@@ -140,6 +140,7 @@ struct sim_t : private sc_thread_t
   bool         save_talent_str;
   auto_dispose< std::vector<player_t*> > actor_list;
   std::string main_target_str;
+  std::string encounter_str;
   int         stat_cache;
   int         max_aoe_enemies;
   bool        requires_regen_event;

@@ -1164,13 +1164,21 @@ void print_player( std::ostream& os, player_t& p )
 
   const player_collected_data_t& cd = p.collected_data;
 
-  fmt::print( os, "\n{}: {} {} {} {} {}\n",
-      p.is_enemy() ? "Target" : p.is_add() ? "Add" : "Player",
-      p.name(),
-      p.race_str,
-      util::player_type_string( p.type ),
-      dbc::specialization_string( p.specialization() ),
-      p.true_level );
+  const char* actor_type = p.is_enemy() ? "Target" : p.is_add() ? "Add" : "Player";
+  if ( p.is_boss() )
+  {
+    fmt::print( os, "\n{}: {} {} Boss {}\n", actor_type, p.name(), p.race_str, p.true_level );
+  }
+  else
+  {
+    fmt::print( os, "\n{}: {} {} {} {} {}\n",
+        actor_type,
+        p.name(),
+        p.race_str,
+        util::player_type_string( p.type ),
+        dbc::specialization_string( p.specialization() ),
+        p.true_level );
+  }
 
   print_collected_amount(os, p, "DPS", cd.dps );
   print_collected_amount(os, p, "HPS", cd.hps );

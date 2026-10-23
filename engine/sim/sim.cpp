@@ -7,6 +7,7 @@
 
 #include "buff/buff.hpp"
 #include "class_modules/class_module.hpp"
+#include "class_modules/bosses/sc_bosses.hpp"
 #include "dbc/dbc.hpp"
 #include "dbc/spell_query/spell_data_expr.hpp"
 #include "interfaces/bcp_api.hpp"
@@ -381,6 +382,24 @@ bool parse_player( sim_t*             sim,
     sim -> active_player -> create_options();
 
   return sim -> active_player != nullptr;
+}
+
+bool parse_encounter( sim_t* sim, util::string_view name, util::string_view value )
+{
+  if ( name != "encounter" )
+    return false;
+
+  if ( !sim->encounter_str.empty() )
+    throw std::invalid_argument( "Only one encounter may be specified." );
+
+  player_t* encounter = bosses::create_encounter( sim, value );
+  if ( !encounter )
+    throw std::invalid_argument( fmt::format( "Unable to create encounter '{}'.", value ) );
+
+  sim->active_player = encounter;
+  encounter->create_options();
+  sim->encounter_str = std::string( value );
+  return true;
 }
 
 // parse_proxy ==============================================================
@@ -3947,6 +3966,7 @@ void sim_t::create_options()
   add_option( opt_func( "warrior", parse_player ) );
   add_option( opt_func( "player_simplified", parse_player ) );
   add_option( opt_func( "enemy", parse_player ) );
+  add_option( opt_func( "encounter", parse_encounter ) );
   add_option( opt_func( "tank_dummy", parse_player ) );
   add_option( opt_func( "pet", parse_player ) );
   add_option( opt_func( "guardian", parse_player ) );
@@ -4774,7 +4794,7 @@ void sim_t::activate_actors()
       for (size_t i = 0; i < target_non_sleeping_list.size(); i++)
       {
         player_t* t = target_non_sleeping_list[ i ];
-        if ( !t->debuffs.hunters_mark )
+        if ( !t->receives_raid_debuffs() || !t->debuffs.hunters_mark )
           continue;
 
         if ( !new_mark )

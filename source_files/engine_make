@@ -31,6 +31,8 @@ SRC += \
     class_modules$(PATHSEP)apl$(PATHSEP)druid$(PATHSEP)druid.cpp \
     class_modules$(PATHSEP)apl$(PATHSEP)mage.cpp \
     class_modules$(PATHSEP)apl$(PATHSEP)warlock.cpp \
+    class_modules$(PATHSEP)bosses$(PATHSEP)sc_bosses.cpp \
+    class_modules$(PATHSEP)bosses$(PATHSEP)sc_vashnik.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_monk.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_monk_pets.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_stagger.cpp \

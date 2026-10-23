@@ -3778,7 +3778,11 @@ void print_html_player_description( report::sc_html_stream& os, const player_t& 
   fmt::print( os, "<li><b>Race:</b> {}</li>\n", util::inverse_tokenize( p.race_str ) );
 
   const char* pt;
-  if ( p.is_pet() )
+  if ( p.is_boss() )
+  {
+    pt = "Boss";
+  }
+  else if ( p.is_pet() )
   {
     pt = util::pet_type_string( p.cast_pet()->pet_type );
   }
@@ -3801,14 +3805,17 @@ void print_html_player_description( report::sc_html_stream& os, const player_t& 
     timewalk_str += util::to_string( p.true_level );
     timewalk_str += ")";
   }
-  os.printf( "<li><b>Level:</b> %d%s</li>\n"
-             "<li><b>Role:</b> %s</li>\n"
-             "<li><b>Position:</b> %s</li>\n"
-             "<li><b>Profile Source:</b> %s</li>\n",
+  os.printf( "<li><b>Level:</b> %d%s</li>\n",
              p.level(),
-             sim.timewalk > 0 && !p.is_enemy() ? timewalk_str.c_str() : "",
-             util::inverse_tokenize( util::role_type_string( p.primary_role() ) ).c_str(),
-             util::encode_html( p.position_str ).c_str(),
+             sim.timewalk > 0 && !p.is_enemy() ? timewalk_str.c_str() : "" );
+  if ( !p.is_boss() )
+  {
+    os.printf( "<li><b>Role:</b> %s</li>\n"
+               "<li><b>Position:</b> %s</li>\n",
+               util::inverse_tokenize( util::role_type_string( p.primary_role() ) ).c_str(),
+               util::encode_html( p.position_str ).c_str() );
+  }
+  os.printf( "<li><b>Profile Source:</b> %s</li>\n",
              util::profile_source_string( p.profile_source_ ) );
 
   os.format("</ul>\n");

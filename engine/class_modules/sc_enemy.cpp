@@ -6,139 +6,81 @@
 #include "util/generic.hpp"
 
 #include "simulationcraft.hpp"
+#include "class_modules/sc_enemy.hpp"
 
 // ==========================================================================
 // Enemy
 // ==========================================================================
 
-namespace
-{  // UNNAMED NAMESPACE
-
-enum class tank_dummy_e
+namespace enemy
 {
-  NONE = 0,
-  WEAK,
-  DUNGEON,
-  RAID,
-  HEROIC,
-  MYTHIC,
-  MAX
-};
 
-struct enemy_t : public player_t
+enemy_t::enemy_t( sim_t* s, util::string_view n, race_e r, player_e type )
+  : player_t( s, type, n, r ),
+    enemy_id( s->target_list.size() ),
+    fixed_health( 0 ),
+    initial_health( 0 ),
+    fixed_health_percentage( 0 ),
+    initial_health_percentage( 100.0 ),
+    custom_health_timeline(),
+    health_recalculation_dampening_exponent( 1.0 ),
+    waiting_time( timespan_t::from_seconds( 1.0 ) ),
+    current_target( 0 ),
+    apply_damage_taken_debuff( 0 ),
+    custom_armor_coeff( 0 )
 {
-  size_t enemy_id;
-  double fixed_health, initial_health;
-  double fixed_health_percentage, initial_health_percentage;
-  std::vector<std::pair<double, double>> custom_health_timeline;
-  double health_recalculation_dampening_exponent;
-  timespan_t waiting_time;
+  s->target_list.push_back( this );
+  position_str = "front";
+  combat_reach = 4.0;
+}
 
-  int current_target;
-  int apply_damage_taken_debuff;
-  double custom_armor_coeff;
+role_e enemy_t::primary_role() const
+{
+  return ROLE_TANK;
+}
 
-  std::vector<buff_t*> buffs_health_decades;
+resource_e enemy_t::primary_resource() const
+{
+  return RESOURCE_HEALTH;
+}
 
-  enemy_t( sim_t* s, util::string_view n, race_e r = RACE_HUMANOID, player_e type = ENEMY )
-    : player_t( s, type, n, r ),
-      enemy_id( s->target_list.size() ),
-      fixed_health( 0 ),
-      initial_health( 0 ),
-      fixed_health_percentage( 0 ),
-      initial_health_percentage( 100.0 ),
-      custom_health_timeline(),
-      health_recalculation_dampening_exponent( 1.0 ),
-      waiting_time( timespan_t::from_seconds( 1.0 ) ),
-      current_target( 0 ),
-      apply_damage_taken_debuff( 0 ),
-      custom_armor_coeff( 0 )
+bool enemy_t::has_absorb() const
+{
+  return range::any_of( absorb_buff_list,
+                        []( const absorb_buff_t* ab ) { return ab->check_value() > 0; } );
+}
+
+double enemy_t::current_absorb_amount() const
+{
+  return range::accumulate( absorb_buff_list, 0.0,
+                            []( const absorb_buff_t* ab ) { return ab->check_value(); } );
+}
+
+timespan_t enemy_t::available() const
+{
+  return waiting_time;
+}
+
+void enemy_t::actor_changed()
+{
+  if ( !sim->overrides.target_health.empty() )
   {
-    s->target_list.push_back( this );
-    position_str = "front";
-    combat_reach = 4.0;
+    initial_health =
+        static_cast<double>( sim->overrides.target_health[ enemy_id % sim->overrides.target_health.size() ] );
+  }
+  else
+  {
+    initial_health = fixed_health;
   }
 
-  role_e primary_role() const override
-  {
-    return ROLE_TANK;
-  }
-
-  resource_e primary_resource() const override
-  {
-    return RESOURCE_HEALTH;
-  }
-
-  action_t* create_action( util::string_view name, util::string_view options_str ) override;
-  void init_race() override;
-  void init_base_stats() override;
-  void init_defense() override;
-  void create_buffs() override;
-  void init_resources( bool force = false ) override;
-  void init_target() override;
-  virtual std::string generate_action_list();
-  virtual void generate_heal_raid_event();
-  void init_action_list() override;
-  void init_actions() override;
-  double resource_loss( resource_e, double, gain_t*, action_t* ) override;
-  void create_options() override;
-  pet_t* create_pet( util::string_view add_name, util::string_view pet_type = {} ) override;
-  void create_pets() override;
-  double health_percentage() const override;
-  timespan_t time_to_percent( double ) const override;
-  void combat_begin() override;
-  void combat_end() override;
-  virtual void recalculate_health();
-  void demise() override;
-  double armor_coefficient( int level, tank_dummy_e diff );
-  std::unique_ptr<expr_t> create_expression( util::string_view expression_str ) override;
-
-  bool has_absorb() const override
-  {
-    return range::any_of( absorb_buff_list,
-                          []( const absorb_buff_t* ab ) { return ab->check_value() > 0; } );
-  }
-
-  double current_absorb_amount() const override
-  {
-    return range::accumulate( absorb_buff_list, 0.0,
-                              []( const absorb_buff_t* ab ) { return ab->check_value(); } );
-  }
-
-  timespan_t available() const override
-  {
-    return waiting_time;
-  }
-
-  void actor_changed() override
-  {
-    if ( !sim->overrides.target_health.empty() )
+  this->default_target = this->target = sim->player_no_pet_list[ sim->current_index ];
+  range::for_each( action_list, [ this ]( action_t* action ) {
+    if ( action->harmful )
     {
-      initial_health =
-          static_cast<double>( sim->overrides.target_health[ enemy_id % sim->overrides.target_health.size() ] );
+      action->default_target = action->target = sim->player_no_pet_list[ sim->current_index ];
     }
-    else
-    {
-      initial_health = fixed_health;
-    }
-
-    this->default_target = this->target = sim->player_no_pet_list[ sim->current_index ];
-    range::for_each( action_list, [ this ]( action_t* action ) {
-      if ( action->harmful )
-      {
-        action->default_target = action->target = sim->player_no_pet_list[ sim->current_index ];
-      }
-    } );
-  }
-
-  bool taunt( player_t* source ) override;
-  void reset_auto_attacks( timespan_t delay, proc_t* proc = nullptr ) override;
-  void delay_auto_attacks( timespan_t delay, proc_t* proc = nullptr ) override;
-
-  bool validate_custom_timeline();
-  std::string generate_tank_action_list( tank_dummy_e );
-  void add_tank_heal_raid_event( tank_dummy_e );
-};
+  } );
+}
 
 namespace actions
 {
@@ -819,7 +761,8 @@ struct spell_dot_driver_t : public enemy_action_driver_t<spell_dot_t>
 struct spell_aoe_t : public enemy_action_t<spell_t>
 {
   // default constructor
-  spell_aoe_t( player_t* p, util::string_view options_str ) : base_t( "spell_aoe", p )
+  spell_aoe_t( player_t* p, util::string_view options_str, util::string_view action_name = "spell_aoe" )
+    : base_t( action_name, p )
   {
     school            = SCHOOL_FIRE;
     base_execute_time = timespan_t::from_seconds( 3.0 );
@@ -1021,6 +964,7 @@ struct pause_action_t : public action_t
     action_t::update_ready( cd );
   }
 };
+
 }  // end namespace actions
 
 action_t* enemy_create_action( player_t* p, util::string_view name, util::string_view options_str )
@@ -2205,22 +2149,22 @@ struct tank_dummy_enemy_module_t : public module_t
   void register_actor_initializers( sim_t* ) const override {}
 };
 
-}  // END UNNAMED NAMESPACE
+}  // namespace enemy
 
 const module_t* module_t::enemy()
 {
-  static enemy_module_t m = enemy_module_t();
+  static enemy::enemy_module_t m = enemy::enemy_module_t();
   return &m;
 }
 
 const module_t* module_t::heal_enemy()
 {
-  static heal_enemy_module_t m = heal_enemy_module_t();
+  static enemy::heal_enemy_module_t m = enemy::heal_enemy_module_t();
   return &m;
 }
 
 const module_t* module_t::tank_dummy_enemy()
 {
-  static tank_dummy_enemy_module_t m = tank_dummy_enemy_module_t();
+  static enemy::tank_dummy_enemy_module_t m = enemy::tank_dummy_enemy_module_t();
   return &m;
 }

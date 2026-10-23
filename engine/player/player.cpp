@@ -7062,14 +7062,17 @@ void player_t::arise()
     // When an enemy arises, trigger players to potentially acquire a new target
     range::for_each( sim->player_non_sleeping_list, [this]( player_t* p ) { p->acquire_target( retarget_source::ACTOR_ARISE, this ); } );
 
-    if ( sim->overrides.chaos_brand && debuffs.chaos_brand )
-      debuffs.chaos_brand->override_buff();
-    if ( sim->overrides.mystic_touch && debuffs.mystic_touch )
-      debuffs.mystic_touch->override_buff();
-    if ( sim->overrides.bleeding && debuffs.bleeding )
-      debuffs.bleeding->override_buff( 1, 1.0 );
-    if ( sim->overrides.mortal_wounds && debuffs.mortal_wounds )
-      debuffs.mortal_wounds->override_buff();
+    if ( receives_raid_debuffs() )
+    {
+      if ( sim->overrides.chaos_brand && debuffs.chaos_brand )
+        debuffs.chaos_brand->override_buff();
+      if ( sim->overrides.mystic_touch && debuffs.mystic_touch )
+        debuffs.mystic_touch->override_buff();
+      if ( sim->overrides.bleeding && debuffs.bleeding )
+        debuffs.bleeding->override_buff( 1, 1.0 );
+      if ( sim->overrides.mortal_wounds && debuffs.mortal_wounds )
+        debuffs.mortal_wounds->override_buff();
+    }
   }
   else
   {

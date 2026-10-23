@@ -2091,6 +2091,9 @@ bool buff_t::trigger( int stacks, timespan_t duration )
 
 bool buff_t::trigger( int stacks, double value, double chance, timespan_t duration )
 {
+  if ( player && player->is_enemy() && !player->receives_buffs() )
+    return false;
+
   if ( _max_stack == 0 || chance == 0 )
     return false;
 
@@ -2428,6 +2431,9 @@ void buff_t::reschedule_tick( timespan_t delta )
 void buff_t::start( int stacks, double value, timespan_t duration )
 {
   if ( _max_stack == 0 )
+    return;
+
+  if ( player && player->is_enemy() && !player->receives_buffs() )
     return;
 
   if ( value == DEFAULT_VALUE() )

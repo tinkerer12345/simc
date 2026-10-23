@@ -27,7 +27,10 @@ class_modules/apl/apl_warrior.hpp
 class_modules/apl/druid/druid.hpp
 class_modules/apl/mage.hpp
 class_modules/apl/warlock.hpp
+class_modules/bosses/sc_bosses.hpp
+class_modules/bosses/sc_vashnik.hpp
 class_modules/class_module.hpp
+class_modules/sc_enemy.hpp
 class_modules/monk/sc_monk.hpp
 class_modules/monk/sc_stagger.hpp
 class_modules/paladin/sc_paladin.hpp
@@ -236,6 +239,8 @@ class_modules/priest/sc_priest_shadow.cpp
 class_modules/sc_death_knight.cpp
 class_modules/sc_demon_hunter.cpp
 class_modules/sc_druid.cpp
+class_modules/bosses/sc_bosses.cpp
+class_modules/bosses/sc_vashnik.cpp
 class_modules/sc_enemy.cpp
 class_modules/sc_evoker.cpp
 class_modules/sc_hunter.cpp

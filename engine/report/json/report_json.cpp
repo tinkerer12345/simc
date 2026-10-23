@@ -757,7 +757,11 @@ void to_json( JsonOutput& arr, const ::report::json::report_configuration_t& rep
   root[ "name" ] = p.name();
   root[ "race" ] = util::race_type_string( p.race );
   root[ "level" ] = p.true_level;
-  root[ "role" ] = util::role_type_string( p.role );
+  root[ "role" ] = p.is_boss() ? "" : util::role_type_string( p.role );
+  if ( p.is_boss() )
+  {
+    root[ "class" ] = "Boss";
+  }
   root[ "specialization" ] = util::specialization_string( p.specialization() );
   root[ "profile_source" ] = util::profile_source_string( p.profile_source_ );
   root[ "talents" ] = p.talents_str;

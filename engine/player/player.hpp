@@ -963,6 +963,9 @@ public:
   bool is_enemy() const { return _is_enemy( type ); }
   bool is_boss() const { return type == ENEMY || type == ENEMY_ADD_BOSS || type == TANK_DUMMY; }
   bool is_add() const { return type == ENEMY_ADD || type == ENEMY_ADD_BOSS; }
+  /// Whether buff and debuff applications should affect this actor.
+  virtual bool receives_buffs() const { return true; }
+  virtual bool receives_raid_debuffs() const { return true; }
   bool is_sleeping() const { return _is_sleeping( this ); }
   bool is_my_pet( const player_t* t ) const;
   /// Is the actor active currently
