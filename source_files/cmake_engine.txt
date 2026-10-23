@@ -29,6 +29,7 @@ class_modules/apl/mage.hpp
 class_modules/apl/warlock.hpp
 class_modules/bosses/sc_bosses.hpp
 class_modules/bosses/sc_vashnik.hpp
+class_modules/raid/sc_raid_member.hpp
 class_modules/class_module.hpp
 class_modules/sc_enemy.hpp
 class_modules/monk/sc_monk.hpp
@@ -104,6 +105,8 @@ player/assessor.hpp
 player/azerite_data.hpp
 player/consumable.hpp
 player/darkmoon_deck.hpp
+player/death_recap.hpp
+player/raid_frames.hpp
 player/effect_callbacks.hpp
 player/gear_stats.hpp
 player/ground_aoe.hpp
@@ -241,6 +244,7 @@ class_modules/sc_demon_hunter.cpp
 class_modules/sc_druid.cpp
 class_modules/bosses/sc_bosses.cpp
 class_modules/bosses/sc_vashnik.cpp
+class_modules/raid/sc_raid_member.cpp
 class_modules/sc_enemy.cpp
 class_modules/sc_evoker.cpp
 class_modules/sc_hunter.cpp
@@ -309,6 +313,8 @@ player/actor_target_data.cpp
 player/azerite_data.cpp
 player/consumable.cpp
 player/darkmoon_deck.cpp
+player/death_recap.cpp
+player/raid_frames.cpp
 player/effect_callbacks.cpp
 player/ground_aoe.cpp
 player/instant_absorb.cpp

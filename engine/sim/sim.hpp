@@ -141,6 +141,20 @@ struct sim_t : private sc_thread_t
   auto_dispose< std::vector<player_t*> > actor_list;
   std::string main_target_str;
   std::string encounter_str;
+  std::string encounter_difficulty_str;
+  int encounter_wipes = 0;  // encounter fights that ended because every player died
+  // Stand-in raid members (raid_tanks / raid_healers / raid_ranged / raid_melee), see
+  // class_modules/raid/sc_raid_member.cpp.
+  struct raid_stand_in_t
+  {
+    int members                  = 0;
+    double health                = 900000;   // max health of healers and dps
+    double damage_reduction      = 0.10;     // on all damage, on top of any versatility from raid buffs
+    double avoidance             = 0.0;      // extra reduction of area damage
+    double tank_health           = 1300000;
+    double tank_damage_reduction = 0.15;
+    double healer_hps            = 0.0;      // healing per second from each stand-in healer
+  } raid_stand_in;
   int         stat_cache;
   int         max_aoe_enemies;
   bool        requires_regen_event;

@@ -6141,6 +6141,9 @@ void player_t::combat_begin()
   if ( !precombat_initialized )
     precombat_init();
 
+  if ( raid_frames.enabled )
+    raid_frames.combat_begin( *this );
+
   // Trigger registered pre-pull functions
   for ( const auto& f : precombat_begin_functions )
   {
@@ -6482,6 +6485,8 @@ void merge( player_t& left, player_t& right )
 void player_t::merge( player_t& other )
 {
   collected_data.merge( other );
+  death_recap.merge( other.death_recap );
+  raid_frames.merge( other.raid_frames );
 
   for ( resource_e i = RESOURCE_NONE; i < RESOURCE_MAX; ++i )
   {
@@ -6617,6 +6622,8 @@ void player_t::merge( player_t& other )
 void player_t::reset()
 {
   sim->print_debug( "Resetting {}.", *this );
+
+  death_recap.reset();
 
   last_cast = timespan_t::zero();
   gcd_ready = timespan_t::zero();
@@ -6782,6 +6789,8 @@ void player_t::trigger_ready()
   sim->print_debug( "{} is triggering ready, interval={}", *this, ( sim->current_time() - started_waiting ) );
 
   iteration_waiting_time += sim->current_time() - started_waiting;
+  if ( death_recap.enabled() )
+    death_recap.record_wait( started_waiting, sim->current_time() );
   started_waiting = timespan_t::min();
 
   schedule_ready( available() );
@@ -6938,6 +6947,8 @@ void player_t::schedule_ready( timespan_t delta_time, bool waiting )
       sequence_add_wait( delta_time );
 
     iteration_waiting_time += delta_time;
+    if ( death_recap.enabled() )
+      death_recap.record_wait( sim->current_time(), sim->current_time() + delta_time );
   }
   else
   {
@@ -7180,6 +7191,31 @@ void player_t::demise()
   {
     sim->active_allies--;
     sim->player_non_sleeping_list.find_and_erase_unordered( this );
+
+    // Boss encounters (encounter=<name>) end once every player has died; other sims keep running as before.
+    if ( !sim->encounter_str.empty() && !is_pet() )
+    {
+      // As in game, HoTs and DoTs from anyone end when the player dies (demise only cancels its own).
+      for ( player_t* actor : sim->actor_list )
+        for ( dot_t* d : actor->dot_list )
+          if ( d->target == this )
+            d->cancel();
+
+      bool any_alive = false;
+      for ( const player_t* p : sim->player_no_pet_list )
+        any_alive = any_alive || !p->is_sleeping();
+
+      // Only a wipe if the last player actually died while the fight was running; combat_end also
+      // demises everyone.
+      if ( !any_alive && !sim->event_mgr.canceled && health_percentage() <= death_pct )
+      {
+        // Counted only for fights whose data is collected (same rule as sim_t::combat_end), so wipes
+        // match simulation_length.count().
+        if ( sim->iterations == 1 || sim->current_iteration >= 1 )
+          sim->encounter_wipes++;
+        sim->cancel_iteration();
+      }
+    }
   }
 
   // If an enemy mob dies, trigger on-kill callback on all active players
@@ -8377,6 +8413,9 @@ void player_t::do_damage( action_state_t* incoming_state )
   if ( incoming_state->result_amount > 0.0 )
     resource_loss( RESOURCE_HEALTH, incoming_state->result_amount, nullptr, incoming_action );
 
+  if ( death_recap.enabled() )
+    death_recap.record_damage( *this, *incoming_state );
+
   // New callback system; proc abilities on incoming events.
   if ( incoming_action && incoming_action->callbacks && incoming_action->target_callbacks &&
        ( !incoming_action->suppress_target_procs || incoming_action->enable_proc_from_suppressed ) )
@@ -8413,6 +8452,16 @@ void player_t::do_damage( action_state_t* incoming_state )
   {
     if ( !current.sleeping )
       collected_data.deaths.add( sim->current_time().total_seconds() );
+
+    if ( death_recap.enabled() && !current.sleeping )
+      death_recap.record_death( *this, incoming_state, started_waiting );
+
+    if ( !current.sleeping )
+    {
+      for ( player_t* p : sim->player_no_pet_list )
+        if ( p->raid_frames.enabled )
+          p->raid_frames.record_death( *p, *this, incoming_state );
+    }
 
     if ( sim->log )
       sim->out_log.printf( "%s has died.", name() );
@@ -8488,6 +8537,9 @@ void player_t::assess_heal( school_e, result_amount_type, action_state_t* s )
 {
   // process heal
   s->result_amount = resource_gain( RESOURCE_HEALTH, s->result_total, nullptr, s->action );
+
+  if ( death_recap.enabled() )
+    death_recap.record_heal( *this, *s );
 
   // if the target is a tank record this event on damage timeline
   if ( !is_pet() && primary_role() == ROLE_TANK )
@@ -9745,6 +9797,8 @@ struct wait_action_base_t : public action_t
   void execute() override
   {
     player->iteration_waiting_time += time_to_execute;
+    if ( player->death_recap.enabled() )
+      player->death_recap.record_wait( sim->current_time(), sim->current_time() + time_to_execute );
     total_executions++;
   }
 };
@@ -13404,6 +13458,8 @@ void player_t::create_options()
   add_option( opt_bool( "infinite_energy", resources.infinite_resource[ RESOURCE_ENERGY ] ) );
   add_option( opt_bool( "infinite_focus", resources.infinite_resource[ RESOURCE_FOCUS ] ) );
   add_option( opt_bool( "infinite_health", resources.infinite_resource[ RESOURCE_HEALTH ] ) );
+  add_option( opt_timespan( "death_recap", death_recap.window, 0_ms, 120_s ) );
+  add_option( opt_bool( "raid_frames", raid_frames.enabled ) );
   add_option( opt_bool( "infinite_mana", resources.infinite_resource[ RESOURCE_MANA ] ) );
   add_option( opt_bool( "infinite_rage", resources.infinite_resource[ RESOURCE_RAGE ] ) );
   add_option( opt_bool( "infinite_runic", resources.infinite_resource[ RESOURCE_RUNIC_POWER ] ) );

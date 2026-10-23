@@ -8,6 +8,7 @@
 #include "buff/buff.hpp"
 #include "class_modules/class_module.hpp"
 #include "class_modules/bosses/sc_bosses.hpp"
+#include "class_modules/raid/sc_raid_member.hpp"
 #include "dbc/dbc.hpp"
 #include "dbc/spell_query/spell_data_expr.hpp"
 #include "interfaces/bcp_api.hpp"
@@ -399,6 +400,27 @@ bool parse_encounter( sim_t* sim, util::string_view name, util::string_view valu
   sim->active_player = encounter;
   encounter->create_options();
   sim->encounter_str = std::string( value );
+  return true;
+}
+
+// parse_raid_members ======================================================
+
+// raid_tanks / raid_healers / raid_ranged / raid_melee=<n> each create that many stand-in raid members.
+bool parse_raid_members( sim_t* sim, util::string_view name, util::string_view value )
+{
+  static constexpr util::string_view prefix = "raid_";
+  if ( name.substr( 0, prefix.size() ) != prefix )
+    return false;
+
+  util::string_view kind = name.substr( prefix.size() );
+  if ( kind == "tanks" ) kind = "tank";
+  else if ( kind == "healers" ) kind = "healer";
+
+  int count = util::to_int( value );
+  if ( count < 0 || sim->raid_stand_in.members + count > 39 )
+    throw std::invalid_argument( fmt::format( "{}={} would make more than 39 raid members.", name, value ) );
+
+  raid::create_raid_members( sim, kind, count );
   return true;
 }
 
@@ -3295,6 +3317,7 @@ void sim_t::merge( sim_t& other_sim )
   }
 
   iterations += other_sim.iterations;
+  encounter_wipes += other_sim.encounter_wipes;
   work_per_thread[ other_sim.thread_index ] = other_sim.work_done;
 
   simulation_length.merge( other_sim.simulation_length );
@@ -3967,6 +3990,14 @@ void sim_t::create_options()
   add_option( opt_func( "player_simplified", parse_player ) );
   add_option( opt_func( "enemy", parse_player ) );
   add_option( opt_func( "encounter", parse_encounter ) );
+  for ( auto kind : { "raid_tanks", "raid_healers", "raid_ranged", "raid_melee" } )
+    add_option( opt_func( kind, parse_raid_members ) );
+  add_option( opt_float( "raid_member_health", raid_stand_in.health, 1, std::numeric_limits<double>::max() ) );
+  add_option( opt_float( "raid_member_damage_reduction", raid_stand_in.damage_reduction, 0, 0.95 ) );
+  add_option( opt_float( "raid_member_avoidance", raid_stand_in.avoidance, 0, 0.95 ) );
+  add_option( opt_float( "raid_tank_health", raid_stand_in.tank_health, 1, std::numeric_limits<double>::max() ) );
+  add_option( opt_float( "raid_tank_damage_reduction", raid_stand_in.tank_damage_reduction, 0, 0.95 ) );
+  add_option( opt_float( "raid_healer_hps", raid_stand_in.healer_hps, 0, std::numeric_limits<double>::max() ) );
   add_option( opt_func( "tank_dummy", parse_player ) );
   add_option( opt_func( "pet", parse_player ) );
   add_option( opt_func( "guardian", parse_player ) );

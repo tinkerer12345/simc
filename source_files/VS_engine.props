@@ -35,6 +35,7 @@ To change the list of source files run synchronize.py
 		<ClInclude Include="..\engine\class_modules\apl\warlock.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_bosses.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_vashnik.hpp" />
+		<ClInclude Include="..\engine\class_modules\raid\sc_raid_member.hpp" />
 		<ClInclude Include="..\engine\class_modules\class_module.hpp" />
 		<ClInclude Include="..\engine\class_modules\sc_enemy.hpp" />
 		<ClInclude Include="..\engine\class_modules\monk\sc_monk.hpp" />
@@ -110,6 +111,8 @@ To change the list of source files run synchronize.py
 		<ClInclude Include="..\engine\player\azerite_data.hpp" />
 		<ClInclude Include="..\engine\player\consumable.hpp" />
 		<ClInclude Include="..\engine\player\darkmoon_deck.hpp" />
+		<ClInclude Include="..\engine\player\death_recap.hpp" />
+		<ClInclude Include="..\engine\player\raid_frames.hpp" />
 		<ClInclude Include="..\engine\player\effect_callbacks.hpp" />
 		<ClInclude Include="..\engine\player\gear_stats.hpp" />
 		<ClInclude Include="..\engine\player\ground_aoe.hpp" />
@@ -232,6 +235,7 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\class_modules\apl\warlock.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_bosses.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_vashnik.cpp" />
+		<ClCompile Include="..\engine\class_modules\raid\sc_raid_member.cpp" />
 		<ClCompile Include="..\engine\class_modules\monk\sc_monk.cpp" />
 		<ClCompile Include="..\engine\class_modules\monk\sc_monk_pets.cpp" />
 		<ClCompile Include="..\engine\class_modules\monk\sc_stagger.cpp" />
@@ -315,6 +319,8 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\player\azerite_data.cpp" />
 		<ClCompile Include="..\engine\player\consumable.cpp" />
 		<ClCompile Include="..\engine\player\darkmoon_deck.cpp" />
+		<ClCompile Include="..\engine\player\death_recap.cpp" />
+		<ClCompile Include="..\engine\player\raid_frames.cpp" />
 		<ClCompile Include="..\engine\player\effect_callbacks.cpp" />
 		<ClCompile Include="..\engine\player\ground_aoe.cpp" />
 		<ClCompile Include="..\engine\player\instant_absorb.cpp" />

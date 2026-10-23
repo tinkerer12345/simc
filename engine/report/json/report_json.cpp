@@ -565,6 +565,121 @@ void to_json( JsonOutput root, const ::report::json::report_configuration_t& rep
   } );
 }
 
+void death_recap_ability_to_json( JsonOutput root, const death_recap_t::ability_t& a )
+{
+  root[ "source" ]   = a.source;
+  root[ "ability" ]  = a.ability;
+  root[ "school" ]   = a.school;
+  root[ "amount" ]   = util::round( a.amount, 0 );
+  root[ "absorbed" ] = util::round( a.absorbed, 0 );
+  root[ "hits" ]     = a.hits;
+}
+
+void death_recap_to_json( JsonOutput root, const death_recap_t& recap )
+{
+  root.make_array();
+
+  for ( const auto& d : recap.deaths )
+  {
+    auto node          = root.add();
+    node[ "time" ]       = util::round( d.time, 3 );
+    node[ "max_health" ] = util::round( d.max_health, 0 );
+    node[ "max_mana" ]   = util::round( d.max_mana, 0 );
+
+    // One column per value, one entry per second, oldest first; the last second ends at the death.
+    std::vector<double> damage, absorbed, healing, overheal, health, mana, idle;
+    for ( const auto& s : d.seconds )
+    {
+      damage.push_back( util::round( s.damage, 0 ) );
+      absorbed.push_back( util::round( s.absorbed, 0 ) );
+      healing.push_back( util::round( s.healing, 0 ) );
+      overheal.push_back( util::round( s.overheal, 0 ) );
+      health.push_back( util::round( s.health, 0 ) );
+      mana.push_back( util::round( s.mana, 0 ) );
+      idle.push_back( util::round( s.idle, 2 ) );
+    }
+    auto seconds          = node[ "seconds" ];
+    seconds[ "damage" ]   = damage;
+    seconds[ "absorbed" ] = absorbed;
+    seconds[ "healing" ]  = healing;
+    seconds[ "overheal" ] = overheal;
+    seconds[ "health" ]   = health;
+    seconds[ "mana" ]     = mana;
+    seconds[ "idle" ]     = idle;
+
+    auto abilities = node[ "abilities" ];
+    abilities.make_array();
+    for ( const auto& a : d.abilities )
+      death_recap_ability_to_json( abilities.add(), a );
+
+    if ( !d.killing_blow.ability.empty() )
+      death_recap_ability_to_json( node[ "killing_blow" ], d.killing_blow );
+  }
+}
+
+void raid_frames_to_json( JsonOutput root, const raid_frames_t& frames )
+{
+  auto units = root[ "units" ];
+  units.make_array();
+  for ( const auto& u : frames.units )
+  {
+    auto node            = units.add();
+    node[ "name" ]       = u.name;
+    node[ "role" ]       = u.role;
+    node[ "position" ]   = u.position;
+    node[ "max_health" ] = util::round( u.max_health, 0 );
+  }
+
+  auto snapshots = root[ "snapshots" ];
+  snapshots.make_array();
+  for ( const auto& s : frames.snapshots )
+  {
+    auto node    = snapshots.add();
+    node[ "time" ] = util::round( s.time, 3 );
+
+    std::vector<double> health, absorb, alive;
+    for ( size_t i = 0; i < s.health.size(); ++i )
+    {
+      health.push_back( util::round( s.health[ i ], 0 ) );
+      absorb.push_back( util::round( s.absorb[ i ], 0 ) );
+      alive.push_back( s.alive[ i ] ? 1 : 0 );
+    }
+    node[ "health" ] = health;
+    node[ "absorb" ] = absorb;
+    node[ "alive" ]  = alive;
+
+    // Per unit, a list of [name, remaining seconds, stacks, is_hot].
+    auto effects = node[ "effects" ];
+    effects.make_array();
+    for ( const auto& unit_effects : s.effects )
+    {
+      auto list = effects.add();
+      list.make_array();
+      for ( const auto& e : unit_effects )
+      {
+        auto entry          = list.add();
+        entry[ "name" ]     = e.name;
+        entry[ "remains" ]  = util::round( e.remains, 1 );
+        entry[ "stacks" ]   = e.stacks;
+        entry[ "hot" ]      = e.hot;
+      }
+    }
+  }
+
+  auto deaths = root[ "deaths" ];
+  deaths.make_array();
+  for ( const auto& d : frames.deaths )
+  {
+    auto node          = deaths.add();
+    node[ "time" ]     = util::round( d.time, 3 );
+    node[ "name" ]     = d.name;
+    node[ "ability" ]  = d.ability;
+    node[ "source" ]   = d.source;
+    node[ "amount" ]   = util::round( d.amount, 0 );
+    node[ "snapshot" ] = static_cast<unsigned>( d.snapshot );
+  }
+}
+
 void collected_data_to_json( JsonOutput root, const ::report::json::report_configuration_t& report_configuration,
                              const player_t& p )
 {
@@ -585,13 +700,18 @@ void collected_data_to_json( JsonOutput root, const ::report::json::report_confi
   add_non_zero( root, "dps", cd.dps );
   add_non_zero( root, "dpse", cd.dpse );
 
-  if ( p.role == ROLE_TANK || p.role == ROLE_HEAL )
+  // Encounter sims export this for every player, so healer reports can show the whole raid.
+  if ( p.role == ROLE_TANK || p.role == ROLE_HEAL || !sim.encounter_str.empty() )
   {
-    if ( p.role == ROLE_TANK )
+    // Healers need incoming-damage data too: it is what their healing responds to.
     {
       root[ "dtps" ] = cd.dmg_taken;
       root[ "timeline_dmg_taken" ] = cd.timeline_dmg_taken;
       root[ "deaths" ] = cd.deaths;
+      if ( !p.death_recap.deaths.empty() )
+        death_recap_to_json( root[ "death_recaps" ], p.death_recap );
+      if ( p.raid_frames.enabled && !p.raid_frames.snapshots.empty() )
+        raid_frames_to_json( root[ "raid_frames" ], p.raid_frames );
     }
 
     root[ "heal" ] = cd.heal;
@@ -602,7 +722,6 @@ void collected_data_to_json( JsonOutput root, const ::report::json::report_confi
     root[ "compound_absorb" ] = cd.compound_absorb;
     root[ "aps" ] = cd.aps;
 
-    if ( p.role == ROLE_TANK )
     {
       root[ "htps" ] = cd.htps;
       root[ "heal_taken" ] = cd.heal_taken;
@@ -1224,6 +1343,11 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
   options_root[ "average_range" ] = sim.average_range;
   options_root[ "average_gauss" ] = sim.average_gauss;
   options_root[ "fight_style" ] = util::fight_style_string( sim.fight_style );
+  if ( !sim.encounter_str.empty() )
+  {
+    options_root[ "encounter" ] = sim.encounter_str;
+    options_root[ "encounter_difficulty" ] = sim.encounter_difficulty_str;
+  }
   options_root[ "desired_targets" ] = sim.desired_targets;
   options_root[ "default_aura_delay" ] = sim.default_aura_delay.mean;
   options_root[ "default_aura_delay_stddev" ] = sim.default_aura_delay.stddev;
@@ -1307,6 +1431,12 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
   add_non_zero( stats_root, "total_dmg", sim.total_dmg );
   add_non_zero( stats_root, "total_heal", sim.total_heal );
   add_non_zero( stats_root, "total_absorb", sim.total_absorb );
+  if ( !sim.encounter_str.empty() )
+  {
+    // Every fight is a wipe (all players died) or a kill (survived to the end of the encounter).
+    stats_root[ "encounter_fights" ] = sim.simulation_length.count();
+    stats_root[ "encounter_wipes" ]  = sim.encounter_wipes;
+  }
 
   if ( sim.report_details != 0 )
   {

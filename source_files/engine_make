@@ -33,6 +33,7 @@ SRC += \
     class_modules$(PATHSEP)apl$(PATHSEP)warlock.cpp \
     class_modules$(PATHSEP)bosses$(PATHSEP)sc_bosses.cpp \
     class_modules$(PATHSEP)bosses$(PATHSEP)sc_vashnik.cpp \
+    class_modules$(PATHSEP)raid$(PATHSEP)sc_raid_member.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_monk.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_monk_pets.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_stagger.cpp \
@@ -116,6 +117,8 @@ SRC += \
     player$(PATHSEP)azerite_data.cpp \
     player$(PATHSEP)consumable.cpp \
     player$(PATHSEP)darkmoon_deck.cpp \
+    player$(PATHSEP)death_recap.cpp \
+    player$(PATHSEP)raid_frames.cpp \
     player$(PATHSEP)effect_callbacks.cpp \
     player$(PATHSEP)ground_aoe.cpp \
     player$(PATHSEP)instant_absorb.cpp \

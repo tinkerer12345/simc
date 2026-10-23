@@ -1,0 +1,60 @@
+iterations=1000
+max_time=345
+vary_combat_length=0
+
+druid="Silverblooms"
+level=90
+race=harronir
+region=eu
+server=silvermoon
+role=heal
+# SimC players have infinite health by default; healers must be able to die.
+infinite_health=0
+# Record the last 20 seconds before each death for the healer report's cause-of-death panel.
+death_recap=20
+professions=leatherworking=100/inscription=100
+spec=restoration
+talents=CkGADBD3hSPCL9Y9gz68WcKvMYMmZZmZMzMmthHgZmNjtxMAAAAAAAAAAYxQzmZMNzAPgZxMzMDDzAAAAAwAAAAABAAMbzs0sNzmNGzMDmZD0MAAzMAMA
+omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
+
+head=,id=271528,enchant_id=7961,bonus_id=13334/6652/13696/13847/13692/12854/13658,redirected_base_stats=271875
+neck=,id=268265,gem_id=240983/240892,bonus_id=6652/13668/13334/13987/12854
+shoulder=,id=244572,enchant_id=8031,bonus_id=12214/13667/12497/13751/14001/8793/13836,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
+back=,id=268253,bonus_id=6652/13662/13334/12850
+chest=,id=271531,enchant_id=7987,bonus_id=13334/6652/13696/13690/13698/12854,redirected_base_stats=268235
+tabard=,id=246740,content_tuning=863
+wrist=,id=244576,gem_id=240892,bonus_id=12214/13667/13695/12497/13751/14001/8960/12384/8793/13836/13696,content_tuning=3615,crafted_stats=49/36,crafting_quality=5
+hands=,id=271529,bonus_id=13335/13691/6652/13697/12854,content_tuning=1040
+waist=,id=268256,bonus_id=6652/13696/13662/13334/12850
+legs=,id=271527,enchant_id=7937,bonus_id=13334/6652/13693/13698/12853,redirected_base_stats=268225
+feet=,id=244569,enchant_id=7993,bonus_id=12214/13667/12497/13751/14001/8960/12384/8793/13836,content_tuning=3615,crafted_stats=40/32,crafting_quality=5
+finger1=,id=252258,enchant_id=7969,gem_id=240892,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
+finger2=,id=268249,enchant_id=7969,gem_id=240892,bonus_id=6652/13668/13335/12851
+trinket1=,id=270162,bonus_id=6652/13335/12854
+trinket2=,id=270167,bonus_id=40/13335/12854
+main_hand=,id=271092,enchant_id=8039,bonus_id=6652/13334/12854
+off_hand=,id=245769,bonus_id=12214/13667/12497/13751/14001/12715/8793/13836,content_tuning=3615,crafted_stats=36/32,crafting_quality=5
+
+# Test harness, not a real rotation: Regrowth on the lowest-health player.
+actions=regrowth,target_if=min:target.health.pct,if=target.health.pct<100
+
+# Record raid frames (everyone's health and our HoTs/buffs) in the sample fight for the healer report.
+raid_frames=1
+
+# Stand-in raid: 2 tanks, 3 healers, us, 7 ranged, 7 melee (20 players). Placeholder values.
+raid_tanks=2
+raid_healers=3
+raid_ranged=7
+raid_melee=7
+raid_member_health=900000
+raid_member_damage_reduction=0.10
+raid_member_avoidance=0
+raid_tank_health=1300000
+raid_tank_damage_reduction=0.15
+# Healing per second from each stand-in healer (0 until we have log numbers).
+raid_healer_hps=0
+
+encounter=Vashnik
+difficulty=mythic
+enemy_health=1000000000
+ 

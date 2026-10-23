@@ -13,6 +13,8 @@
 #include "dbc/specialization.hpp"
 #include "effect_callbacks.hpp"
 #include "gear_stats.hpp"
+#include "death_recap.hpp"
+#include "raid_frames.hpp"
 #include "player_collected_data.hpp"
 #include "player_processed_report_information.hpp"
 #include "player_resources.hpp"
@@ -422,6 +424,8 @@ struct player_t : public actor_t
 
   // All Data collected during / end of combat
   player_collected_data_t collected_data;
+  death_recap_t death_recap;  // opt-in, see death_recap=<seconds>
+  raid_frames_t raid_frames;  // opt-in, see raid_frames=1
   bool collect_pet_sequence_data;
 
 
