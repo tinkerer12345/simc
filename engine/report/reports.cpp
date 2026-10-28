@@ -9,10 +9,13 @@
 #include "dbc/sc_spell_info.hpp"
 #include "dbc/spell_query/spell_data_expr.hpp"
 #include "player/player.hpp"
+#include "report/json/report_configuration.hpp"
 #include "report/report_helper.hpp"
 #include "sim/sim.hpp"
+#include "sim/tolerance.hpp"
 #include "util/xml.hpp"
 
+#include <fstream>
 #include <ostream>
 #include <sstream>
 
@@ -258,6 +261,24 @@ void print_suite( sim_t* sim )
   catch ( const std::exception& )
   {
     std::throw_with_nested( sc_report_output_error( "JSON output" ) );
+  }
+
+  // The healer report (healer_html=, sim/tolerance.hpp) is built from the JSON report just written.
+  try
+  {
+    if ( !sim->parent && sim->tolerance && !sim->tolerance->healer_html.empty() )
+    {
+      if ( sim->json_reports.empty() )
+        throw std::invalid_argument( "healer_html needs a JSON report (json2=<file>)." );
+      std::ifstream in( sim->json_reports.front().destination(), std::ios::binary );
+      std::stringstream json;
+      json << in.rdbuf();
+      sim->tolerance->print_healer_html( json.str() );
+    }
+  }
+  catch ( const std::exception& )
+  {
+    std::throw_with_nested( sc_report_output_error( "Healer report" ) );
   }
 
   try

@@ -28,6 +28,7 @@ class_modules/apl/druid/druid.hpp
 class_modules/apl/mage.hpp
 class_modules/apl/warlock.hpp
 class_modules/bosses/sc_bosses.hpp
+class_modules/bosses/sc_encounter_damage.hpp
 class_modules/bosses/sc_vashnik.hpp
 class_modules/raid/sc_raid_member.hpp
 class_modules/class_module.hpp
@@ -167,6 +168,7 @@ sim/profileset_control.hpp
 sim/progress_bar.hpp
 sim/raid_event.hpp
 sim/reforge_plot.hpp
+sim/tolerance.hpp
 sim/scale_factor_control.hpp
 sim/sim.hpp
 sim/sim_control.hpp
@@ -243,6 +245,7 @@ class_modules/sc_death_knight.cpp
 class_modules/sc_demon_hunter.cpp
 class_modules/sc_druid.cpp
 class_modules/bosses/sc_bosses.cpp
+class_modules/bosses/sc_encounter_damage.cpp
 class_modules/bosses/sc_vashnik.cpp
 class_modules/raid/sc_raid_member.cpp
 class_modules/sc_enemy.cpp
@@ -364,6 +367,7 @@ sim/profileset_control.cpp
 sim/progress_bar.cpp
 sim/raid_event.cpp
 sim/reforge_plot.cpp
+sim/tolerance.cpp
 sim/scale_factor_control.cpp
 sim/sim.cpp
 sim/sim_ostream.cpp

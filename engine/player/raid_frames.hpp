@@ -25,6 +25,7 @@ struct raid_frames_t
     std::string role;      // tank / heal / dps ...
     std::string position;  // front / back / ranged_back ...
     double max_health = 0;
+    double max_mana   = 0;  // 0 for units without mana (stand-ins)
   };
 
   // A HoT the owner has on a unit.
@@ -41,6 +42,7 @@ struct raid_frames_t
     double time = 0;
     std::vector<double> health;   // per unit, same order as units
     std::vector<double> absorb;
+    std::vector<double> mana;
     std::vector<bool> alive;
     std::vector<std::vector<effect_t>> effects;
   };

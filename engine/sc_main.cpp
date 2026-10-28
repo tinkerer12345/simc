@@ -13,6 +13,7 @@
 #include "player/unique_gear.hpp"
 #include "report/reports.hpp"
 #include "sim/plot.hpp"
+#include "sim/tolerance.hpp"
 #include "sim/reforge_plot.hpp"
 #include "sim/profileset.hpp"
 #include "sim/sim.hpp"
@@ -361,6 +362,7 @@ int sim_t::main( const std::vector<std::string>& args )
         scaling->analyze();
         plot->analyze();
         reforge_plot->analyze();
+        tolerance->analyze();
 
         if ( canceled == 0 && !profilesets->iterate( this ) )
           canceled = true;

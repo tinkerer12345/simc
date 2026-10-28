@@ -9,8 +9,8 @@
 
 namespace raid
 {
-// Creates count stand-in raid members of a kind ("tank", "healer", "ranged" or "melee"), named
-// Tank_1, Healer_1, Ranged_1, Melee_1 and so on.
+// Creates count stand-in raid members of a kind ("tank", "healer", "ranged" or "melee"), named after specs
+// (Protection_Warrior, Holy_Priest, Balance_Druid, Havoc_Demon_Hunter...). Healers are names only: they don't heal.
 void create_raid_members( sim_t* sim, util::string_view kind, int count );
 }  // namespace raid
 

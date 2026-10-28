@@ -14,34 +14,108 @@ infinite_health=0
 death_recap=20
 professions=leatherworking=100/inscription=100
 spec=restoration
-talents=CkGADBD3hSPCL9Y9gz68WcKvMYMmZZmZMzMmthHgZmNjtxMAAAAAAAAAAYxQzmZMNzAPgZxMzMDDzAAAAAwAAAAABAAMbzs0sNzmNGzMDmZD0MAAzMAMA
+# Silverblooms' own talents and gear (SimC addon export, 2026-10-26)
+talents=CkGADBD3hSPCL9Y9gz68WcKvMYMmZZmZMzMmthZwsZsNmBAAAAAAAAAALGa2MjpZG4BMLmZmZYYGAAAAAGAAAAIAAgZbmlmtZ2sxYmZwMbgmBAYmBgB
+set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
 omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
 
 head=,id=271528,enchant_id=7961,bonus_id=13334/6652/13696/13847/13692/12854/13658,redirected_base_stats=271875
 neck=,id=268265,gem_id=240983/240892,bonus_id=6652/13668/13334/13987/12854
 shoulder=,id=244572,enchant_id=8031,bonus_id=12214/13667/12497/13751/14001/8793/13836,content_tuning=3615,crafted_stats=40/36,crafting_quality=5
-back=,id=268253,bonus_id=6652/13662/13334/12850
+back=,id=268253,bonus_id=6652/13662/13334/12854
 chest=,id=271531,enchant_id=7987,bonus_id=13334/6652/13696/13690/13698/12854,redirected_base_stats=268235
 tabard=,id=246740,content_tuning=863
 wrist=,id=244576,gem_id=240892,bonus_id=12214/13667/13695/12497/13751/14001/8960/12384/8793/13836/13696,content_tuning=3615,crafted_stats=49/36,crafting_quality=5
 hands=,id=271529,bonus_id=13335/13691/6652/13697/12854,content_tuning=1040
-waist=,id=268256,bonus_id=6652/13696/13662/13334/12850
-legs=,id=271527,enchant_id=7937,bonus_id=13334/6652/13693/13698/12853,redirected_base_stats=268225
+waist=,id=268256,bonus_id=6652/13696/13662/13334/12852
+legs=,id=271527,enchant_id=7937,bonus_id=13334/6652/13693/13698/12854,redirected_base_stats=268225
 feet=,id=244569,enchant_id=7993,bonus_id=12214/13667/12497/13751/14001/8960/12384/8793/13836,content_tuning=3615,crafted_stats=40/32,crafting_quality=5
 finger1=,id=252258,enchant_id=7969,gem_id=240892,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
-finger2=,id=268249,enchant_id=7969,gem_id=240892,bonus_id=6652/13668/13335/12851
+finger2=,id=268249,enchant_id=7969,gem_id=240892,bonus_id=6652/13668/13335/12854
 trinket1=,id=270162,bonus_id=6652/13335/12854
 trinket2=,id=270167,bonus_id=40/13335/12854
-main_hand=,id=271092,enchant_id=8039,bonus_id=6652/13334/12854
+main_hand=,id=271092,enchant_id=8039,bonus_id=6652/13334/12856
 off_hand=,id=245769,bonus_id=12214/13667/12497/13751/14001/12715/8793/13836,content_tuning=3615,crafted_stats=36/32,crafting_quality=5
 
-# Test harness, not a real rotation: Regrowth on the lowest-health player.
-actions=regrowth,target_if=min:target.health.pct,if=target.health.pct<100
+# Rotation from Silverblooms' Mythic kill log (casts per minute) and Silverblooms' play notes of 2026-10-25. injured_allies.<pct>,
+# raid_health.pct and active_dot.rejuvenation are druid expressions added for this fork.
+# Pre-pull: Lifebloom, Rejuvenation + Germination on yourself and on the tank (Protection_Warrior stands in for the
+# Protection Paladin: the tank with low sustain; the Blood DK gets none)
+actions.precombat=lifebloom,target_self=1
+actions.precombat+=/rejuvenation,target_self=1
+actions.precombat+=/rejuvenation,target_self=1
+actions.precombat+=/rejuvenation,target=Protection_Warrior
+actions.precombat+=/rejuvenation,target=Protection_Warrior
+# Heart of the Wild weave (finish it first once started): Cat Form, Heart of the Wild = empowered Feral Frenzy for 5
+# combo points, Ferocious Bite at 5 for damage and Master Shapeshifter mana; the next heal shifts back. Started only
+# while the raid is healthy. Never Convoke in a DPS form.
+actions=variable,name=ramp,value=cooldown.tranquility.remains<15&encounter.imbibe.remains<15
+# Tranquility as an Imbibe's Expulsions land (the ramp below sets it up), or in an emergency
+actions+=/tranquility,if=encounter.imbibe.ago<3|raid_health.pct<60
+actions+=/heart_of_the_wild,if=buff.cat_form.up
+actions+=/ferocious_bite,if=buff.cat_form.up&combo_points>=5
+# Feral Frenzy's 5 claws (one combo point each) land over 1 sec: stay in Cat Form until they have
+actions+=/wait,sec=0.2,if=buff.cat_form.up&combo_points<5&cooldown.heart_of_the_wild.remains>115
+actions+=/cat_form,if=cooldown.heart_of_the_wild.ready&raid_health.pct>=85&!buff.cat_form.up&cooldown.convoke_the_spirits.remains>10&mana.pct<=90&!variable.ramp&cooldown.tranquility.remains<165
+actions+=/use_item,name=soulcoiler_ritual_vessel,if=injured_allies.80>=5
+# Innervate always goes on yourself
+actions+=/innervate,if=mana.pct<75
+# Lifebloom on yourself (Photosynthesis blooms and Everbloom cleave), refreshed in the pandemic window
+actions+=/lifebloom,target_self=1,if=refreshable
+# Before every Convoke: Wild Growth, then Nature's Swiftness into Regrowth on yourself (Overgrowth refreshes your
+# Lifebloom and adds Rejuvenation and Wild Growth on you)
+actions+=/wild_growth,target_if=min:target.health.pct,if=cooldown.convoke_the_spirits.remains<=gcd.max*2&!buff.natures_swiftness.up
+# Hex Lord's Dooming Idol (when equipped; ignored otherwise): its Intellect right before every Convoke
+actions+=/use_item,name=hex_lords_dooming_idol,if=cooldown.convoke_the_spirits.remains<=gcd.max*2
+actions+=/natures_swiftness,if=cooldown.convoke_the_spirits.remains<=gcd.max
+actions+=/regrowth,target_self=1,if=buff.natures_swiftness.up
+actions+=/convoke_the_spirits,if=!buff.natures_swiftness.up
+# Tranquility ramp, from 15 sec before an Imbibe's Expulsions land (encounter.imbibe.remains: the encounter's script)
+# while Tranquility will be ready: dump Swiftmend charges but keep the last, Wild Growth, Regrowths until 5 are out
+# (Rejuvenations from the filler), then Swiftmend yourself with the last charge and spread its Soul of the Forest
+# Rejuvenation to 3 allies; Tranquility as the damage lands (Flourish extends every HoT by 2 sec per tick), then
+# Regrowths (below).
+actions+=/swiftmend,target_self=1,if=variable.ramp&encounter.imbibe.remains<=4
+actions+=/rejuvenation,target_if=min:target.health.pct,if=variable.ramp&buff.soul_of_the_forest_tree.up
+actions+=/swiftmend,target_if=min:target.health.pct,if=variable.ramp&encounter.imbibe.remains>4&charges>=2
+actions+=/wild_growth,target_if=min:target.health.pct,if=variable.ramp
+actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+target.health.pct,if=variable.ramp&active_dot.regrowth<5
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.ramp&active_dot.rejuvenation<12
+actions+=/ironbark,target_if=min:target.health.pct,if=target.health.pct<40
+# Exploding Infection (your 1 per wave): it gains a stack every tick and explodes on the raid when dispelled, so
+# dispel at 2 stacks while the raid is healthy and let it reach 3 when the raid is low
+actions+=/natures_cure,target_if=max:target.dispellable,if=target.dispellable>=3|target.dispellable>=2&raid_health.pct>=80
+# Rejuvenation + Germination on yourself and on the tank at all times
+actions+=/rejuvenation,target_self=1,if=dot.rejuvenation.refreshable|dot.germination.refreshable
+actions+=/rejuvenation,target=Protection_Warrior,if=dot.rejuvenation.refreshable|dot.germination.refreshable
+# Swiftmend: consume your own Regrowth HoT when charges are capping; if you have none, a Regrowth on anyone also
+# lands its HoT on you (Rampant Growth: you are the Lifebloom target). Or spot heal someone low who has a HoT.
+actions+=/swiftmend,target_self=1,if=charges_fractional>=1.8&dot.regrowth.ticking
+actions+=/regrowth,target_if=min:target.health.pct,if=cooldown.swiftmend.charges_fractional>=1.8
+actions+=/swiftmend,target_if=min:target.health.pct,if=target.health.pct<50&(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking)
+# Soul of the Forest Rejuvenation: Power of the Archdruid puts it on 3 allies
+actions+=/rejuvenation,target_if=min:target.health.pct,if=buff.soul_of_the_forest_tree.up
+actions+=/regrowth,target_if=min:target.health.pct,if=buff.clearcasting_tree.up
+# After a Tranquility (and in the Abundance window after a Convoke): spam Regrowth on allies without one, Rejuvenation
+# targets first (more Harmony), anyone low first of all
+actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+(target.health.pct>50)*50-dot.rejuvenation.ticking*20+target.health.pct*0.1,if=cooldown.tranquility.remains>165|buff.abundance.up&cooldown.convoke_the_spirits.remains>45&target.health.pct<90
+# Wild Growth when mana allows and it isn't needed for the next Convoke
+actions+=/wild_growth,target_if=min:target.health.pct,if=injured_allies.90>=5&mana.pct>=40&cooldown.convoke_the_spirits.remains>10
+# Low mana: fewer Rejuvenations, Regrowths with Abundance instead
+actions+=/regrowth,target_if=min:target.health.pct,if=buff.abundance.up&(target.health.pct<45|mana.pct<30&target.health.pct<70)
+# Starsurge while the raid is healthy: Master Shapeshifter returns more mana than it costs (10 casts on the kill)
+actions+=/starsurge,if=raid_health.pct>=95
+# Rejuvenations in waves: always enough for Abundance (5), more while someone is hurt and mana allows
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*10+target.health.pct,if=active_dot.rejuvenation<5|target.health.pct<95&mana.pct>=30
+# Downtime: Starsurge or Wrath (Master Shapeshifter mana) instead of waiting
+actions+=/starsurge
+actions+=/wrath
 
-# Record raid frames (everyone's health and our HoTs/buffs) in the sample fight for the healer report.
+# Record raid frames (everyone's health and mana, and our HoTs) in the sample fight for the healer report.
 raid_frames=1
 
-# Stand-in raid: 2 tanks, 3 healers, us, 7 ranged, 7 melee (20 players). Placeholder values.
+# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
+# With us: 20 players, and we are the only one healing. Health and damage reduction are placeholders.
 raid_tanks=2
 raid_healers=3
 raid_ranged=7
@@ -50,9 +124,10 @@ raid_member_health=900000
 raid_member_damage_reduction=0.10
 raid_member_avoidance=0
 raid_tank_health=1300000
-raid_tank_damage_reduction=0.15
-# Healing per second from each stand-in healer (0 until we have log numbers).
-raid_healer_hps=0
+# Tank mitigation from the Mythic log: Dripping Fangs' Nature DoT ~35% mitigated, Melee and the bite (physical) ~70%
+# (35% here plus 57% physical-only). Gives Melee 27-31M, bites ~5M and DoT ticks ~31M per fight, as in the log.
+raid_tank_damage_reduction=0.35
+raid_tank_physical_reduction=0.57
 
 encounter=Vashnik
 difficulty=mythic

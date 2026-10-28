@@ -1,0 +1,45 @@
+﻿{
+    "healer_profile":  {
+                           "players":  20,
+                           "fights":  199,
+                           "wipes":  199,
+                           "simulation_length":  47.63287437185936,
+                           "healer_hps":  790396.0806371637,
+                           "healer_damage_taken":  3011392.4044598515,
+                           "healer_fight_length":  47.63287437185936,
+                           "raid_damage_taken":  54668050.637003362,
+                           "raid_frames_units":  20,
+                           "raid_frames_deaths":  16,
+                           "death_recaps":  1
+                       },
+    "MID1_Priest_Shadow":  {
+                               "dps":  130914.1519005129,
+                               "hps":  null,
+                               "dtps":  null
+                           },
+    "MID1_Death_Knight_Blood":  {
+                                    "dps":  69002.76983584589,
+                                    "hps":  39728.0972430416,
+                                    "dtps":  19130312.2556774
+                                },
+    "MID1_Druid_Balance":  {
+                               "dps":  130733.89991002358,
+                               "hps":  null,
+                               "dtps":  null
+                           },
+    "MID1_Druid_Feral":  {
+                             "dps":  142146.9560752665,
+                             "hps":  null,
+                             "dtps":  null
+                         },
+    "MID1_Druid_Guardian":  {
+                                "dps":  76559.63847130533,
+                                "hps":  28560.18923085383,
+                                "dtps":  20557459.2378402
+                            },
+    "MID2_Druid_Feral":  {
+                             "dps":  251713.37059574223,
+                             "hps":  null,
+                             "dtps":  null
+                         }
+}

@@ -49,8 +49,8 @@ void raid_frames_t::take_snapshot( const player_t& owner )
     for ( const player_t* p : sim.player_no_pet_list )
     {
       // p->role is the profile's role=; primary_role() can differ (a Restoration Druid reports "attack").
-      units.push_back( { p->name_str, util::role_type_string( p->role ),
-                         util::position_type_string( p->position() ), p->resources.max[ RESOURCE_HEALTH ] } );
+      units.push_back( { p->name_str, util::role_type_string( p->role ), util::position_type_string( p->position() ),
+                         p->resources.max[ RESOURCE_HEALTH ], p->resources.max[ RESOURCE_MANA ] } );
     }
   }
 
@@ -67,6 +67,7 @@ void raid_frames_t::take_snapshot( const player_t& owner )
     bool alive = !p->is_sleeping() && p->resources.current[ RESOURCE_HEALTH ] > 0;
     snap.health.push_back( std::max( 0.0, p->resources.current[ RESOURCE_HEALTH ] ) );
     snap.absorb.push_back( alive ? absorb : 0.0 );
+    snap.mana.push_back( std::max( 0.0, p->resources.current[ RESOURCE_MANA ] ) );
     snap.alive.push_back( alive );
 
     std::vector<effect_t> effects;

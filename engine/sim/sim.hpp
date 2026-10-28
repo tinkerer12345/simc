@@ -38,6 +38,7 @@ struct option_t;
 struct plot_t;
 struct raid_event_t;
 struct reforge_plot_t;
+namespace tolerance { struct tolerance_t; }
 struct scale_factor_control_t;
 struct sim_control_t;
 struct spell_data_expr_t;
@@ -142,9 +143,31 @@ struct sim_t : private sc_thread_t
   std::string main_target_str;
   std::string encounter_str;
   std::string encounter_difficulty_str;
-  int encounter_wipes = 0;  // encounter fights that ended because every player died
+  // Encounter fights ended by a wipe rule, in total and per rule (a fight that reaches the end is a kill).
+  int encounter_wipes            = 0;
+  int encounter_wipes_all_dead   = 0;
+  int encounter_wipes_tanks_dead = 0;
+  int encounter_wipes_raid_low   = 0;
+  // Wipe rules besides everyone dead: every tank dead, and fewer than this share of the raid alive (0 = off).
+  bool encounter_wipe_on_tanks   = true;
+  double encounter_wipe_raid_pct = 0.2;
+  // Boss damage multipliers per damage type (see class_modules/bosses/sc_encounter_damage.hpp); _all applies on top.
+  double encounter_damage_steady = 1.0;
+  double encounter_damage_burst  = 1.0;
+  double encounter_damage_spot   = 1.0;
+  double encounter_damage_tank   = 1.0;
+  double encounter_damage_avoidable = 1.0;
+  double encounter_damage_all    = 1.0;
+  // Set by an encounter that has debuffs players must dispel: the stacks of such a debuff on a player that the healer
+  // under test should dispel (0 = none), and the dispel itself (returns true if something was removed). Empty otherwise.
+  std::function<double( const player_t* )> encounter_dispellable;
+  std::function<bool( player_t* )> encounter_dispel;
+  // Set by an encounter with scripted damage the healer can plan for: seconds until the next event of that name lands
+  // (APL: encounter.<name>.remains; none left = the fight's remaining time), or with ago=true seconds since the last
+  // one landed (encounter.<name>.ago; none yet = 9999). Negative if the encounter has no such event.
+  std::function<double( util::string_view name, bool ago )> encounter_timer;
   // Stand-in raid members (raid_tanks / raid_healers / raid_ranged / raid_melee), see
-  // class_modules/raid/sc_raid_member.cpp.
+  // class_modules/raid/sc_raid_member.cpp. Stand-in healers are names only.
   struct raid_stand_in_t
   {
     int members                  = 0;
@@ -153,7 +176,7 @@ struct sim_t : private sc_thread_t
     double avoidance             = 0.0;      // extra reduction of area damage
     double tank_health           = 1300000;
     double tank_damage_reduction = 0.15;
-    double healer_hps            = 0.0;      // healing per second from each stand-in healer
+    double tank_physical_reduction = 0.0;  // armor + active mitigation, on physical damage only, on top of the above
   } raid_stand_in;
   int         stat_cache;
   int         max_aoe_enemies;
@@ -527,6 +550,8 @@ struct sim_t : private sc_thread_t
   std::unique_ptr<scale_factor_control_t> scaling;
   std::unique_ptr<plot_t> plot;
   std::unique_ptr<reforge_plot_t> reforge_plot;
+  // Healer damage tolerance search and gear sets (tolerance=1, encounter sims)
+  std::unique_ptr<tolerance::tolerance_t> tolerance;
   chrono::cpu_clock::duration elapsed_cpu;
   chrono::wall_clock::duration elapsed_time;
   std::vector<size_t> work_per_thread;

@@ -7201,18 +7201,40 @@ void player_t::demise()
           if ( d->target == this )
             d->cancel();
 
-      bool any_alive = false;
+      // Wipe rules: everyone dead, every tank dead (encounter_wipe_on_tanks), or fewer than
+      // encounter_wipe_raid_pct of the raid alive. Otherwise the fight goes on; reaching its end is a kill.
+      int total = 0, alive = 0, tanks = 0, tanks_alive = 0;
       for ( const player_t* p : sim->player_no_pet_list )
-        any_alive = any_alive || !p->is_sleeping();
+      {
+        bool up = !p->is_sleeping();
+        total++;
+        alive += up;
+        if ( p->role == ROLE_TANK )
+        {
+          tanks++;
+          tanks_alive += up;
+        }
+      }
 
-      // Only a wipe if the last player actually died while the fight was running; combat_end also
+      int* reason = nullptr;
+      if ( alive == 0 )
+        reason = &sim->encounter_wipes_all_dead;
+      else if ( sim->encounter_wipe_on_tanks && tanks > 0 && tanks_alive == 0 )
+        reason = &sim->encounter_wipes_tanks_dead;
+      else if ( alive < sim->encounter_wipe_raid_pct * total )
+        reason = &sim->encounter_wipes_raid_low;
+
+      // Only a wipe if this player actually died while the fight was running; combat_end also
       // demises everyone.
-      if ( !any_alive && !sim->event_mgr.canceled && health_percentage() <= death_pct )
+      if ( reason && !sim->event_mgr.canceled && health_percentage() <= death_pct )
       {
         // Counted only for fights whose data is collected (same rule as sim_t::combat_end), so wipes
         // match simulation_length.count().
         if ( sim->iterations == 1 || sim->current_iteration >= 1 )
+        {
           sim->encounter_wipes++;
+          ( *reason )++;
+        }
         sim->cancel_iteration();
       }
     }
@@ -11876,6 +11898,30 @@ std::unique_ptr<expr_t> player_t::create_expression( util::string_view expressio
 
   if ( expression_str == "in_boss_encounter" )
     return make_ref_expr( "in_boss_encounter", in_boss_encounter );
+
+  // An encounter's scripted events (see sim_t::encounter_timer): encounter.<name>.remains = seconds until the next one
+  // lands, encounter.<name>.ago = seconds since the last one did
+  if ( util::str_prefix_ci( expression_str, "encounter." ) )
+  {
+    auto parts = util::string_split<util::string_view>( expression_str, "." );
+    if ( parts.size() == 3 && ( parts[ 2 ] == "remains" || parts[ 2 ] == "ago" ) )
+    {
+      std::string event_name( parts[ 1 ] );
+      bool ago = parts[ 2 ] == "ago";
+      return make_fn_expr( expression_str, [ this, event_name, ago ] {
+        double t = sim->encounter_timer ? sim->encounter_timer( event_name, ago ) : -1.0;
+        if ( t < 0 )
+          throw sc_runtime_error( fmt::format( "The encounter has no event '{}' (encounter.{}).", event_name, event_name ) );
+        return t;
+      } );
+    }
+  }
+
+  // Stacks of an encounter debuff the healer under test should dispel, 0 if none (see sim_t::encounter_dispellable).
+  if ( expression_str == "dispellable" )
+    return make_fn_expr( expression_str, [ this ] {
+      return sim->encounter_dispellable ? sim->encounter_dispellable( this ) : 0.0;
+    } );
 
   if ( expression_str == "ptr" )
     return expr_t::create_constant( "ptr", dbc->ptr );

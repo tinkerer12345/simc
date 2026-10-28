@@ -153,3 +153,6 @@ CMakeLists.txt.user
 
 UpgradeLog.htm
 libsimcengine.prl
+
+# Healer sim output (scripts\restoration_druid_sim.bat)
+scripts/reports/

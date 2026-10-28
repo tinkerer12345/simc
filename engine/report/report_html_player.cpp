@@ -3777,8 +3777,10 @@ void print_html_player_description( report::sc_html_stream& os, const player_t& 
 #endif
   fmt::print( os, "<li><b>Race:</b> {}</li>\n", util::inverse_tokenize( p.race_str ) );
 
+  // Encounter bosses (encounter=<name>) are shown as "Boss" without role and position; other targets as before.
+  bool encounter_boss = p.is_boss() && !sim.encounter_str.empty();
   const char* pt;
-  if ( p.is_boss() )
+  if ( encounter_boss )
   {
     pt = "Boss";
   }
@@ -3808,7 +3810,7 @@ void print_html_player_description( report::sc_html_stream& os, const player_t& 
   os.printf( "<li><b>Level:</b> %d%s</li>\n",
              p.level(),
              sim.timewalk > 0 && !p.is_enemy() ? timewalk_str.c_str() : "" );
-  if ( !p.is_boss() )
+  if ( !encounter_boss )
   {
     os.printf( "<li><b>Role:</b> %s</li>\n"
                "<li><b>Position:</b> %s</li>\n",

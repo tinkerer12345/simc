@@ -24,6 +24,7 @@
 #include "sim/event.hpp"
 #include "sim/iteration_data_entry.hpp"
 #include "sim/plot.hpp"
+#include "sim/tolerance.hpp"
 #include "sim/raid_event.hpp"
 #include "sim/reforge_plot.hpp"
 #include "sim/cooldown.hpp"
@@ -1534,6 +1535,7 @@ sim_t::sim_t()
     scaling( new scale_factor_control_t( this ) ),
     plot( new plot_t( this ) ),
     reforge_plot( new reforge_plot_t( this ) ),
+    tolerance( new tolerance::tolerance_t( this ) ),
     elapsed_cpu(),
     elapsed_time(),
     work_done( 0 ),
@@ -2884,7 +2886,8 @@ void sim_t::init()
                                     : single_actor_batch ? players_for_content - 1
                                                          : players_for_content - ( healers + dps + tanks );
 
-    if ( healers > 0 || healing > 0 )
+    // Encounter sims bring their own raid, so they get no padding Healing_Targets unless healing=<n> asks for them.
+    if ( healing > 0 || ( healers > 0 && encounter_str.empty() ) )
     {
       while ( healing_targets_to_create > 0 )
       {
@@ -2951,6 +2954,8 @@ void sim_t::init()
   // exit in any case
   if ( active_player && active_player->report_information.save_str.empty() )
   {
+    // Takes the profilesets over as gear sets when tolerance=1.
+    tolerance->initialize();
     profilesets->initialize( this );
     plot->initialize();
   }
@@ -3318,6 +3323,9 @@ void sim_t::merge( sim_t& other_sim )
 
   iterations += other_sim.iterations;
   encounter_wipes += other_sim.encounter_wipes;
+  encounter_wipes_all_dead += other_sim.encounter_wipes_all_dead;
+  encounter_wipes_tanks_dead += other_sim.encounter_wipes_tanks_dead;
+  encounter_wipes_raid_low += other_sim.encounter_wipes_raid_low;
   work_per_thread[ other_sim.thread_index ] = other_sim.work_done;
 
   simulation_length.merge( other_sim.simulation_length );
@@ -3990,6 +3998,14 @@ void sim_t::create_options()
   add_option( opt_func( "player_simplified", parse_player ) );
   add_option( opt_func( "enemy", parse_player ) );
   add_option( opt_func( "encounter", parse_encounter ) );
+  add_option( opt_bool( "encounter_wipe_on_tanks", encounter_wipe_on_tanks ) );
+  add_option( opt_float( "encounter_wipe_raid_pct", encounter_wipe_raid_pct, 0, 1 ) );
+  add_option( opt_float( "encounter_damage_steady", encounter_damage_steady, 0, 100 ) );
+  add_option( opt_float( "encounter_damage_burst", encounter_damage_burst, 0, 100 ) );
+  add_option( opt_float( "encounter_damage_spot", encounter_damage_spot, 0, 100 ) );
+  add_option( opt_float( "encounter_damage_tank", encounter_damage_tank, 0, 100 ) );
+  add_option( opt_float( "encounter_damage_avoidable", encounter_damage_avoidable, 0, 100 ) );
+  add_option( opt_float( "encounter_damage_all", encounter_damage_all, 0, 100 ) );
   for ( auto kind : { "raid_tanks", "raid_healers", "raid_ranged", "raid_melee" } )
     add_option( opt_func( kind, parse_raid_members ) );
   add_option( opt_float( "raid_member_health", raid_stand_in.health, 1, std::numeric_limits<double>::max() ) );
@@ -3997,7 +4013,7 @@ void sim_t::create_options()
   add_option( opt_float( "raid_member_avoidance", raid_stand_in.avoidance, 0, 0.95 ) );
   add_option( opt_float( "raid_tank_health", raid_stand_in.tank_health, 1, std::numeric_limits<double>::max() ) );
   add_option( opt_float( "raid_tank_damage_reduction", raid_stand_in.tank_damage_reduction, 0, 0.95 ) );
-  add_option( opt_float( "raid_healer_hps", raid_stand_in.healer_hps, 0, std::numeric_limits<double>::max() ) );
+  add_option( opt_float( "raid_tank_physical_reduction", raid_stand_in.tank_physical_reduction, 0, 0.95 ) );
   add_option( opt_func( "tank_dummy", parse_player ) );
   add_option( opt_func( "pet", parse_player ) );
   add_option( opt_func( "guardian", parse_player ) );

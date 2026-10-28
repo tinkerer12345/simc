@@ -32,6 +32,7 @@ SRC += \
     class_modules$(PATHSEP)apl$(PATHSEP)mage.cpp \
     class_modules$(PATHSEP)apl$(PATHSEP)warlock.cpp \
     class_modules$(PATHSEP)bosses$(PATHSEP)sc_bosses.cpp \
+    class_modules$(PATHSEP)bosses$(PATHSEP)sc_encounter_damage.cpp \
     class_modules$(PATHSEP)bosses$(PATHSEP)sc_vashnik.cpp \
     class_modules$(PATHSEP)raid$(PATHSEP)sc_raid_member.cpp \
     class_modules$(PATHSEP)monk$(PATHSEP)sc_monk.cpp \
@@ -168,6 +169,7 @@ SRC += \
     sim$(PATHSEP)progress_bar.cpp \
     sim$(PATHSEP)raid_event.cpp \
     sim$(PATHSEP)reforge_plot.cpp \
+    sim$(PATHSEP)tolerance.cpp \
     sim$(PATHSEP)scale_factor_control.cpp \
     sim$(PATHSEP)sim.cpp \
     sim$(PATHSEP)sim_ostream.cpp \

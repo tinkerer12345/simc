@@ -34,6 +34,7 @@ To change the list of source files run synchronize.py
 		<ClInclude Include="..\engine\class_modules\apl\mage.hpp" />
 		<ClInclude Include="..\engine\class_modules\apl\warlock.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_bosses.hpp" />
+		<ClInclude Include="..\engine\class_modules\bosses\sc_encounter_damage.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_vashnik.hpp" />
 		<ClInclude Include="..\engine\class_modules\raid\sc_raid_member.hpp" />
 		<ClInclude Include="..\engine\class_modules\class_module.hpp" />
@@ -173,6 +174,7 @@ To change the list of source files run synchronize.py
 		<ClInclude Include="..\engine\sim\progress_bar.hpp" />
 		<ClInclude Include="..\engine\sim\raid_event.hpp" />
 		<ClInclude Include="..\engine\sim\reforge_plot.hpp" />
+		<ClInclude Include="..\engine\sim\tolerance.hpp" />
 		<ClInclude Include="..\engine\sim\scale_factor_control.hpp" />
 		<ClInclude Include="..\engine\sim\sim.hpp" />
 		<ClInclude Include="..\engine\sim\sim_control.hpp" />
@@ -234,6 +236,7 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\class_modules\apl\mage.cpp" />
 		<ClCompile Include="..\engine\class_modules\apl\warlock.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_bosses.cpp" />
+		<ClCompile Include="..\engine\class_modules\bosses\sc_encounter_damage.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_vashnik.cpp" />
 		<ClCompile Include="..\engine\class_modules\raid\sc_raid_member.cpp" />
 		<ClCompile Include="..\engine\class_modules\monk\sc_monk.cpp" />
@@ -370,6 +373,7 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\sim\progress_bar.cpp" />
 		<ClCompile Include="..\engine\sim\raid_event.cpp" />
 		<ClCompile Include="..\engine\sim\reforge_plot.cpp" />
+		<ClCompile Include="..\engine\sim\tolerance.cpp" />
 		<ClCompile Include="..\engine\sim\scale_factor_control.cpp" />
 		<ClCompile Include="..\engine\sim\sim.cpp" />
 		<ClCompile Include="..\engine\sim\sim_ostream.cpp" />

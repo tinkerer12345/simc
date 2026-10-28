@@ -1,0 +1,12 @@
+# Gear sets to compare with your current gear (restoration_druid_sim.bat passes this file to SimC with tolerance=1).
+# One SimC profileset per set: profileset."Name"+=<profile line>, one line per change, the lines from the SimC addon
+# export ("Gear from Bags"). Each set is your current gear with these lines swapped in. Add ilevel=<n> to an item to
+# compare it at another item level. An empty file compares nothing.
+
+# Sigil of the Impending Eclipse at item level 334 (your other trinkets' level), in place of each trinket
+profileset."Sigil of the Impending Eclipse 334 for Soulcoiler Ritual Vessel"+=trinket1=,id=280835,bonus_id=6652/13334/12849,ilevel=334
+profileset."Sigil of the Impending Eclipse 334 for Wavecaller's Seastone"+=trinket2=,id=280835,bonus_id=6652/13334/12849,ilevel=334
+
+# Hex Lord's Dooming Idol at item level 334, in place of each trinket (the rotation uses it right before every Convoke)
+profileset."Hex Lord's Dooming Idol 334 for Soulcoiler Ritual Vessel"+=trinket1=,id=270169,bonus_id=6652/13334/12849,ilevel=334
+profileset."Hex Lord's Dooming Idol 334 for Wavecaller's Seastone"+=trinket2=,id=270169,bonus_id=6652/13334/12849,ilevel=334

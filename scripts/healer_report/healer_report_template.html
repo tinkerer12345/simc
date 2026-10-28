@@ -109,7 +109,8 @@ p { margin: 0; }
 }
 .brand { font-weight: 700; white-space: nowrap; }
 .brand span { color: var(--ink-3); font-weight: 500; }
-.nav { display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; flex: 1; }
+/* Wraps onto a second row instead of cutting sections off */
+.nav { display: flex; flex-wrap: wrap; gap: 2px 4px; flex: 1; min-width: 0; }
 .nav::-webkit-scrollbar { display: none; }
 .nav a {
   text-decoration: none; color: var(--ink-2); font-weight: 500; font-size: 14px;
@@ -199,6 +200,129 @@ section { margin-top: 48px; }
 .kb { color: var(--dmg); font-weight: 700; font-size: 12px; margin-left: 6px; }
 .chart .idle-band { fill: var(--ink-3); }
 
+/* ---------- damage tolerance ---------- */
+.tol-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+.tol { padding: 18px 20px; border-top: 4px solid var(--tc); }
+.tol-name { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-2); }
+.tol-value { font-size: 44px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; margin-top: 6px; }
+.tol-value small { font-size: 18px; font-weight: 700; color: var(--ink-3); margin: 0 4px; }
+.tol.none .tol-value { font-size: 24px; color: var(--ink-3); }
+.tol-score { font-size: 20px; font-weight: 700; color: var(--ink-2); margin-left: 12px; letter-spacing: 0; }
+.tol.main { background: color-mix(in srgb, var(--ink) 4%, var(--panel)); }
+.score-track { margin-top: 14px; padding: 16px 24px 12px; }
+.st-you { position: relative; display: inline-block; transform: translateX(-50%); font-size: 14px; color: var(--ink-2); white-space: nowrap; margin-bottom: 6px; }
+.st-you b { color: var(--ink); }
+.st-row { position: relative; height: 22px; font-size: 13px; color: var(--ink-2); }
+.st-row span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.st-row b { color: var(--ink); }
+.st-top span { bottom: 2px; }
+.st-bottom span { top: 2px; }
+.st-bar { position: relative; height: 14px; background: var(--grid); border-radius: 4px; }
+.st-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; }
+.st-fill.ok { background: var(--heal); }
+.st-fill.short { background: var(--dmg); }
+.st-lvl { position: absolute; top: 9px; bottom: 0; width: 1px; background: var(--ink-3); opacity: .5; }
+.st-mark { position: absolute; top: -6px; bottom: -6px; width: 2px; margin-left: -1px; background: var(--ink-2); }
+.st-mark.req { background: var(--ink); width: 3px; }
+.st-legend { list-style: none; margin: 10px 0 0; padding: 10px 0 0; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; color: var(--ink-2); }
+.st-legend b { color: var(--ink); }
+.tol-verdict { padding: 18px 22px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; border-left: 6px solid var(--vc); }
+.tol-verdict.ok { --vc: var(--heal); }
+.tol-verdict.short { --vc: var(--dmg); }
+.tol-verdict .mark { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-size: 24px; font-weight: 800; color: #fff; background: var(--vc); flex: none; }
+.tol-verdict .what { font-size: 24px; font-weight: 800; }
+.tol-verdict .how { color: var(--ink-2); }
+.tol-verdict .how b { color: var(--ink); }
+.hr-chart { margin-top: 14px; padding: 8px 0 12px; }
+.hr-row { display: grid; grid-template-columns: 200px minmax(0, 1fr) 90px; gap: 14px; align-items: center; padding: 7px 22px; }
+.hr-row:focus { outline: 2px solid var(--mana); outline-offset: -2px; border-radius: 8px; }
+.hr-name small { display: block; color: var(--ink-3); font-size: 12px; }
+.hr-track { position: relative; height: 16px; }
+.hr-zero { position: absolute; top: -5px; bottom: -5px; width: 2px; margin-left: -1px; background: var(--ink); }
+.hr-ms { position: absolute; top: -3px; bottom: -3px; width: 1px; background: var(--ink-3); opacity: .7; }
+.hr-bar { position: absolute; top: 2px; bottom: 2px; background: var(--bc); }
+.hr-bar.pos { border-radius: 0 4px 4px 0; }
+.hr-bar.neg { border-radius: 4px 0 0 4px; }
+.hr-num { text-align: right; font-weight: 700; }
+.hr-axis { display: grid; grid-template-columns: 200px minmax(0, 1fr) 90px; gap: 14px; padding: 0 22px; font-size: 12px; color: var(--ink-3); }
+.hr-axis .ticks { position: relative; height: 16px; }
+.hr-axis .ticks span { position: absolute; transform: translateX(-50%); white-space: nowrap; }
+.hr-legend { padding: 8px 22px 4px; font-size: 13px; color: var(--ink-2); display: flex; flex-wrap: wrap; gap: 4px 20px; border-top: 1px solid var(--line); margin-top: 8px; }
+.hr-legend b { color: var(--ink); }
+/* character sheet; item and rune links are drawn by Wowhead's tooltip script */
+a.wh-item { text-decoration: none; font-weight: 700; }
+a.wh-item:hover { text-decoration: underline; }
+.char-sheet { padding: 0; overflow: hidden; }
+.cs-head { display: flex; justify-content: space-between; align-items: center; gap: 12px 20px; flex-wrap: wrap; padding: 14px 20px;
+  border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 3%, var(--panel)); }
+.cs-stats { display: flex; flex-wrap: wrap; gap: 6px 22px; }
+.cs-stat { display: flex; flex-direction: column; }
+.cs-stat span, .cs-label { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.cs-stat b { font-size: 17px; font-weight: 800; }
+.cs-cols { display: grid; grid-template-columns: 1fr 1fr; }
+.cs-col { display: flex; flex-direction: column; }
+.cs-col + .cs-col { border-left: 1px solid var(--line); }
+.gi { padding: 9px 20px; border-bottom: 1px solid var(--grid); position: relative; }
+.gi:last-child { border-bottom: 0; }
+.gi:hover, .gi:focus { background: color-mix(in srgb, var(--ink) 4%, transparent); outline: none; }
+.gi.up { background: color-mix(in srgb, var(--heal) 9%, transparent); box-shadow: inset 3px 0 0 var(--heal); }
+.gi-top { display: flex; align-items: center; gap: 8px; }
+.gi-slot { font-size: 10.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.gi-ilvl { margin-left: auto; font-size: 12px; font-weight: 700; color: var(--ink-2); background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 999px; padding: 0 8px; }
+.gi-name { font-size: 14px; line-height: 1.3; margin-top: 2px; }
+.gi-meta { font-size: 12px; color: var(--ink-2); margin-top: 1px; }
+.gi-ench { font-size: 12px; color: var(--heal); margin-top: 1px; }
+.gi-gem { font-size: 12px; color: var(--mana); margin-top: 1px; }
+.gi-badge { font-size: 10.5px; font-weight: 700; color: var(--heal); }
+.cs-omnium { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; padding: 12px 20px; border-top: 1px solid var(--line);
+  background: color-mix(in srgb, var(--ink) 3%, var(--panel)); }
+.cs-omnium a.rune { font-size: 13px; }
+.arr { display: inline-block; font-size: 11px; margin-right: 2px; }
+.arr.up { color: var(--heal); }
+.arr.down { color: var(--dmg); }
+.arr.same { color: var(--ink-3); }
+.tip-toggle { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2);
+  border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.tip-toggle b { color: var(--ink); }
+.tt-switch { width: 26px; height: 15px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.tt-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: left .15s; }
+.tip-toggle[aria-pressed="true"] .tt-switch { background: var(--heal); }
+.tip-toggle[aria-pressed="true"] .tt-switch::after { left: 13px; }
+.cmp-tools { display: flex; justify-content: flex-end; padding: 6px 22px 0; }
+@media (max-width: 760px) { .cs-cols { grid-template-columns: 1fr; } .cs-col + .cs-col { border-left: 0; border-top: 1px solid var(--line); } }
+/* damage you can heal */
+.can-heal { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; padding: 20px 24px; }
+.ch-big { font-size: 56px; font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
+.ch-text { flex: 1 1 380px; color: var(--ink-2); display: grid; gap: 6px; }
+.ch-text b { color: var(--ink); }
+.hr-key { display: inline-block; width: 2px; height: 12px; background: var(--ink-3); margin-right: 6px; vertical-align: -1px; }
+.hr-key.zero { background: var(--ink); width: 3px; }
+/* gear comparison */
+.cmp-chart .hr-row { grid-template-columns: minmax(220px, 1.2fr) minmax(0, 1fr) 110px; }
+.cmp-item { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.cmp-item + .cmp-item { margin-top: 6px; }
+.cmp-item small { display: block; color: var(--ink-3); font-size: 12px; }
+.cmp-chart .hr-axis { grid-template-columns: minmax(220px, 1.2fr) minmax(0, 1fr) 110px; }
+.part-divider { margin-top: 56px; padding-top: 22px; border-top: 2px solid var(--line); }
+.part-divider p { color: var(--ink-2); margin-top: 4px; }
+.hr-noise { position: absolute; top: -2px; bottom: -2px; background: var(--grid); border-radius: 3px; }
+.hr-num small { display: block; font-size: 12px; font-weight: 600; }
+.better { color: var(--heal); }
+.worse { color: var(--dmg); }
+.equal { color: var(--ink-3); }
+.cmp-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; padding: 14px 22px 0; }
+.cmp-types { width: calc(100% - 44px); margin: 6px 22px 12px; border-collapse: collapse; font-size: 14px; }
+.cmp-types th, .cmp-types td { padding: 6px 8px; text-align: right; border-top: 1px solid var(--line); white-space: nowrap; }
+.cmp-types th:first-child, .cmp-types td:first-child { text-align: left; white-space: normal; }
+.cmp-types th { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); border-top: 0; }
+.cmp-types td { font-weight: 700; }
+.cmp-scroll { overflow-x: auto; }
+@media (max-width: 700px) { .hr-row, .hr-axis { grid-template-columns: 100px minmax(0, 1fr) 64px; gap: 8px; padding-left: 12px; padding-right: 12px; } }
+.tol-note { font-size: 14px; color: var(--ink-2); margin-top: 4px; }
+.tol-why { font-size: 13px; color: var(--ink-2); margin-top: 8px; }
+.tol-what { font-size: 12px; color: var(--ink-3); margin-top: 8px; }
+
 /* ---------- raid frames ---------- */
 .rf-panel { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 14px; }
 .rf-bar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
@@ -225,20 +349,22 @@ section { margin-top: 48px; }
 #rfScrub { flex: 1; min-width: 0; accent-color: var(--heal); }
 .rf-sum { font-size: 14px; color: var(--ink-2); min-height: 2.8em; line-height: 1.4; }
 .rf-sum b { color: var(--ink); }
-.rf-group { display: grid; grid-template-columns: 70px minmax(0, 1fr); gap: 10px; align-items: start; margin-top: 4px; }
-.rf-glabel { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; padding-top: 14px; }
-.rf-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 4px; }
+/* Five per row like in-game raid groups; fewer columns on narrow screens. */
+.rf-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4px; }
+@media (max-width: 760px) { .rf-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 460px) { .rf-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .uf {
-  position: relative; height: 52px; border-radius: 4px; overflow: hidden; cursor: default;
+  position: relative; height: 58px; border-radius: 4px; overflow: hidden; cursor: default;
   background: color-mix(in srgb, var(--dmg) 18%, var(--panel-2)); border: 1px solid var(--line);
 }
 .uf.self { outline: 2px solid var(--ink-2); outline-offset: -2px; }
-.uf-hp { position: absolute; inset: 0 auto 0 0; opacity: .85; }
+/* Dimmed so the class-coloured names stay readable on top of it. */
+.uf-hp { position: absolute; inset: 0 auto 0 0; opacity: .5; }
 .uf [hidden] { display: none; }
 .uf-abs { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, rgba(255,255,255,.55) 0 3px, rgba(255,255,255,.15) 3px 6px); }
-.uf-name, .uf-pct { position: absolute; left: 6px; right: 6px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.8); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.uf-name { top: 4px; }
-.uf-pct { top: 19px; font-weight: 600; font-size: 11px; }
+.uf-name, .uf-pct { position: absolute; left: 6px; right: 6px; font-size: 12px; font-weight: 700; color: #fff; text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 0 3px rgba(0,0,0,.9); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.uf-name { top: 5px; font-size: 13px; right: 46px; }
+.uf-pct { top: 23px; font-weight: 600; font-size: 12px; }
 .uf-fx { position: absolute; left: 4px; right: 4px; bottom: 3px; display: flex; gap: 2px; justify-content: flex-end; }
 /* HoT timers: coloured square, seconds left with a dark outline so the number reads on any colour. */
 .uf-fx i {
@@ -248,15 +374,20 @@ section { margin-top: 48px; }
 }
 .rf-legend i { border-radius: 3px; }
 .uf.dead { background: var(--panel-2); }
+/* Healer mana bar along the bottom of the frame, like in-game raid frames; red when nearly empty. */
+.uf-mana { position: absolute; left: 0; right: 0; bottom: 0; height: 6px; background: rgba(0, 0, 0, .55); }
+.uf-mana-fill { height: 100%; background: linear-gradient(180deg, #4a9bff, #1f5fc8); transition: width .15s; }
+.uf-mana-fill.low { background: var(--dmg); }
+.uf.has-mana .uf-fx { bottom: 9px; }
 .uf.dying { outline: 2px solid var(--dmg); outline-offset: -2px; box-shadow: 0 0 0 3px color-mix(in srgb, var(--dmg) 40%, transparent); animation: uf-pulse 1.1s ease-in-out 3; }
-.uf.dying .uf-name, .uf.dying .uf-pct { color: var(--dmg); }
+.uf.dying .uf-name, .uf.dying .uf-pct { color: var(--dmg) !important; }
 .uf-died { position: absolute; top: 4px; right: 4px; z-index: 2; font-size: 9px; font-weight: 800; letter-spacing: .06em; color: #fff; background: var(--dmg); border-radius: 3px; padding: 1px 5px; }
 .rf-died { color: var(--dmg); }
 .rf-died b { color: var(--dmg); }
 @keyframes uf-pulse { 50% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--dmg) 15%, transparent); } }
 @media (prefers-reduced-motion: reduce) { .uf.dying { animation: none; } }
-.uf.dead .uf-name, .uf.dead .uf-pct { color: var(--ink-3); text-shadow: none; }
-@media (max-width: 600px) { .rf-group { grid-template-columns: 1fr; } .rf-glabel { padding-top: 0; } }
+/* Dead: grey name, overriding the class colour set inline. */
+.uf.dead .uf-name, .uf.dead .uf-pct { color: var(--ink-3) !important; text-shadow: none; }
 
 /* ---------- activity charts ---------- */
 .act-grid { display: grid; grid-template-columns: minmax(260px, 340px) minmax(0, 1fr); gap: 20px; }
@@ -465,6 +596,9 @@ function schoolPaint(s) {
   return c.length === 1 ? c[0] : `linear-gradient(90deg, ${c.join(", ")})`;
 }
 const schoolDot = s => (s ? `<i class="sdot" style="background:${schoolPaint(s)}" aria-hidden="true"></i>` : "");
+// SimC's names for combined schools, where the game calls them otherwise
+const SCHOOL_NAMES = { shadowstorm: "Plague" };
+const schoolName = s => SCHOOL_NAMES[s] || prettyName(s);
 
 function movingAvg(arr, w) {
   if (w <= 1) return arr.slice();
@@ -500,16 +634,13 @@ let data;
 try {
   data = JSON.parse($("#simc-data").textContent);
 } catch (e) {
-  $("#app").innerHTML = '<div class="panel empty">This report has no simulation data. Generate it with build_healer_report.ps1 and a SimC JSON file.</div>';
+  $("#app").innerHTML = '<div class="panel empty">This report has no simulation data. SimC writes it with healer_html=&lt;file&gt; healer_html_template=&lt;this file&gt; and a JSON report (json2=&lt;file&gt;).</div>';
   return;
 }
 const sim = data.sim || {};
 const players = sim.players || [];
-// The healer under test: whoever recorded raid frames, else the first real (non stand-in) healer.
-// Stand-in raid members have race "none".
-const isStandIn = p => p.race === "none";
-const healer = players.find(p => p.collected_data?.raid_frames)
-  || players.find(p => p.role === "heal" && !isStandIn(p)) || players.find(p => p.role === "heal") || players[0];
+// The healer under test: whoever recorded raid frames, else the healer (the only one in the raid).
+const healer = players.find(p => p.collected_data?.raid_frames) || players.find(p => p.role === "heal") || players[0];
 if (!healer) {
   $("#app").innerHTML = '<div class="panel empty">The simulation has no players to report on.</div>';
   return;
@@ -664,16 +795,42 @@ const bossAbilities = dmgStats.slice(0, 5).map(d => `
   <li><span><span>${schoolDot(d.school)}${esc(d.label)}</span><br><span class="who">${esc(d.source)}${d.sources > 1 ? " ×" + d.sources : ""}</span></span>
   <span class="amt">${fmtPct(totalDmg ? d.eff / totalDmg : 0)}</span></li>`).join("");
 
-// Encounter sims count wipes (every player died). The rest reached the end of the encounter, which is a kill:
-// boss health is a placeholder and the fight length is the real kill time.
+// Damage tolerance (tolerance=1, engine/sim/tolerance.cpp): sim.tolerance.setups holds your current gear ("main"),
+// the gear sets (profilesets, "set") and your current gear rerun with other random seeds ("noise"). Shaped here into
+// tolerance = your current gear's results and compare = one entry per setup.
+let tolerance = null, compare = null;
+{
+  const t = sim.tolerance;
+  const main = t?.version === 3 ? (t.setups || []).find(s => s.role === "main") : null;
+  if (main && main.tests?.length) {
+    const levels = { healer_share: t.share, share_source: t.share_source, milestones: t.milestones || [] };
+    tolerance = { tests: main.tests, levels, criteria: t.criteria, setup: { name: main.name } };
+    if (t.setups.length > 1)
+      compare = t.setups.map(s => ({ tests: s.tests, criteria: t.criteria,
+        setup: { name: s.name, role: s.role === "main" ? "baseline" : s.role === "set" ? "item" : "noise", gear: s.gear, overrides: s.options } }));
+  }
+}
+
+// PASS / FAIL: did this sim meet the requirement, judged like the tolerance search: nobody dies in more than 5% of
+// fights. Low mana is not a fail; when the fight-averaged mana ran dry is shown as information. The .bat runs this
+// sim at your share of the raid's damage (encounter_damage_all), so this answers "can you heal the current Mythic
+// damage".
 const encFights = sim.statistics?.encounter_fights || 0;
-const encWipes = sim.statistics?.encounter_wipes ?? null;
+const crit = Object.assign({ max_death_rate: 0.05, oom_threshold: 0.02 }, tolerance?.criteria || {});
+const dmgOpt = sim.options?.encounter_damage;
+const runMult = dmgOpt ? dmgOpt.all * Math.max(dmgOpt.steady, dmgOpt.burst, dmgOpt.spot) : 1;
+const manaTimeline = cd.resource_timelines?.mana?.data || [];
+const oomIdx = maxMana ? manaTimeline.findIndex((m, i) => i >= 5 && m < crit.oom_threshold * maxMana) : -1;
 let outcomeBadge = "";
-if (encFights && encWipes != null) {
-  const wipeRate = encWipes / encFights;
-  const wipe = wipeRate >= 0.5;
-  outcomeBadge = `<div class="outcome ${wipe ? "wipe" : "kill"}">${wipe ? "WIPE" : "KILL"}</div>
-    <div class="small">${wipe ? `Wiped in ${fmtPct(wipeRate)}` : `Killed in ${fmtPct(1 - wipeRate)}`} of fights</div>`;
+if (encFights) {
+  const dying = players.filter(p => p.collected_data?.deaths && Math.min(1, p.collected_data.deaths.count / encFights) > crit.max_death_rate);
+  const pass = !dying.length;
+  const share = tolerance?.levels.healer_share;
+  const at = share ? `${fmtPct(runMult / share)} of one healer's share of the damage` : `${fmtPct(runMult)} of the raid's damage`;
+  outcomeBadge = `<div class="outcome ${pass ? "kill" : "wipe"}">${pass ? "Raid survives" : "Raiders die"}</div>
+    <div class="small">At ${at}</div>
+    ${dying.length ? `<div class="small">${dying.length} raider${dying.length === 1 ? "" : "s"} died in more than ${fmtPct(crit.max_death_rate)} of fights</div>` : ""}
+    ${oomIdx >= 0 ? `<div class="small">Mana ran dry at ${fmtTime(oomIdx)}</div>` : ""}`;
 }
 
 const matchup = el("section", { id: "summary", "aria-label": "Matchup" });
@@ -708,14 +865,14 @@ const survived = deathCount != null
 const leadParts = [`You healed <b>${fmtNum(hps)} per second</b>`];
 leadParts.push(`and <b>${fmtPct(overPct)}</b> of it was overhealing`);
 let lead = leadParts.join(" ") + ".";
-if (dtps) lead += ` The encounter dealt <b>${fmtNum(dtps)} damage per second</b>.`;
+if (dtps) lead += ` You took <b>${fmtNum(dtps)} damage per second</b>.`;
 if (survived) lead += ` You ${survived}.`;
 if (activeTime != null) lead += ` You were casting for <b>${fmtPct(activeTime / fightLen)}</b> of the fight.`;
 
 const statCells = [
   { label: "Effective healing per second", value: fmtNum(hps), cls: "heal", note: fmtNum(totalEff) + " per fight" },
   { label: "Overhealing", value: fmtPct(overPct), cls: "", note: fmtNum(totalRaw - totalEff) + " wasted per fight" },
-  { label: "Damage taken per second", value: dtps ? fmtNum(dtps) : "–", cls: "dmg", note: totalDmg ? fmtNum(totalDmg) + " per fight" : "" },
+  { label: "Damage you took per second", value: dtps ? fmtNum(dtps) : "–", cls: "dmg", note: dtps ? fmtNum(dtps * fightLen) + " per fight" : "" },
   { label: "Lowest health", value: lowestHealth != null ? lowestHealth.toFixed(0) + "%" : "–", cls: "", note: "averaged across fights" },
   { label: "Deaths", value: deathRate != null ? fmtPct(deathRate) : "–", cls: deathCount ? "dmg" : "",
     note: deathCount ? `of fights, on average at ${fmtTime(deathTime)}` : deathRate != null ? "of fights" : "not in this report" },
@@ -739,9 +896,281 @@ verdict.innerHTML = `
   </div>` : ""}`;
 matchup.appendChild(verdict);
 
+// ----- gear, your limit, gear comparison
+// Item names, icons, quality colours and in-game tooltips come from Wowhead's tooltip script (loaded at the end of the
+// page) on links to the item with its item level, bonus ids, enchant and gems. The in-game tooltips can be switched
+// off (remembered); the report's own tooltips stay.
+const signed = (v, d = 1) => (v >= 0 ? "+" : "−") + (Math.abs(v) * 100).toFixed(d) + "%";
+const fmtScore = s => fmtPct(s, 1);
+const SLOT_NAMES = { head: "Head", neck: "Neck", shoulders: "Shoulders", back: "Back", chest: "Chest", wrists: "Wrists",
+  hands: "Hands", waist: "Waist", legs: "Legs", feet: "Feet", finger1: "Ring", finger2: "Ring", trinket1: "Trinket",
+  trinket2: "Trinket", main_hand: "Main hand", off_hand: "Off hand" };
+const LEFT_SLOTS = ["head", "neck", "shoulders", "back", "chest", "wrists", "main_hand", "off_hand"];
+const RIGHT_SLOTS = ["hands", "waist", "legs", "feet", "finger1", "finger2", "trinket1", "trinket2"];
+const slotLabel = k => SLOT_NAMES[k] || prettyName(k);
+const STAT_NAMES = { crit_rating: "Crit", haste_rating: "Haste", mastery_rating: "Mastery", versatility_rating: "Versatility" };
+const itemId = str => (/\bid=(\d+)/.exec(str || "") || [])[1];
+const opt = (str, key) => (new RegExp("\\b" + key + "=([\\d/:]+)").exec(str || "") || [])[1] || "";
+// "Enchant Ring - Zul'jin's Mastery |A:...|a" -> "Zul'jin's Mastery"
+const cleanEnchant = s => String(s || "").replace(/\|A:[^|]*\|a/g, "").replace(/^Enchant [^-]+ - /, "").trim();
+// One gear slot from a SimC item string, plus the JSON gear entry's stats, enchant and gems when there is one.
+function itemOf(str, ilevel, g = null, slot = "") {
+  const s = String(str || "");
+  const stats = g ? Object.entries(STAT_NAMES).filter(([k]) => g[k] > 0).map(([k, n]) => `${n} ${g[k].toLocaleString()}`) : [];
+  // Weapons and trinkets: their Intellect is most of what they give.
+  const int = g ? (g.intellect || g.agiint || g.strint || 0) : 0;
+  if (int > 0 && /^(main_hand|off_hand|trinket)/.test(slot)) stats.unshift(`Intellect ${int.toLocaleString()}`);
+  return { id: itemId(s), ilevel, name: prettyName(s.split(",")[0]), bonus: opt(s, "bonus_id").replace(/\//g, ":"),
+    ench: opt(s, "enchant_id"), gems: opt(s, "gem_id").replace(/\//g, ":"), stats,
+    enchant: g?.enchant ? cleanEnchant(g.enchant) : "", gemNames: g?.gems || [] };
+}
+// A Wowhead item link: Wowhead adds the icon, the quality colour and the in-game tooltip.
+const itemLink = (it, size = "medium") => it.id
+  ? `<a class="wh-item" href="https://www.wowhead.com/item=${it.id}" data-wh-icon-size="${size}"
+      data-wowhead="item=${it.id}${it.ilevel ? "&ilvl=" + it.ilevel : ""}${it.bonus ? "&bonus=" + it.bonus : ""}${it.ench ? "&ench=" + it.ench : ""}${it.gems ? "&gems=" + it.gems : ""}">${esc(it.name)}</a>`
+  : esc(it.name);
+const currentGear = Object.fromEntries(Object.entries(healer.gear || {}).map(([k, g]) => [k, itemOf(g.encoded_item, g.ilevel, g, k)]));
+
+// In-game tooltips on/off. Off: the links lose their Wowhead attributes (kept aside), after Wowhead has drawn them.
+let whTips = true;
+try { whTips = localStorage.getItem("simc-healer-wowtips") !== "off"; } catch (e) {}
+function applyWhTips() {
+  document.querySelectorAll("a.wh-item").forEach(a => {
+    if (!whTips && a.hasAttribute("href")) {
+      a.dataset.whHref = a.getAttribute("href"); a.dataset.whData = a.getAttribute("data-wowhead") || "";
+      a.removeAttribute("href"); a.removeAttribute("data-wowhead");
+    } else if (whTips && a.dataset.whHref) {
+      a.setAttribute("href", a.dataset.whHref); a.setAttribute("data-wowhead", a.dataset.whData);
+    }
+  });
+  document.querySelectorAll(".tip-toggle").forEach(b => {
+    b.setAttribute("aria-pressed", String(whTips));
+    b.querySelector(".tt-state").textContent = whTips ? "On" : "Off";
+  });
+}
+addEventListener("load", () => setTimeout(applyWhTips, 300));
+const tipToggle = `<button class="tip-toggle" type="button" aria-pressed="true" title="Show the in-game item tooltip when hovering an item">
+  <span class="tt-switch" aria-hidden="true"></span>In-game tooltips: <b class="tt-state">On</b></button>`;
+function bindTipToggle(root) {
+  root.querySelectorAll(".tip-toggle").forEach(b => b.addEventListener("click", () => {
+    whTips = !whTips;
+    try { localStorage.setItem("simc-healer-wowtips", whTips ? "on" : "off"); } catch (e) {}
+    applyWhTips();
+  }));
+}
+// The report's own tooltip on an element, except over an item link while in-game tooltips are on.
+function bindInfoTip(node, html) {
+  const show = ev => {
+    if (whTips && ev.target.closest && ev.target.closest("a.wh-item")) { hideTip(); return; }
+    showTip(typeof html === "function" ? html() : html, ev.clientX, ev.clientY);
+  };
+  node.addEventListener("pointermove", show);
+  node.addEventListener("pointerleave", hideTip);
+  node.addEventListener("focus", () => { const b = node.getBoundingClientRect(); showTip(typeof html === "function" ? html() : html, b.right, b.top); });
+  node.addEventListener("blur", hideTip);
+}
+const arrow = v => v === "better" ? `<span class="arr up" aria-label="better">▲</span>` : v === "worse" ? `<span class="arr down" aria-label="worse">▼</span>` : `<span class="arr same" aria-label="no difference">–</span>`;
+
+// The comparison: your current gear, the gear sets, and your current gear with other random numbers (the noise).
+const cmpAll = Array.isArray(compare) ? compare : [];
+const cmpShown = cmpAll.filter(s => s.setup.role !== "noise");
+const cmpBase = cmpShown.find(s => s.setup.role === "baseline") || null;
+const cmpOthers = cmpBase ? cmpShown.filter(s => s !== cmpBase) : [];
+const scoreOf = (s, k) => s.tests.find(t => t.test === k)?.score;
+const cmpNoise = (() => {
+  if (!cmpBase) return 0;
+  const b = scoreOf(cmpBase, "combined"), prec = cmpBase.criteria?.precision || 0.005;
+  return Math.max(prec / b, ...cmpAll.filter(s => s.setup.role === "noise").map(s => scoreOf(s, "combined"))
+    .filter(v => v != null).map(v => Math.abs(v / b - 1)));
+})();
+// What a gear set changes against your current gear: [{ slot, from, to }].
+function changesOf(s) {
+  const out = [];
+  for (const [slot, g] of Object.entries(s.setup.gear || {})) {
+    const cur = currentGear[slot];
+    if (!cur || !SLOT_NAMES[slot]) continue;  // tabard, shirt
+    if (itemId(g.item) !== cur.id || g.ilevel !== cur.ilevel) out.push({ slot, from: cur, to: itemOf(g.item, g.ilevel) });
+  }
+  return out;
+}
+const cmpRows = cmpOthers.map(s => {
+  const b = scoreOf(cmpBase, "combined"), v = scoreOf(s, "combined");
+  const d = b != null && v != null ? v / b - 1 : null;
+  return { s, d, v, b, changes: changesOf(s), verdict: d == null ? "" : d > cmpNoise ? "better" : d < -cmpNoise ? "worse" : "equal" };
+}).sort((a, b) => (a.d ?? -9) - (b.d ?? -9));
+const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.d)[0] || null;
+
+// ----- your gear: a character sheet of the best set found (your current gear unless a gear set did better)
+{
+  const bestChanges = best ? best.changes : [];
+  const gear = { ...currentGear };
+  for (const c of bestChanges) gear[c.slot] = { ...c.to };
+  const tile = slot => {
+    const it = gear[slot];
+    if (!it) return `<div class="gi empty"><div class="gi-slot">${slotLabel(slot)}</div><div class="faint">Empty</div></div>`;
+    const ch = bestChanges.find(c => c.slot === slot);
+    return `<div class="gi${ch ? " up" : ""}" data-slot="${slot}" tabindex="0">
+      <div class="gi-top"><span class="gi-slot">${slotLabel(slot)}</span>${ch ? `<span class="gi-badge">${arrow("better")} Upgrade</span>` : ""}<span class="gi-ilvl">${it.ilevel || ""}</span></div>
+      <div class="gi-name">${itemLink(it, "medium")}</div>
+      ${it.stats.length ? `<div class="gi-meta">${it.stats.join(" · ")}</div>` : ""}
+      ${it.enchant ? `<div class="gi-ench">✦ ${esc(it.enchant)}</div>` : ""}
+      ${it.gemNames.map(g => `<div class="gi-gem">◆ ${esc(g)}</div>`).join("")}
+      ${ch ? `<div class="gi-meta">Replaces ${esc(ch.from.name)} ${ch.from.ilevel || ""}</div>` : ""}
+    </div>`;
+  };
+  const tileTip = slot => () => {
+    const it = gear[slot], ch = bestChanges.find(c => c.slot === slot);
+    return `<div class="t-head">${esc(it.name)}</div>
+      <div class="t-row"><span>${slotLabel(slot)}</span><span>Item level ${it.ilevel || "–"}</span></div>
+      ${it.stats.map(s => `<div class="t-row"><span>${esc(s.split(" ")[0])}</span><span>${esc(s.split(" ").slice(1).join(" "))}</span></div>`).join("")}
+      ${it.enchant ? `<div class="t-row"><span>Enchant</span><span>${esc(it.enchant)}</span></div>` : ""}
+      ${it.gemNames.map(g => `<div class="t-row"><span>Gem</span><span>${esc(g)}</span></div>`).join("")}
+      ${ch ? `<div class="t-row"><span>Instead of</span><span>${esc(ch.from.name)} ${ch.from.ilevel || ""}</span></div>
+        <div class="t-row"><span>Your limit</span><span class="better">${signed(best.d, 2)}</span></div>` : ""}`;
+  };
+  const omnium = healer.omnium || [];
+  const statChips = healerKV.map(([k, v]) => `<div class="cs-stat"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+  const gearSec = el("section", { id: "gear" });
+  gearSec.innerHTML = `
+    <div class="section-head"><h2>${best ? "Best gear set" : "Your gear"}</h2>
+      <p>${best ? `The best of the gear sets compared below: your limit goes up <b>${signed(best.d)}</b>. Highlighted: what changes.`
+        : cmpRows.length ? "Your current gear. None of the gear sets compared below raises your limit." : "The gear simulated in this report."}</p></div>
+    <div class="panel char-sheet">
+      <div class="cs-head">
+        <div class="cs-stats">${statChips}</div>
+        ${tipToggle}
+      </div>
+      <div class="cs-cols">
+        <div class="cs-col">${LEFT_SLOTS.map(tile).join("")}</div>
+        <div class="cs-col">${RIGHT_SLOTS.map(tile).join("")}</div>
+      </div>
+      ${omnium.length ? `<div class="cs-omnium"><span class="cs-label">Omnium runes</span>${omnium.map(r =>
+        `<a class="wh-item rune" href="https://www.wowhead.com/spell=${r.spell}" data-wh-icon-size="small" data-wowhead="spell=${r.spell}">${esc(r.name)}</a>`).join("")}</div>` : ""}
+    </div>`;
+  app.appendChild(gearSec);
+  gearSec.querySelectorAll(".gi[data-slot]").forEach(n => bindInfoTip(n, tileTip(n.dataset.slot)));
+  bindTipToggle(gearSec);
+  $("#nav").insertBefore(el("a", { href: "#gear" }, "Gear"), $('#nav a[href="#timeline"]') || null);
+}
+
+// ----- your limit (current gear)
+if (tolerance) {
+  const share = tolerance.levels.healer_share;
+  const TOL = {
+    combined: { label: "All damage", color: "var(--ink-2)", what: "Every kind of damage raised together. This is your limit." },
+    steady: { label: "Constant damage", color: "var(--mana)", what: "Damage on the whole raid all fight long: Toxic Vapor, Burning Presence." },
+    burst: { label: "Burst damage", color: "var(--dmg)", what: "Big hits on the whole raid: the Expulsions, Malignant Catalyst, Caustic Surge, Caustic Explosion." },
+    spot: { label: "Damage on a few players", color: "var(--c3)", what: "Hits on a few raiders at a time: Plague Froth, Catalytic Bile, Congealing Bolt, Exploding Infection." },
+    tank: { label: "Tank damage", color: "var(--c4)", what: "Damage on the tanks: Dripping Fangs and melee." },
+    avoidable: { label: "Avoidable damage", color: "var(--ink-3)", what: "Damage from mistakes, as often as on your kill: Plague Wave." },
+  };
+  const combined = tolerance.tests.find(t => t.test === "combined");
+  const tests = Object.keys(TOL).map(k => tolerance.tests.find(t => t.test === k)).filter(t => t && t.score != null);
+  const ms = (tolerance.levels.milestones || []).slice().sort((a, b) => a.score - b.score);
+  const msNote = m => /3-healer/i.test(m.label) ? "each healer covers a third of the healing instead of a quarter" : "";
+  const rows = tests.slice().sort((a, b) => a.score - b.score);  // lowest to highest
+  const hi = Math.max(1.1, ...rows.map(t => t.score), ...ms.map(m => m.score)) * 1.06;
+  const x = v => (Math.min(v, hi) / hi * 100).toFixed(2) + "%";
+  const tickStep = [0.1, 0.2, 0.25, 0.5, 1].find(s => hi / s <= 8) || 1;
+  const ticks = [];
+  for (let v = 0; v <= hi + 1e-9; v += tickStep) ticks.push(`<span style="left:${x(v)}">${fmtPct(v, 0)}</span>`);
+  // What happened one step above the limit.
+  const breakNote = t => {
+    const f = (t.probes || []).find(p => !p.pass && Math.abs(p.pct - t.first_fail) < 1e-9);
+    const worst = f?.deaths?.[0];
+    return t.first_fail == null ? "" : `At ${fmtScore(t.first_fail)}${worst ? `, ${esc(prettyName(worst.name))} died in ${fmtPct(worst.rate)} of fights` : ", raiders died too often"}.`;
+  };
+  const rowTip = t => `<div class="t-head">${TOL[t.test].label}</div><div class="faint" style="margin-bottom:6px;max-width:340px">${esc(TOL[t.test].what)}</div>
+    <div class="t-row"><span>Your limit</span><span>${fmtScore(t.score)}</span></div>
+    ${t.test !== "combined" ? `<div class="t-row"><span>Everything else at</span><span>${fmtScore(t.held)} (your overall limit)</span></div>` : ""}
+    ${t.first_fail != null ? `<div class="faint" style="margin-top:6px;max-width:340px">${breakNote(t)}</div>` : ""}`;
+  const tolSec = el("section", { id: "tolerance" });
+  tolSec.innerHTML = `
+    <div class="section-head"><h2>Your limit</h2></div>
+    <div class="panel can-heal">
+      <div><div class="cs-label">Your limit</div><div class="ch-big">${combined?.score != null ? fmtScore(combined.score) : "–"}</div></div>
+      <div class="ch-text">
+        <p>The most damage you can heal before raiders start dying (more than 1 fight in 20).</p>
+        <p><b>100%</b> is one healer's share of the damage on Mythic ${esc(bossName)}: a quarter of what the 4 healers healed on your kill
+          (${fmtPct(share, 1)} of all the damage your raid took). ${combined?.score == null ? ""
+          : combined.score >= 1 ? `You can heal <b>${fmtPct(combined.score - 1, 1)} more</b> than that.` : `You fall <b>${fmtPct(1 - combined.score, 1)} short</b> of it.`}</p>
+      </div>
+    </div>
+    <div class="panel hr-chart">
+      <div class="hr-row" style="padding-bottom:0"><span class="cs-label">Your limit by kind of damage</span><span></span><span></span></div>
+      ${rows.map(t => `<div class="hr-row" tabindex="0" data-test="${t.test}">
+        <span class="hr-name">${TOL[t.test].label}</span>
+        <span class="hr-track">${ms.map(m => `<i class="hr-ms" style="left:${x(m.score)}"></i>`).join("")}
+          <span class="hr-bar pos" style="--bc:${t.score < 1 ? "var(--dmg)" : TOL[t.test].color};left:0;width:${x(t.score)}"></span>
+          <span class="hr-zero" style="left:${x(1)}"></span></span>
+        <span class="hr-num">${fmtScore(t.score)}</span></div>`).join("")}
+      <div class="hr-axis"><span></span><span class="ticks">${ticks.join("")}</span><span></span></div>
+      <div class="hr-legend"><span><i class="hr-key zero"></i>100%: one healer's share</span>${ms.map(m =>
+        `<span title="${esc(msNote(m))}"><i class="hr-key"></i><b>${fmtScore(m.score)}</b> ${esc(m.label)}${msNote(m) ? " *" : ""}</span>`).join("")}</div>
+      ${ms.some(m => msNote(m)) ? `<p class="faint" style="padding:0 22px 6px;font-size:12px">* A 3-healer setup: ${esc(msNote(ms.find(m => msNote(m))))}, at the same raid damage.</p>` : ""}
+    </div>`;
+  app.appendChild(tolSec);
+  tolSec.querySelectorAll(".hr-row[data-test]").forEach(row => bindInfoTip(row, rowTip(tests.find(q => q.test === row.dataset.test))));
+  $("#nav").insertBefore(el("a", { href: "#tolerance" }, "Your limit"), $('#nav a[href="#timeline"]') || null);
+}
+
+// ----- gear comparison: each gear set against your current gear, lowest to highest
+if (cmpRows.length) {
+  const vals = cmpRows.map(r => r.d).filter(v => v != null);
+  // Zero in the middle, so better and worse read the same way.
+  const ext = Math.max(0.01, cmpNoise, ...vals.map(Math.abs)) * 1.2;
+  const cx = v => ((v + ext) / (2 * ext) * 100).toFixed(2) + "%";
+  const cstep = [0.0025, 0.005, 0.01, 0.02, 0.05, 0.1].find(s => ext / s <= 3) || 0.2;
+  const cticks = [];
+  for (let v = -Math.floor(ext / cstep) * cstep; v <= ext + 1e-9; v += cstep) cticks.push(`<span style="left:${cx(v)}">${Math.abs(v) < 1e-9 ? "0" : signed(v, cstep < 0.01 ? 1 : 0)}</span>`);
+  const colorOf = v => v === "better" ? "var(--heal)" : v === "worse" ? "var(--dmg)" : "var(--ink-3)";
+  const VERDICT = { better: "better", worse: "worse", equal: "no real difference" };
+  const label = r => r.changes.length
+    ? r.changes.map(c => `<span class="cmp-item"><span>${itemLink(c.to, "medium")} <span class="faint">${c.to.ilevel || ""}</span>
+        <small>instead of ${c.from ? itemLink(c.from, "tiny") : "nothing"} ${c.from?.ilevel || ""} · ${slotLabel(c.slot)}</small></span></span>`).join("")
+    : `<span class="cmp-item"><span><b>${esc(r.s.setup.name)}</b></span></span>`;
+  const cmpTip = r => `<div class="t-head">${esc(r.changes.length ? r.changes.map(c => `${c.to.name} ${c.to.ilevel || ""} instead of ${c.from.name} ${c.from.ilevel || ""}`).join(", ") : r.s.setup.name)}</div>
+    <div class="t-row"><span>Your limit with it</span><span>${fmtScore(r.v)}</span></div>
+    <div class="t-row"><span>Your limit now</span><span>${fmtScore(r.b)}</span></div>
+    <div class="t-row"><span>Difference</span><span class="${r.verdict}">${r.d == null ? "–" : signed(r.d, 2)} · ${VERDICT[r.verdict] || ""}</span></div>
+    <div class="faint" style="margin-top:6px;max-width:340px">Differences within ±${fmtPct(cmpNoise, 2)} are the simulation's margin of error.</div>`;
+  const cmpSec = el("section", { id: "compare" });
+  cmpSec.innerHTML = `
+    <div class="section-head"><h2>Gear comparison</h2>
+      <p>Each gear set is your current gear with these items swapped in: how much it raises (▲) or lowers (▼) your limit.
+        Within ±${fmtPct(cmpNoise, 1)} (grey band) is the simulation's margin of error: no real difference.</p></div>
+    <div class="panel hr-chart cmp-chart">
+      <div class="cmp-tools">${tipToggle}</div>
+      ${cmpRows.map((r, i) => `<div class="hr-row" tabindex="0" data-cmp="${i}">
+        <span class="hr-name">${label(r)}</span>
+        <span class="hr-track"><span class="hr-noise" style="left:${cx(-cmpNoise)};width:calc(${cx(cmpNoise)} - ${cx(-cmpNoise)})"></span>
+          ${r.d == null ? "" : `<span class="hr-bar ${r.d >= 0 ? "pos" : "neg"}" style="--bc:${colorOf(r.verdict)};left:${cx(Math.min(0, r.d))};width:calc(${cx(Math.max(0, r.d))} - ${cx(Math.min(0, r.d))})"></span>`}
+          <span class="hr-zero" style="left:${cx(0)}"></span></span>
+        <span class="hr-num ${r.verdict}">${r.d == null ? "–" : `${arrow(r.verdict)} ${signed(r.d)}<small>${VERDICT[r.verdict]}</small>`}</span></div>`).join("")}
+      <div class="hr-axis"><span></span><span class="ticks">${cticks.join("")}</span><span></span></div>
+    </div>`;
+  app.appendChild(cmpSec);
+  cmpSec.querySelectorAll(".hr-row[data-cmp]").forEach(row => bindInfoTip(row, cmpTip(cmpRows[+row.dataset.cmp])));
+  bindTipToggle(cmpSec);
+  $("#nav").insertBefore(el("a", { href: "#compare" }, "Gear comparison"), $('#nav a[href="#timeline"]') || null);
+}
+
+// Everything from here on comes from the one detailed sim of your current gear.
+{
+  const dmgOptD = sim.options?.encounter_damage;
+  const atShare = tolerance && dmgOptD ? (dmgOptD.all * Math.max(dmgOptD.steady, dmgOptD.burst, dmgOptD.spot)) / tolerance.levels.healer_share : null;
+  const div = el("section", { class: "part-divider", id: "details-intro" });
+  div.innerHTML = `<h2>Fight details: your current gear</h2>
+    <p>Everything below is one simulation of your current gear${atShare ? ` at ${fmtPct(atShare, 0)} of one healer's share of the damage` : ""},
+      ${(encFights || iterations).toLocaleString()} fights.</p>`;
+  app.appendChild(div);
+}
+
 // ---------------------------------------------------------------- chart engine
 // A set of vertically stacked panels sharing one time axis and one crosshair.
 function timeChart(container, panels, opts = {}) {
+  // Seconds the x axis spans; defaults to the average fight length.
+  const len = opts.length || fightLen;
   const pad = { l: 56, r: 16, t: 8, b: 26 };
   const gap = 18;
   const n = Math.max(...panels.map(p => p.length || 0), 1);
@@ -793,15 +1222,15 @@ function timeChart(container, panels, opts = {}) {
     // markers spanning all panels
     const bottom = top - gap;
     for (const m of opts.markers || []) {
-      const mx = x(m.time / fightLen * (n - 1));
+      const mx = x(m.time / len * (n - 1));
       const g = svgEl("g", { class: "marker" });
       g.appendChild(svgEl("line", { x1: mx, x2: mx, y1: pad.t, y2: bottom }));
       svg.appendChild(g);
     }
     // x axis
-    const step = fightLen > 240 ? 60 : fightLen > 90 ? 30 : 10;
-    for (let s = 0; s <= fightLen + 0.01; s += step) {
-      const lab = svgEl("text", { x: x(s / fightLen * (n - 1)), y: bottom + 18, "text-anchor": "middle" });
+    const step = len > 240 ? 60 : len > 90 ? 30 : 10;
+    for (let s = 0; s <= len + 0.01; s += step) {
+      const lab = svgEl("text", { x: x(s / len * (n - 1)), y: bottom + 18, "text-anchor": "middle" });
       lab.textContent = fmtTime(s);
       svg.appendChild(lab);
     }
@@ -829,8 +1258,8 @@ function timeChart(container, panels, opts = {}) {
         c.setAttribute("cx", cx); c.setAttribute("cy", L.y(Math.min(v, L.maxV))); c.setAttribute("visibility", "visible");
         rows += `<div class="t-row"><span><i class="sw" style="background:${s.color}"></i>${esc(s.name)}</span><span>${L.p.yFormat ? L.p.yFormat(v) : fmtNum(v)}</span></div>`;
       }
-      const t = i / Math.max(n - 1, 1) * fightLen;
-      const near = (opts.markers || []).filter(m => Math.abs(m.time - t) <= Math.max(1.5, fightLen / n)).map(m => `<div class="t-row"><span>${esc(m.label)}</span><span>cast</span></div>`).join("");
+      const t = i / Math.max(n - 1, 1) * len;
+      const near = (opts.markers || []).filter(m => Math.abs(m.time - t) <= Math.max(1.5, len / n)).map(m => `<div class="t-row"><span>${esc(m.label)}</span><span>cast</span></div>`).join("");
       showTip(`<div class="t-head">${fmtTime(t)}</div>${rows}${near}`, ev.clientX, ev.clientY);
     });
     hit.addEventListener("pointerleave", () => {
@@ -1036,7 +1465,7 @@ if (recaps.length) {
     latest: analysed[analysed.length - 1],
   };
 
-  $("#nav").insertBefore(el("a", { href: "#deaths" }, "Deaths"), $('#nav a[href="#activity"]') || null);
+  $("#nav").insertBefore(el("a", { href: "#deaths" }, "Deaths"), $('#nav a[href="#activity"]') || $('#nav a[href="#healing"]') || null);
 
   const deathSec = el("section", { id: "deaths" });
   deathSec.innerHTML = `
@@ -1327,6 +1756,7 @@ if (activeTime != null) {
         <div class="chart" id="actChart"></div>
       </div>
     </div>`;
+  // Placed for now; moved right above "Where your healing went" once that section exists.
   app.appendChild(actSec);
   donutChart($("#actDonut"), segs, fmtPct(activeTime / fightLen), "casting");
   const renderAct = w => {
@@ -1355,7 +1785,7 @@ function breakdown(container, rows, kind, total) {
       const effW = (r.eff / max) * 100, overW = (r.over / max) * 100;
       bar = `<div class="bar" title="${fmtNum(r.eff)} effective, ${fmtNum(r.over)} overhealing">${effW > 0 ? `<span class="eff" style="width:${effW}%"></span>` : ""}${overW > 0.3 ? `<span class="over" style="width:${overW}%"></span>` : ""}</div>`;
       const dShare = r.direct.eff + r.tick.eff ? r.direct.eff / (r.direct.eff + r.tick.eff) : 0;
-      const split = r.direct.count && r.tick.count ? `, ${fmtPct(dShare)} direct and ${fmtPct(1 - dShare)} over time` : r.tick.count ? ", all over time" : "";
+      const split = r.direct.raw && r.tick.count ? `, ${fmtPct(dShare)} direct and ${fmtPct(1 - dShare)} over time` : r.tick.count ? ", all over time" : "";
       metaText = `${Math.round(r.casts)} casts, ${fmtPct(r.raw ? r.over / r.raw : 0)} overhealing${split}`;
       num = `${fmtPct(total ? r.eff / total : 0)}<small>${fmtNum(r.eff / fightLen)}/s</small>`;
     } else {
@@ -1365,7 +1795,7 @@ function breakdown(container, rows, kind, total) {
       num = `${fmtPct(total ? r.eff / total : 0)}<small>${fmtNum(r.eff / fightLen)}/s</small>`;
     }
     btn.innerHTML = `
-      <span style="min-width:0"><span class="nm"><span class="chev" aria-hidden="true">›</span>${esc(r.label)}${r.school ? `<span class="school">${schoolDot(r.school)}${esc(prettyName(r.school))}</span>` : ""}</span><div class="meta">${metaText}</div></span>
+      <span style="min-width:0"><span class="nm"><span class="chev" aria-hidden="true">›</span>${esc(r.label)}${r.school ? `<span class="school">${schoolDot(r.school)}${esc(schoolName(r.school))}</span>` : ""}</span><div class="meta">${metaText}</div></span>
       <span class="barcell">${bar}</span>
       <span class="num">${num}</span>`;
     const detail = el("div", { class: "bd-detail", id });
@@ -1373,7 +1803,8 @@ function breakdown(container, rows, kind, total) {
     const lossCells = p => kind === "heal"
       ? `<td>${fmtPct(p.crit / p.count)}</td><td>${fmtPct(p.raw ? 1 - p.eff / p.raw : 0)}</td>`
       : `<td>${p.raw > p.eff ? `${fmtPct(1 - p.eff / p.raw, 1)} <span class="faint">(${fmtNum(p.raw - p.eff)})</span>` : "–"}</td>`;
-    const line = (lab, p) => p.count ? `<tr><td>${lab}</td><td>${Math.round(p.count)}</td><td>${fmtNum(p.eff / p.count)}</td>${lossCells(p)}<td>${fmtNum(p.eff)}</td></tr>` : "";
+    // A pure HoT (Wild Growth) records its application as a 0-amount direct "hit": skip that row, casts are above.
+    const line = (lab, p) => p.count && p.raw > 0 ? `<tr><td>${lab}</td><td>${Math.round(p.count)}</td><td>${fmtNum(p.eff / p.count)}</td>${lossCells(p)}<td>${fmtNum(p.eff)}</td></tr>` : "";
     detail.innerHTML = `<table>
       <thead><tr><th></th><th>Count</th><th>Average</th>${kind === "heal" ? "<th>Crit rate</th><th>Overheal</th>" : "<th>Mitigated</th>"}<th>Total</th></tr></thead>
       <tbody>${line(kind === "heal" ? "Direct heal" : "Direct hit", r.direct)}${line(kind === "heal" ? "Over time (ticks)" : "Ticks", r.tick)}</tbody></table>`;
@@ -1397,6 +1828,8 @@ healSec.innerHTML = `
   </div>
   <div class="panel breakdown" id="healBd"></div>`;
 app.appendChild(healSec);
+if ($("#activity")) app.insertBefore($("#activity"), healSec);
+
 breakdown($("#healBd"), healStats, "heal", totalEff);
 
 const dmgSec = el("section", { id: "damage" });
@@ -1405,7 +1838,7 @@ dmgSec.innerHTML = `
     <h2>What hurt${raidMembers.length ? " the raid" : ""}</h2>
     <p>Damage dealt by ${esc(bossName)} and its adds${raidMembers.length ? ` to all ${raidMembers.length + 1} players` : ""}, per fight, coloured by spell school. Abilities shared by several adds are combined.</p>
     <div class="school-legend">${[...new Set(dmgStats.map(d => d.school).filter(Boolean))]
-      .map(s => `<span><i style="background:${schoolPaint(s)}"></i>${esc(prettyName(s))}</span>`).join("")}</div>
+      .map(s => `<span><i style="background:${schoolPaint(s)}"></i>${esc(schoolName(s))}</span>`).join("")}</div>
   </div>
   <div class="panel breakdown" id="dmgBd"></div>`;
 app.appendChild(dmgSec);
@@ -1458,12 +1891,22 @@ if (raidMembers.length) {
   app.appendChild(raidSec);
 
   if (frames) {
-    const units = frames.units.map((u, i) => ({ ...u, i, label: u.name === healer.name ? u.name : prettyName(u.name) }));
-    const groupOf = u => u.role === "tank" ? "Tanks" : u.role === "heal" ? "Healers"
-      : /ranged/.test(u.position) ? "Ranged" : "Melee";
-    const groups = ["Tanks", "Healers", "Melee", "Ranged"]
-      .map(g => ({ name: g, units: units.filter(u => groupOf(u) === g) })).filter(g => g.units.length);
-    const roleColor = { Tanks: "var(--mana)", Healers: "var(--heal)", Melee: "var(--dmg)", Ranged: "var(--c3)" };
+    // Stand-ins are named after their spec ("Protection_Warrior"); the class in that name, or the healer's own
+    // specialization, picks the in-game class colour for the name.
+    const CLASS_COLORS = { "Death Knight": "#c41e3a", "Demon Hunter": "#a330c9", Druid: "#ff7c0a", Evoker: "#33937f",
+      Hunter: "#aad372", Mage: "#3fc7eb", Monk: "#00ff98", Paladin: "#f48cba", Priest: "#ffffff", Rogue: "#fff468",
+      Shaman: "#0070dd", Warlock: "#8788ee", Warrior: "#c69b6d" };
+    const classOf = text => Object.keys(CLASS_COLORS).find(c => text.includes(c)) || null;  // "Demon Hunter" before "Hunter"
+    const units = frames.units.map((u, i) => {
+      const self = u.name === healer.name;
+      const label = self ? u.name : prettyName(u.name);
+      const cls = classOf(self ? prettyName(healer.specialization || "") : label);
+      return { ...u, i, self, label, cls, color: cls ? CLASS_COLORS[cls] : "#ffffff" };
+    });
+    const groupOf = u => u.role === "tank" ? "Tank" : u.role === "heal" ? "Healer" : "DPS";
+    // One raid frame: tanks, then healers (you first), then DPS.
+    const rank = u => (u.role === "tank" ? 0 : u.role === "heal" ? (u.self ? 1 : 2) : 3);
+    const ordered = units.slice().sort((a, b) => rank(a) - rank(b) || a.i - b.i);
 
     // Order snapshots by time; a death snapshot sorts right after the periodic one at the same time.
     const snaps = frames.snapshots.map((s, idx) => ({ ...s, idx })).sort((a, b) => a.time - b.time || a.idx - b.idx);
@@ -1478,13 +1921,19 @@ if (raidMembers.length) {
     const hotColor = n => HOT_COLORS[n] || FALLBACK[[...n].reduce((h, c) => h + c.charCodeAt(0), 0) % FALLBACK.length];
     const HOT_LABELS = { rune_of_unleashed_fire_heal_lingering: "Unleashed Fire (rune)", rejuvenation_germination: "Germination" };
     const hotLabel = n => HOT_LABELS[n] || prettyName(n);
+    // You get a mana bar under your frame (stand-ins don't cast, so theirs would never move).
+    const hasMana = u => u.self && (u.max_mana || 0) > 0;
+    const manaPct = (s, u) => Math.max(0, Math.min(1, (s.mana?.[u.i] || 0) / (u.max_mana || 1)));
     // HoTs end on death; never show any on a dead unit.
     const effectsOf = (s, u) => (s.alive[u.i] ? (s.effects[u.i] || []).filter(e => e.hot) : []);
-    const hotNames = [...new Set(snaps.flatMap(s => s.effects.flatMap(list => (list || []).filter(e => e.hot).map(e => e.name))))];
+    // Squares on the frames only for the HoTs you track by eye; hovering a frame lists all of them (blooms etc.).
+    const SQUARE_HOTS = new Set(["lifebloom", "regrowth", "rejuvenation", "germination", "rejuvenation_germination"]);
+    const squareEffectsOf = (s, u) => effectsOf(s, u).filter(e => SQUARE_HOTS.has(e.name));
+    const hotNames = [...new Set(snaps.flatMap(s => s.effects.flatMap(list => (list || []).filter(e => e.hot && SQUARE_HOTS.has(e.name)).map(e => e.name))))];
     const hpColor = p => p > 0.5 ? "var(--heal)" : p > 0.25 ? "var(--c4)" : "var(--dmg)";
 
     // Deaths on the same displayed second share one square; clicking it shows the moment after the last of them.
-    const colorOf = d => roleColor[groupOf(d.unit || {})] || "var(--ink-3)";
+    const colorOf = d => d.unit ? d.unit.color : "var(--ink-3)";
     const exactTime = t => Math.floor(t / 60) + ":" + (t % 60).toFixed(1).padStart(4, "0");
     const deathGroups = [];
     for (const d of deaths) {
@@ -1515,7 +1964,7 @@ if (raidMembers.length) {
 
     if (hotNames.length)
       $("#rfGroups").insertAdjacentHTML("beforebegin", `<div class="legend rf-legend">${hotNames.map(n =>
-        `<span><i style="background:${hotColor(n)}"></i>${esc(hotLabel(n))}</span>`).join("")}<span class="faint">Number: seconds left</span></div>`);
+        `<span><i style="background:${hotColor(n)}"></i>${esc(hotLabel(n))}</span>`).join("")}<span class="faint">Number: seconds left · hover a frame for all your HoTs</span></div>`);
 
     const scrub = $("#rfScrub");
     scrub.max = String(snaps.length - 1);
@@ -1562,31 +2011,36 @@ if (raidMembers.length) {
         t.abs.hidden = !(ab > 0);
         if (ab > 0) { t.abs.style.left = (hp * 100).toFixed(1) + "%"; t.abs.style.width = (ab * 100).toFixed(1) + "%"; }
         t.pct.textContent = alive ? fmtPct(hp) : "Dead";
-        const fx = effectsOf(s, u).map(e => `<i style="background:${hotColor(e.name)}">${e.remains >= 0 ? Math.floor(e.remains) : ""}</i>`).join("");
+        if (t.mana) {
+          const mp = alive ? manaPct(s, u) : 0;
+          t.mana.style.width = (mp * 100).toFixed(1) + "%";
+          t.mana.classList.toggle("low", mp < 0.05);
+        }
+        const fx = squareEffectsOf(s, u).map(e => `<i style="background:${hotColor(e.name)}">${e.remains >= 0 ? Math.floor(e.remains) : ""}</i>`).join("");
         if (t.fxHtml !== fx) { t.fx.innerHTML = fx; t.fxHtml = fx; }
       }
       if (tipUnit) showUnitTip(tipUnit, tipX, tipY);
     }
 
     // Frames are built once; render() only updates them.
-    $("#rfGroups").innerHTML = groups.map(g => `
-      <div class="rf-group"><div class="rf-glabel" style="color:${roleColor[g.name]}">${g.name}</div>
-        <div class="rf-grid">${g.units.map(u => `
-          <div class="uf${u.name === healer.name ? " self" : ""}" data-u="${u.i}" tabindex="0">
+    $("#rfGroups").innerHTML = `<div class="rf-grid">${ordered.map(u => `
+          <div class="uf${u.self ? " self" : ""}${hasMana(u) ? " has-mana" : ""}" data-u="${u.i}" tabindex="0">
             <span class="uf-died" hidden>DIED</span>
             <div class="uf-hp"></div><div class="uf-abs" hidden></div>
-            <div class="uf-name">${esc(u.label)}</div><div class="uf-pct"></div><div class="uf-fx"></div>
-          </div>`).join("")}</div></div>`).join("");
+            <div class="uf-name" style="color:${u.color}">${esc(u.label)}</div><div class="uf-pct"></div><div class="uf-fx"></div>
+            ${hasMana(u) ? '<div class="uf-mana"><div class="uf-mana-fill"></div></div>' : ""}
+          </div>`).join("")}</div>`;
     let current = null, tipUnit = null, tipX = 0, tipY = 0;
     const tiles = units.map(u => {
       const node = $(`.uf[data-u="${u.i}"]`, $("#rfGroups"));
       return { u, node, hp: $(".uf-hp", node), abs: $(".uf-abs", node), pct: $(".uf-pct", node), fx: $(".uf-fx", node),
-        died: $(".uf-died", node), fxHtml: null };
+        died: $(".uf-died", node), mana: $(".uf-mana-fill", node), fxHtml: null };
     });
     function showUnitTip(u, x, y) {
       const s = current, fx = effectsOf(s, u);
-      showTip(`<div class="t-head">${esc(u.label)} <span class="faint">(${groupOf(u).replace(/s$/, "")})</span></div>
+      showTip(`<div class="t-head"><span style="color:${u.color}">${esc(u.label)}</span> <span class="faint">(${groupOf(u)}${u.self ? ", you" : ""})</span></div>
         <div class="t-row"><span>Health</span><span>${s.alive[u.i] ? fmtNum(s.health[u.i]) + " / " + fmtNum(u.max_health) : "Dead"}</span></div>
+        ${hasMana(u) && s.alive[u.i] ? `<div class="t-row"><span><i class="sw" style="background:#2f7fe0"></i>Mana</span><span>${fmtPct(manaPct(s, u))} (${fmtNum(s.mana[u.i])})</span></div>` : ""}
         ${s.absorb[u.i] ? `<div class="t-row"><span>Absorb</span><span>${fmtNum(s.absorb[u.i])}</span></div>` : ""}
         ${fx.length ? fx.map(e => `<div class="t-row"><span><i class="sw" style="background:${hotColor(e.name)}"></i>${esc(hotLabel(e.name))}${e.stacks > 1 ? " ×" + e.stacks : ""}</span><span>${e.remains >= 0 ? e.remains.toFixed(1) + "s" : "∞"}</span></div>`).join("")
           : `<div class="t-row"><span class="faint">${s.alive[u.i] ? "None of your HoTs" : "Dead"}</span><span></span></div>`}`, x, y);
@@ -1625,19 +2079,28 @@ manaSec.innerHTML = `
     <p>Mana over the fight, and how much of the fight each of your buffs was active.</p>
   </div>
   <div class="two-col">
-    <div class="panel chart-panel"><div class="chart-title"><h3>Mana</h3><div class="legend"><span><i class="line" style="background:var(--mana)"></i>Mana</span></div></div><div class="chart" id="manaChart"></div></div>
+    <div class="panel chart-panel"><div class="chart-title"><h3>Mana, one sample fight</h3>
+      <div class="legend"><span><i class="line" style="background:var(--mana)"></i>Mana</span></div></div>
+      <div class="chart" id="manaChart"></div></div>
     <div class="panel"><div class="chart-title" style="padding:18px 20px 0"><h3>Buff uptime</h3></div>
       <div class="uptimes">${buffs.length ? buffs.map(b => `<div class="up"><span>${esc(b.name)}</span><div class="track"><div class="fill" style="width:${(b.up * 100).toFixed(1)}%"></div></div><span class="pct">${fmtPct(b.up)}</span></div>`).join("") : '<p class="muted">No buff data in this report.</p>'}</div>
     </div>
   </div>`;
 app.appendChild(manaSec);
-if (manaTL.length) {
-  const mMax = maxMana || Math.max(...manaTL);
-  timeChart($("#manaChart"), [{
-    height: 180, length: manaTL.length, yMax: 100, yTicks: [0, 50, 100], yFormat: v => Math.round(v) + "%",
-    series: [{ name: "Mana", values: manaTL.map(v => (v / mMax) * 100), color: color("--mana"), kind: "area", opacity: 0.14 }],
-  }], { label: "Mana over time" });
-} else $("#manaChart").innerHTML = '<p class="empty">No mana timeline in this report.</p>';
+// Your mana in the sample fight, from the mana recorded with every cast, until your last action.
+// (The averaged timeline sinks towards zero in fights where you died early, so it would mislead here.)
+if (maxMana && healerSeq.length) {
+  const last = Math.ceil(Math.max(...healerSeq.map(e => e.time)));
+  const values = [];
+  let k = 0, cur = 100;
+  for (let t = 0; t <= last; t++) {
+    while (k < healerSeq.length && healerSeq[k].time <= t) { cur = (healerSeq[k].resources?.mana ?? 0) / maxMana * 100; k++; }
+    values.push(cur);
+  }
+  timeChart($("#manaChart"), [{ height: 200, length: values.length, yMax: 100, yTicks: [0, 50, 100], yFormat: v => Math.round(v) + "%",
+    series: [{ name: "Mana", values, color: color("--mana"), kind: "area", opacity: 0.14 }] }],
+    { label: "Mana over time", length: values.length - 1 });
+} else $("#manaChart").innerHTML = '<p class="empty">No mana data in this report.</p>';
 
 // ----- details
 const detSec = el("section", { id: "details" });
@@ -1666,5 +2129,8 @@ const obs = new IntersectionObserver(entries => {
 document.querySelectorAll("main section[id]").forEach(s => obs.observe(s));
 })();
 </script>
+<!-- Wowhead item names, icons, quality colours and tooltips for the item links (needs a connection) -->
+<script>const whTooltips = { colorLinks: true, iconizeLinks: true, renameLinks: true, iconSize: "large" };</script>
+<script src="https://wow.zamimg.com/js/tooltips.js"></script>
 </body>
 </html>

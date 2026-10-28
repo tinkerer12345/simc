@@ -541,8 +541,8 @@ void report_helper::generate_player_buff_lists( player_t& p, player_processed_re
     ri.buff_list.insert( ri.buff_list.end(), pet->buff_list.begin(), pet->buff_list.end() );
   }
 
-  // Raid auras belong to players, not enemy actors.
-  if ( !p.is_enemy() )
+  // Raid auras belong to players, not to enemy actors that take no buffs (encounter bosses).
+  if ( !p.is_enemy() || p.receives_buffs() )
     ri.buff_list.insert( ri.buff_list.end(), p.sim->buff_list.begin(), p.sim->buff_list.end() );
 
   // Filter out non-dynamic buffs, copy them into ri.dynamic_buffs and sort

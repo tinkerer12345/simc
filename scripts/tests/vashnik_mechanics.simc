@@ -1,0 +1,20 @@
+# Regression test profile for the Vashnik encounter mechanics.
+# Two stand-ins (a tank and a ranged) that cannot die, with no mitigation and no raid buffs, so every hit lands at
+# its base value and the whole scripted fight (4 Imbibes, 4 add waves) plays out. Raid-wide spells hit both, spells
+# on "n random players" hit both, tank spells hit the tank.
+max_time=345
+vary_combat_length=0
+optimal_raid=0
+
+raid_tanks=1
+raid_ranged=1
+raid_member_health=1000000000000
+raid_member_damage_reduction=0
+raid_member_avoidance=0
+raid_tank_health=1000000000000
+raid_tank_damage_reduction=0
+raid_tank_physical_reduction=0
+
+encounter=Vashnik
+difficulty=mythic
+enemy_health=1000000000

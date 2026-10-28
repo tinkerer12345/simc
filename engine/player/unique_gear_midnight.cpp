@@ -5069,6 +5069,44 @@ void coiled_fangstone( special_effect_t& effect )
 
   effect.execute_action = create_proc_action<coiled_fangstone_t>( "coiled_fangstone", effect );
 }
+
+// Sigil of the Impending Eclipse
+// 1309868 driver: RPPM on your heals. e1 = haste, e2 = haste for every e3% health the healed target is missing
+// 1309909 Forestall the End (15s haste buff)
+// The amount is taken from the target of the heal that procs it (after that heal). A proc while the buff is up
+// restarts it with the new amount.
+void sigil_of_the_impending_eclipse( special_effect_t& effect )
+{
+  struct forestall_the_end_cb_t final : public dbc_proc_callback_t
+  {
+    stat_buff_t* buff;
+    double base, per_step, step;
+
+    forestall_the_end_cb_t( const special_effect_t& e, stat_buff_t* b )
+      : dbc_proc_callback_t( e.player, e ),
+        buff( b ),
+        base( e.driver()->effectN( 1 ).average( e ) ),
+        per_step( e.driver()->effectN( 2 ).average( e ) ),
+        step( std::max( 1.0, e.driver()->effectN( 3 ).base_value() ) )
+    {}
+
+    void execute( const spell_data_t*, player_t*, action_state_t* s ) override
+    {
+      double missing = 0.0;
+      if ( s && s->target && !s->target->is_enemy() )
+        missing = std::max( 0.0, 100.0 - s->target->health_percentage() );
+
+      buff->expire();
+      buff->stats[ 0 ].amount = base + per_step * std::floor( missing / step );
+      buff->trigger();
+    }
+  };
+
+  auto buff = create_buff<stat_buff_t>( effect.player, effect.player->find_spell( 1309909 ), effect.item )
+    ->add_stat( STAT_HASTE_RATING, effect.driver()->effectN( 1 ).average( effect ) );
+
+  new forestall_the_end_cb_t( effect, buff );
+}
 }  // namespace trinkets
 
 namespace weapons
@@ -6558,6 +6596,7 @@ void register_special_effects()
   register_special_effect( 1250564, trinkets::resonant_bellowstone );
   register_special_effect( 1256790, trinkets::undreamt_gods_oozing_vestige );
   register_special_effect( 1259633, trinkets::light_company_guidon );
+  register_special_effect( 1309868, trinkets::sigil_of_the_impending_eclipse );
   register_special_effect( 1251817, DISABLED_EFFECT );  // Light Company Guidon equip driver
   register_special_effect( 1251822, trinkets::heart_of_ancient_hunger );
   register_special_effect( { 1260592, 1265809 }, trinkets::plume_of_beloren ); // Radiant and Umbral Plume

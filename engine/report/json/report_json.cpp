@@ -3,6 +3,7 @@
 // Send questions to natehieter@gmail.com
 // ==========================================================================
 
+#include "dbc/trait_data.hpp"
 #include "interfaces/sc_js.hpp"
 #include "rapidjson/document.h"
 #include "rapidjson/filewritestream.h"
@@ -14,6 +15,7 @@
 #include "report/reports.hpp"
 #include "sim/iteration_data_entry.hpp"
 #include "sim/plot.hpp"
+#include "sim/tolerance.hpp"
 #include "sim/profileset.hpp"
 #include "sim/reforge_plot.hpp"
 #include "sim/scale_factor_control.hpp"
@@ -408,6 +410,58 @@ void gear_to_json( JsonOutput root, const player_t& p )
 
     for ( const auto& [ stat, amount ] : item_stats )
       slotnode[ stat ] = amount;
+
+    // Enchant and gem names, for gear displays (e.g. the healer report's character panel).
+    if ( item.parsed.enchant_id )
+    {
+      const auto& enchant = p.dbc->item_enchantment( item.parsed.enchant_id );
+      if ( enchant.id && enchant.name )
+      {
+        // Some enchant names are tooltip templates ("+$k1 Intellect"): use the enchant's spell name then.
+        std::string name = enchant.name;
+        if ( name.find( '$' ) != std::string::npos && enchant.id_spell )
+        {
+          const spell_data_t* spell = p.find_spell( enchant.id_spell );
+          if ( spell->ok() )
+            name = spell->name_cstr();
+        }
+        slotnode[ "enchant" ] = name;
+      }
+    }
+    std::vector<std::string> gems;
+    for ( int gem : item.parsed.gem_id )
+    {
+      if ( gem <= 0 )
+        continue;
+      const auto& gem_data = p.dbc->item( gem );
+      if ( gem_data.id && gem_data.name )
+        gems.emplace_back( gem_data.name );
+    }
+    if ( !gems.empty() )
+    {
+      auto arr = slotnode[ "gems" ].make_array();
+      for ( const auto& g : gems )
+        arr.add() = g;
+    }
+  }
+}
+
+// Expansion (Omnium) traits from omnium_talents=, with their names.
+void omnium_to_json( JsonOutput root, const player_t& p )
+{
+  auto arr = root.make_array();
+  for ( auto entry : util::string_split<std::string_view>( p.omnium_talents_str, "/" ) )
+  {
+    auto id = util::string_split<std::string_view>( entry, ":" )[ 0 ];
+    if ( !util::is_number( id ) )
+      continue;
+    const auto* trait = trait_data_t::find( util::to_unsigned( id ), p.is_ptr() );
+    if ( !trait || !trait->id_trait_node_entry )
+      continue;
+    auto node        = arr.add();
+    node[ "id" ]     = trait->id_trait_node_entry;
+    node[ "spell" ]  = trait->id_spell;
+    node[ "name" ]   = trait->name ? trait->name : "";
   }
 }
 
@@ -628,6 +682,7 @@ void raid_frames_to_json( JsonOutput root, const raid_frames_t& frames )
     node[ "role" ]       = u.role;
     node[ "position" ]   = u.position;
     node[ "max_health" ] = util::round( u.max_health, 0 );
+    node[ "max_mana" ]   = util::round( u.max_mana, 0 );
   }
 
   auto snapshots = root[ "snapshots" ];
@@ -637,15 +692,17 @@ void raid_frames_to_json( JsonOutput root, const raid_frames_t& frames )
     auto node    = snapshots.add();
     node[ "time" ] = util::round( s.time, 3 );
 
-    std::vector<double> health, absorb, alive;
+    std::vector<double> health, absorb, mana, alive;
     for ( size_t i = 0; i < s.health.size(); ++i )
     {
       health.push_back( util::round( s.health[ i ], 0 ) );
       absorb.push_back( util::round( s.absorb[ i ], 0 ) );
+      mana.push_back( util::round( s.mana[ i ], 0 ) );
       alive.push_back( s.alive[ i ] ? 1 : 0 );
     }
     node[ "health" ] = health;
     node[ "absorb" ] = absorb;
+    node[ "mana" ]   = mana;
     node[ "alive" ]  = alive;
 
     // Per unit, a list of [name, remaining seconds, stacks, is_hot].
@@ -876,8 +933,10 @@ void to_json( JsonOutput& arr, const ::report::json::report_configuration_t& rep
   root[ "name" ] = p.name();
   root[ "race" ] = util::race_type_string( p.race );
   root[ "level" ] = p.true_level;
-  root[ "role" ] = p.is_boss() ? "" : util::role_type_string( p.role );
-  if ( p.is_boss() )
+  // Encounter bosses (encounter=<name>) have no role and the class "Boss"; other targets as before.
+  bool encounter_boss = p.is_boss() && !p.sim->encounter_str.empty();
+  root[ "role" ] = encounter_boss ? "" : util::role_type_string( p.role );
+  if ( encounter_boss )
   {
     root[ "class" ] = "Boss";
   }
@@ -1014,6 +1073,8 @@ void to_json( JsonOutput& arr, const ::report::json::report_configuration_t& rep
   }
 
   gear_to_json( root[ "gear" ], p );
+  if ( !p.omnium_talents_str.empty() )
+    omnium_to_json( root[ "omnium" ], p );
 
   JsonOutput custom = root[ "custom" ];
   p.output_json_report( custom );
@@ -1103,6 +1164,79 @@ void profileset_fetch_output_data( const profileset::profile_output_data_t& outp
   if( !output_data.talents_str().empty() )
   {
     ovr[ "talents" ] = output_data.talents_str();
+  }
+}
+
+// Damage tolerance results (sim/tolerance.hpp): the profile's search, the gear sets and the noise runs.
+void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
+{
+  root[ "version" ]      = 3;
+  root[ "share" ]        = t.share;
+  root[ "share_source" ] = t.share_source;
+  auto criteria                = root[ "criteria" ];
+  criteria[ "max_death_rate" ] = t.max_death_rate;
+  criteria[ "oom_threshold" ]  = t.oom_threshold;
+  criteria[ "precision" ]      = t.precision;
+  criteria[ "iterations" ]     = t.iterations;
+  auto milestones = root[ "milestones" ].make_array();
+  for ( auto&& m : util::string_split<util::string_view>( t.milestones_str, "/" ) )
+  {
+    auto colon = m.rfind( ':' );
+    if ( colon == util::string_view::npos )
+      continue;
+    auto node       = milestones.add();
+    node[ "label" ] = std::string( m.substr( 0, colon ) );
+    node[ "score" ] = util::to_double( m.substr( colon + 1 ) );
+  }
+
+  auto setups = root[ "setups" ].make_array();
+  for ( const auto& s : t.results )
+  {
+    auto sn      = setups.add();
+    sn[ "name" ] = s.name;
+    sn[ "role" ] = s.role;
+    sn[ "seed" ] = s.seed;
+    auto opts    = sn[ "options" ].make_array();
+    for ( const auto& o : s.options )
+      opts.add() = o;
+    auto gear = sn[ "gear" ];
+    for ( const auto& [ slot, item ] : s.gear )
+    {
+      gear[ slot ][ "item" ]   = item.first;
+      gear[ slot ][ "ilevel" ] = item.second;
+    }
+    auto tests = sn[ "tests" ].make_array();
+    for ( const auto& r : s.tests )
+    {
+      auto tn      = tests.add();
+      tn[ "test" ] = r.test;
+      if ( r.score >= 0 )
+        tn[ "score" ] = r.score;
+      if ( r.first_fail >= 0 )
+        tn[ "first_fail" ] = r.first_fail;
+      tn[ "held" ] = r.held;
+      auto probes  = tn[ "probes" ].make_array();
+      for ( const auto& p : r.probes )
+      {
+        auto pn                = probes.add();
+        pn[ "pct" ]            = p.pct;
+        pn[ "pass" ]           = p.pass;
+        pn[ "players_dying" ]  = p.players_dying;
+        pn[ "mana_end" ]       = p.mana_end;
+        if ( p.oom_at >= 0 )
+          pn[ "oom_at" ] = p.oom_at;
+        pn[ "hps" ]            = p.hps;
+        pn[ "wipe_rate" ]      = p.wipe_rate;
+        pn[ "fight_length" ]   = p.fight_length;
+        auto deaths            = pn[ "deaths" ].make_array();
+        for ( const auto& [ name, rate ] : p.deaths )
+        {
+          auto dn      = deaths.add();
+          dn[ "name" ] = name;
+          dn[ "rate" ] = rate;
+        }
+      }
+    }
   }
 }
 
@@ -1347,6 +1481,13 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
   {
     options_root[ "encounter" ] = sim.encounter_str;
     options_root[ "encounter_difficulty" ] = sim.encounter_difficulty_str;
+    auto damage                            = options_root[ "encounter_damage" ];
+    damage[ "steady" ]                     = sim.encounter_damage_steady;
+    damage[ "burst" ]                      = sim.encounter_damage_burst;
+    damage[ "spot" ]                       = sim.encounter_damage_spot;
+    damage[ "tank" ]                       = sim.encounter_damage_tank;
+    damage[ "avoidable" ]                  = sim.encounter_damage_avoidable;
+    damage[ "all" ]                        = sim.encounter_damage_all;
   }
   options_root[ "desired_targets" ] = sim.desired_targets;
   options_root[ "default_aura_delay" ] = sim.default_aura_delay.mean;
@@ -1436,7 +1577,15 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
     // Every fight is a wipe (all players died) or a kill (survived to the end of the encounter).
     stats_root[ "encounter_fights" ] = sim.simulation_length.count();
     stats_root[ "encounter_wipes" ]  = sim.encounter_wipes;
+    auto reasons                     = stats_root[ "encounter_wipe_reasons" ];
+    reasons[ "all_dead" ]            = sim.encounter_wipes_all_dead;
+    reasons[ "tanks_dead" ]          = sim.encounter_wipes_tanks_dead;
+    reasons[ "raid_low" ]            = sim.encounter_wipes_raid_low;
+    stats_root[ "encounter_wipe_raid_pct" ] = sim.encounter_wipe_raid_pct;
   }
+
+  if ( sim.tolerance && !sim.tolerance->results.empty() )
+    tolerance_json( *sim.tolerance, root[ "tolerance" ] );
 
   if ( sim.report_details != 0 )
   {

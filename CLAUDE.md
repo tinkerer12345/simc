@@ -1,76 +1,86 @@
 # Healer simulation fork of SimulationCraft
 
-Personal fork of SimC aimed at simulating **healers** against scripted boss encounters.
-Healer under test: Silverblooms, Restoration Druid (EU/Silvermoon).
+Personal fork of SimC that simulates **healers** against scripted boss encounters.
+Healer under test: Silverblooms, Restoration Druid (EU/Silvermoon). Encounter: Vashnik, Mythic.
 
-## Build and run
-- Build (PowerShell, repo root). Only needed after changes under `engine\`:
+## Goal: measure damage tolerance, not healing output
+- Effective HPS is capped by incoming damage, so it can't rank setups. The result is **how much damage a setup survives**: the player's **limit**.
+- One healer (the druid) + raid stand-ins, no other healing. The 3 stand-in healers are names only (they take damage, never heal). The removed other-healer work is in git history (commit d55782e103).
+- **Limit** = highest % of one healer's share of the damage survived. 100% = the share: `tolerance_share=0.2032` (a quarter of the 4 healers' effective healing / raid damage taken on the Mythic kill log), set in `scripts\restoration_druid_sim.bat`. Reference marks (`tolerance_milestones`): your kill 103.1%, top healer on the kill 112.2%, 3-healer setup 133.3%.
+- **Fail rule:** any player dies in more than 5% of fights. Running out of mana is NOT a fail, only information.
+- **Damage types**, each with its own multiplier: steady, burst, spot, tank, avoidable (damage a clean raid wouldn't take, kept at the log's rate). All types raised together = the limit; then each type alone with the others held at the limit, to show where the room is.
+- Gear sets are compared like DPS sims: **% more damage you can heal than your current gear**, better/worse only beyond the measured noise.
+- Results are only as good as the healer APL and the encounter model: compare setups with the same APL.
+
+## Build, run, test
+- Build (PowerShell, repo root), only after changes under `engine\`:
   `& 'C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe' simc_vs2026.sln /p:Configuration=Release /p:Platform=x64 /m /v:minimal`
-- Run: `scripts\restoration_druid_sim.bat` -> writes SimC HTML/JSON/txt to `scripts\reports\`, then builds and opens the healer report.
-- Profile: `scripts\restoration_druid.simc` (`role=heal`, `max_time=345`, `encounter=Vashnik`, `difficulty=mythic`). Its APL is only self-Regrowth: a test harness, not a real rotation.
+- Run: `scripts\restoration_druid_sim.bat` = ONE simc call (no PowerShell; user, 2026-10-26: everything the engine can do lives in the engine): the detailed sim of the current gear at the share, the limit search, the gear sets of `scripts\gear_sets.simc`, and the healer report (`scripts\reports\restoration-druid-healer.html`, opened). ~2.5 min with 4 gear sets.
+- Profile: `scripts\restoration_druid.simc` (the user's SimC addon export of 2026-10-26: talents, gear, Mid2 2pc/4pc, Omnium runes; `encounter=Vashnik`, `difficulty=mythic`, `max_time=345`). Player options go in the druid section: command-line options apply to the LAST actor (Vashnik).
+- `scripts\tests\run_regression.ps1` after every engine change (~1 min, exit 1 on failure, 129 checks; `-UpdateBaseline` only after confirming a change is intended):
+  - Vashnik mechanics (`tests\vashnik_mechanics.simc`, immortal stand-ins, no mitigation): per-hit damage, hit counts, damage-type multipliers, timings from the log.
+  - The limit search (`tests\tolerance_sets.simc`): JSON shape, a gear set swaps the healer's item, no normal profileset run.
+  - `tests\baseline.json`: golden deterministic results for the healer profile and stock MID1 Shadow Priest, Blood DK, Balance/Feral/Guardian and MID2 Feral, proving the fork doesn't change normal sims. Keep their iterations/threads fixed.
+- Upstream's own tests (`tests\run.py`) need Python + `simc_support`, not installed here. Equivalent smoke test: every `profiles\MID1`/`MID2` profile on Patchwerk/DungeonSlice/HeavyMovement, druid profiles with `enable_all_talents=1 enable_all_sets=1`; pass = no `Error:` line. Known upstream failures, not ours: 18 MID1 profiles have outdated talent hashes, Demon Hunters refuse DungeonSlice.
+- PowerShell gotchas (regression script): `[math]::Min(1, x)` picks the Int32 overload (use `1.0`); names are case-insensitive; SimC warnings on stderr become ErrorRecords (don't treat them as failures).
+
+## Keeping upstream intact
+- Normal SimC sims (no `encounter=`, no opt-in options) must behave and report exactly as upstream. Gate fork behaviour on `!sim->encounter_str.empty()`, `receives_buffs()` / `receives_raid_debuffs()` (false only for our bosses), the Restoration spec / its talents, or opt-in options. `is_boss()` alone is NOT enough: it is also true for stock target dummies (the 2026-10-28 review fixed "Boss" labels leaking into every report).
+- Additive JSON fields are fine (healers get dtps/deaths/heal_taken; gear gets enchant/gem names; players get `omnium`).
+
+## Damage tolerance (engine)
+- `engine/class_modules/bosses/sc_encounter_damage.cpp/.hpp`: `damage_type_e` and `raid_damage_t` (all living players, `random_targets( n )` or `single_target()`; target list rebuilt every cast because enemy actions are never `activate()`d; scaled by its type's multiplier before mitigation). **Every boss damage spell must be a `raid_damage_t` with a type.** Options `encounter_damage_steady/_burst/_spot/_tank/_avoidable` and `encounter_damage_all` (on top).
+- `engine/sim/tolerance.cpp/.hpp` (`sim->tolerance`, like `plot_t`), `tolerance=1`: after the main sim (`sc_main.cpp`), child sims (`deterministic=1`, same seed) bracket the breaking point by steps, then halve to the precision. The profile: all damage (`tolerance_iterations` 1000, precision 0.0025), then each of `tolerance_tests` (300 fights, 0.005). Gear sets: the profile's `profileset."Name"+=line` lines, taken over from `profileset_map` at init (so no normal profileset run), each line replacing the healer's same-name option or added at the end of the healer's section (before `encounter=` / `raid_*=` / the next actor); all damage only, starting at the profile's limit. `tolerance_noise_runs` (2) reruns with other seeds give the noise. Item lines may carry `ilevel=<n>`. JSON `sim.tolerance` (version 3: setups[] with role main/set/noise, gear, tests[] with probes).
+- `healer_html=<file> healer_html_template=<file>` (needs a JSON report): `tolerance_t::print_healer_html` puts the JSON into the template's `__SIMC_DATA__`.
 
 ## Encounters (boss modules)
-- `encounter=<name>` profile option -> `bosses::create_encounter()` (registered in `engine/sim/sim.cpp`).
-- `engine/class_modules/bosses/sc_bosses.cpp/.hpp`: dispatcher ONLY. Never put boss-specific code here.
-- One file pair per boss, e.g. `sc_vashnik.cpp/.hpp`. New source files must be added to `source_files/engine_make`, `source_files/VS_engine.props`, `source_files/cmake_engine.txt` and `source_files/QT_engine.pri`.
-- Reusable enemy base: `enemy::enemy_t` in `engine/class_modules/sc_enemy.hpp`. Adds are enemy pets (`pet_t`, `PET_ENEMY`).
-- Boss rules: `ROLE_NONE`, reported as class "Boss", keep race, no player buffs (`receives_buffs()` false), no raid debuffs (`receives_raid_debuffs()` false). Generic `enemy=` behaviour must stay unchanged.
-- Boss spells hit living, non-pet players only. Background boss actions must call `sequence_add(...)` to appear in the report timeline.
-- Hand-coded damage must set `base_dd_max = base_dd_min` too: SimC rolls between min and max (max defaults to 0), so setting only min silently halves the damage.
+- `encounter=<name>` -> `bosses::create_encounter()`; `sc_bosses.cpp/.hpp` is a dispatcher ONLY. One file pair per boss (`sc_vashnik.cpp/.hpp`); new source files go into `source_files/engine_make`, `VS_engine.props`, `cmake_engine.txt` and `QT_engine.pri`.
+- Base `enemy::enemy_t` (`sc_enemy.hpp`); adds are enemy pets (`PET_ENEMY`). Bosses: `ROLE_NONE`, class "Boss", no player buffs, no raid debuffs.
+- Background boss actions must call `sequence_add(...)` to appear in the report timeline. Hand-coded damage: set `base_dd_max = base_dd_min` and create spells with non-zero damage (SimC only applies mitigation to actions with direct damage at init).
+- Generic hooks: encounter timers (`sim->encounter_timer( name, ago )`, APL `encounter.<name>.remains` / `.ago`) and dispels (`sim->encounter_dispellable` / `encounter_dispel`, APL `target.dispellable`; Nature's Cure keeps its cooldown only when something was removed, only when the hook is set).
+- Wipe rules (encounter sims): everyone dead, every tank dead (`encounter_wipe_on_tanks`), or fewer than `encounter_wipe_raid_pct` (0.2) alive; reaching the fight end = kill. On a death, every actor's HoTs/DoTs on that player are cancelled. Profile sets `infinite_health=0`. No `Healing_Target_N` padding in encounter sims unless `healing=<n>`.
 
-## Vashnik (Mythic, validated against a Mythic WCL log; more damage events still to be added)
-- Simulating **Mythic** only. `difficulty=mythic` (boss option, line after `encounter=`) selects a `vashnik_tuning_t` table; other difficulties are rejected until their values are filled in. All encounter numbers live in that table. Fight length 345s to match the log.
-- Damage values are tooltip values (no raid debuff). In the log every Vashnik spell landed at x0.952 (a damage-done debuff the raid put on enemies; some adds had it too), so log-only values are divided by 0.952.
-- Hand-coded "hits every living player" spells derive from `raid_damage_t`. Create them with non-zero damage: SimC only applies target mitigation to actions that have direct damage at init.
-- Imbibe (ID 1284663): 4s cast at 20s then every 84s; activates the fountains. Vashnik stands in fire and shadow, gaining Flame/Shadow Infusion (1293971/1293968, 1.5 min, so stacks never drop). Each Imbibe deals no damage itself but triggers Conflagrating Expulsion (1298587, fire) and Gloom Expulsion (1284785, shadow assumed) for 108,343 x cast number each (log 103,142.5), adds a Toxic Vapor stack and spawns a Burning Venom wave.
-- Toxic Vapor (ID 1284561, "School Damage", 300yd): room aura active from the pull with 1 stack; every 2s, 10,001 Nature per stack (tooltips: Mythic 10,001, Heroic 9,269, Normal 6,592).
-- Burning Venom waves: 3 adds, 3s after each Imbibe (4 waves, `Burning_Venom_1..12`). Burning Presence 33,336 fire every 3s (in the log the druid is not always in range). Deaths per wave from the log; on death Caustic Surge 100,009 + 3 ticks of 83,341 fire, 1s apart.
-- Caustic Explosion (ID 1295209, fire, 300yd): 233,354 (log 222,153); player-triggered, so its 28 times are replayed from the log (groups of 4, ~20s and ~72s after each Imbibe).
-- Spell IDs are not in the bundled spell data, so damage is hand-coded.
-- Mitigation (verified against in-game tooltips and the log): versatility (4.92% with Mark of the Wild) x Thick Hide (4%) x avoidance (1.77%). Avoidance applies to every Vashnik spell, ticks included: the log shows identical mitigation for ticks and hits at the same moment.
-- SimC players have infinite health by default; the profile sets `infinite_health=0` so the healer can die. In encounter sims (`encounter=` set) the iteration ends when every non-pet player has died (`player_t::demise` -> `sim->cancel_iteration()`) and counts as a wipe (`sim->encounter_wipes`, merged across threads, only for data-collected iterations); other sims are unchanged (verified with deterministic stock profiles). JSON: `sim.statistics.encounter_fights` / `encounter_wipes`; the report shows a KILL/WIPE badge (kill = survived to the end, since boss health is a placeholder and fight length is the real kill time).
-- SimC runs one warm-up iteration per thread that is not data-collected, but `collected_data.deaths` still counts its deaths (deaths.count can exceed the fight count). Sample-fight charts are still cut at the healer's last action.
-- Enemy actions are never `activate()`d (enemies are not in `player_list`), so their cached target lists are not refreshed when a player dies. `raid_damage_t::execute` rebuilds the list on every cast; before this, dead players kept taking damage (it inflated damage taken ~3x).
-- Why the sim dies but the real player didn't: in the log ~17.7M damage reached Silverblooms and the raid's other healers and shields kept them up; the sim has no other healing yet (see Next steps 1). Sim damage is also ~16% above the log (0.952 debuff removed, lower mitigation, Burning Presence always in range).
+## Vashnik (Mythic)
+- All numbers in `vashnik_tuning_t` (`difficulty=mythic`; other difficulties rejected). Sources: Wowhead tooltips (`nether.wowhead.com/tooltip/spell/<id>` shows Mythic values) and the user's WCL CSVs; log values divided by 0.952 (a damage-done debuff the raid kept on enemies). Spell IDs aren't in SimC's data, so damage is hand-coded.
+- Mechanics: Imbibe (4s cast at 20s, every 84s) -> Expulsions (108,343 x cast number each), +1 Toxic Vapor stack, Burning Venoms (Burning Presence; Caustic Surge at logged deaths) and 8 Shrouded Venoms (Congealing Bolt until logged deaths). Toxic Vapor from the pull. Plague Froth + Plague Wave, Malignant Catalyst + Catalytic Bile, Dripping Fangs + melee with tank swaps, Exploding Infection (7 waves of 4; removal = Caustic Explosion on everyone; the healer owns 1 dispel per wave, the others follow the log; undispelled ones expire after 30s, an assumption).
+- Tags: steady = Toxic Vapor, Burning Presence; burst = Expulsions, Caustic Surge, Caustic Explosion, Malignant Catalyst; spot = Plague Froth, Catalytic Bile, Congealing Bolt, Exploding Infection; tank = Dripping Fangs, melee; avoidable = Plague Wave.
+- Not modelled: Stygian Infection (heal absorb; needs a generic heal-absorb feature and application data), Virulent Fumes, Umbral Ejection, Catalytic Bile's no-soak hit, Dripping Fangs' physical-taken debuff. Per hit the sim runs ~10-20% above the log.
 
-## Raid members (stand-ins, engine)
-- Sim options `raid_tanks` / `raid_healers` / `raid_ranged` / `raid_melee=<n>` (max 39 total) create `Tank_1`, `Healer_1`, `Ranged_1`, `Melee_1`... (`engine/class_modules/raid/sc_raid_member.cpp/.hpp`, settings in `sim_t::raid_stand_in`). Profile uses 2/3/7/7 + the druid = 20. Settings (placeholders): `raid_member_health` 900000, `raid_member_damage_reduction` 0.10, `raid_member_avoidance` 0, `raid_tank_health` 1300000, `raid_tank_damage_reduction` 0.15, `raid_healer_hps` 0 (each stand-in healer heals the lowest-health living player every 1s; set from log data). Put them after the druid section, before `encounter=`.
-- Roles: tanks ROLE_TANK/position front, healers ROLE_HEAL/ranged_back, ranged ROLE_DPS/ranged_back, melee ROLE_DPS/back. Melee vs ranged is only a label so far (no positional damage).
-- A raid member has health, damage reduction, no rotation/gear/consumables/racials, can die. It reuses `PLAYER_SIMPLIFIED` (SimC's Evoker stand-in type: no gear or item effects) and borrows Priest base stats like `simplified_player_t`. Must use `RACE_NONE`, the default level (`sim->max_player_level` is -1 while parsing: level -1 crashed init) and "disabled" consumables. Stand-ins show in JSON with race "none".
-- Boss spells already hit every living player and the wipe check covers them. In encounter sims every player's JSON gets dtps/deaths/heal_taken. The druid test APL heals the lowest-health player (`target_if=min:target.health.pct`).
-- With `raid_healer_hps=0` the whole raid wipes at ~0:38-0:45.
+## Raid stand-ins
+- `raid_tanks/_healers/_ranged/_melee=<n>` (max 39) create stand-ins named after specs (the report reads class colour from the name); `sc_raid_member.cpp/.hpp`. Profile: 2/3/7/7 + the druid = 20, placed before `encounter=`. Health and damage reduction only (`PLAYER_SIMPLIFIED`, `RACE_NONE`, default level: level -1 crashes init); tank reductions calibrated to the log's tank damage, the rest are placeholders.
 
-## Raid frames (engine, opt-in)
-- Player option `raid_frames=1` (on the druid). `engine/player/raid_frames.cpp/.hpp`, member `player_t::raid_frames`. In the sample fight (same rule as `sequence_add`: `nth_iteration() == 1`) it snapshots every player each second and at each death: health, absorbs (`absorb_buff_list`), alive, and the owner's HoTs on them (`action->find_dot( target )`), only from class spells (`data().class_family() != 0`, so item/enchant/rune procs like Rune of Unleashed Fire are skipped); buffs are deliberately not recorded. The report shows each HoT as a square in its colour (`HOT_COLORS`, legend above the frames) with the seconds left rounded down. Deaths store the killing blow. JSON: `collected_data.raid_frames` {units, snapshots, deaths}.
-- Units use `p->role` (profile role), not `primary_role()` (a Resto Druid reports "attack").
-- Report "The raid": cross-fight summary, then raid frames grouped Tanks/Healers/Melee/Ranged, a strip of death squares (click to jump), a timeline scrubber, HoT timer squares, hover tooltips. Frames are built once and `render()` updates them in place (rebuilding them on every slider step caused jitter); the slider row and status line have fixed sizes. Deaths on the same displayed second share one square (role-coloured strip per death, hover lists each with its killing blow); clicking shows the snapshot after the last of them and highlights all of them (red outline, DIED tag) with a cause summary.
-- In encounter sims, when a player dies, every actor's HoTs/DoTs on them are cancelled (`player_t::demise`; SimC only cancels the dead actor's own). The recorder stores no effects or absorbs for dead units.
-- Verify the report without a browser: Edge headless `--dump-dom` / `--screenshot` (URL-encode spaces in the file path, use a scratch `--user-data-dir`).
-- Debugging crashes: debug/log output is buffered and lost on a crash; use temporary `fprintf( stderr, ... )` traces (e.g. in `sim_t::init_actor`, which runs each actor's init steps in order). No cdb on this machine.
+## Restoration Druid (`sc_druid.cpp`)
+- Upstream lacked most of the current Resto kit; implemented and gated by talent/set/spec: Abundance, Power of the Archdruid, Nature's Bounty, Thriving Vegetation, Nurturing Dormancy, Rampant Growth, Overgrowth, Everbloom cleave, Blooming Frenzy, Photosynthesis, Lifetreading, Swiftmend extras, Flourish, Convoke in caster form, the Wildstalker kit, diminishing Harmony, Mid2 set (Genesis). Mana: Innervate restores mana, Master Shapeshifter (caster and 5-CP cat finishers), Starsurge's real cost. Fixed upstream Resto bugs (free Germination, Clearcasting never consumed, Lifebloom double bloom, final-tick `adjust_duration`, Harmony on enemies).
+- Trinket implemented in `unique_gear_midnight.cpp`: Sigil of the Impending Eclipse (haste proc scaled by the healed target's missing health).
+- Not modelled: Everbloom Lifebloom stacking every 5s (waiting on the user's Lifebloom tick data), Convoke's mini-Tranquility, Ironfur mana.
+- APL additions: actions `ironbark`, `natures_swiftness`; expressions `injured_allies.<pct>`, `raid_health.pct`, `active_dot.rejuvenation`, `active_dot.regrowth`. The profile APL follows the user's notes and kill-log cast counts (HoT upkeep on self and one tank, Tranquility ramp before Imbibes, Wild Growth/Nature's Swiftness/Hex Lord's Dooming Idol before Convoke, Heart of the Wild cat weave for mana, Starsurge/Wrath in downtime). Change it with the user, not unilaterally.
+- Calibration vs the kill log: most per-hit values within ~20%; raw HPS 481k vs the log's 729k.
+- Planned by the user (discuss first): Thriving Vegetation point into Verdancy, Reforestation into Nature's Bounty.
 
-## Death recap (engine, opt-in)
-- Player option `death_recap=<seconds>` (0 = off, the default; max 120). `engine/player/death_recap.cpp/.hpp`, member `player_t::death_recap`.
-- While on, keeps a rolling window of damage taken, healing received and waiting (idle) time; on death stores a per-second summary (damage, absorbed, healing, overheal, health, mana, idle), damage by ability and the killing blow. Up to 1000 deaths kept; merged across threads. Exported as `collected_data.death_recaps`.
-- Hooks (all guarded by `enabled()`): `player_t::do_damage` (after health loss, and at the death check), `assess_heal`, the three waiting-time sites, `reset`, `merge`. Mana is only sampled at damage/heal events.
-- Verified harmless: `deterministic=1` runs with it off and on give identical results (druid profile, stock Shadow Priest and Blood DK).
-- Command-line options apply to the LAST actor in the profile (Vashnik here), not the druid; put player options in the druid section.
+## Opt-in recorders (player options on the druid)
+- `raid_frames=1`: the sample fight, every player each second and at each death (health, mana, absorbs, your class-spell HoTs, killing blows). Units use `p->role`, not `primary_role()`.
+- `death_recap=<seconds>`: per-second summary before each death, damage by ability, killing blow. Deterministic runs are identical with it on or off.
 
-## Healer report (our own, separate from SimC's HTML report)
-- "Why you died" section (only when death recaps exist): cause split across deaths, a recap chart of the last seconds (earliest / typical / latest death), and what hit you. Causes come from `DEATH_RULES` in the template (burst, out of mana, idle while dropping, not enough healing): interpretation, tunable without a rebuild.
-- `scripts/healer_report/healer_report_template.html`: all layout and logic (vanilla JS + SVG, dark by default). Template changes never need a rebuild.
-- `scripts/healer_report/build_healer_report.ps1 -Json <file> [-Out <file>] [-Open]` injects SimC JSON into the template.
-- Difficulty is stored on the sim (`sim->encounter_difficulty_str`) and written to JSON as `sim.options.encounter` / `encounter_difficulty` (only when an encounter is set); the report shows it as a badge, in the top bar and in Simulation settings.
-- `engine/report/json/report_json.cpp` was changed so healers also get dtps / timeline_dmg_taken / deaths / heal_taken (SimC only did this for tanks).
-- SimC JSON quirks: `collected_data.deaths` holds death TIMES (count = fights ending in death, mean = average time); real fight count is `fight_length.count`; `collected_data.dtps` is damage taken PER FIGHT; buff `uptime` is 0-100; `buffed_stats` is empty (use gear ratings and `action_sequence[].resources_max`); `timeline_healing_taken` is empty for self-healing; background actions are not in `action_sequence` unless logged.
-- Do not restyle SimC's built-in HTML report; that attempt was reverted.
-- Report sections: summary (with casting/idle bar), timeline, activity (donut + casting-per-time-slice columns from `waiting_time` and per-spell `total_execute_time`), healing, damage taken (school colours, mitigated = `total_amount` - `actual_amount`), mana and buffs, details.
-- `build_healer_report.ps1` needs absolute paths for `-Out` when run from another directory.
+## Healer report (`scripts/healer_report/healer_report_template.html`)
+- All layout and logic (vanilla JS + SVG, dark by default); template changes never need a rebuild. Sections: summary; **Your gear** (character sheet with Wowhead icons, stats, enchants, gems, Omnium runes; the best gear set highlighted); **Your limit** (one number, per kind of damage lowest to highest, reference marks); **Gear comparison** (▲/▼/– vs current gear, grey = noise); then "Fight details: your current gear" (timeline, why you died, casting vs idle, healing, damage, the raid, mana and buffs, details).
+- Wording for players (user, 2026-10-26): "limit"; no "requirement", "headroom", "level", script names or run metadata; every section says which gear it shows.
+- Item and rune names, icons, colours and in-game tooltips come from Wowhead's `tooltips.js` on `wowhead.com/item=` / `spell=` links; an "In-game tooltips" toggle (localStorage) switches them off, the report's own tooltips stay.
+- SimC JSON quirks: `collected_data.deaths` holds death TIMES (fight count = `fight_length.count`); `dtps` is per fight; buff `uptime` is 0-100; `buffed_stats` is empty; averaged mana timelines sink when players die early (use `action_sequence[].resources.mana`).
+- Verify without a browser: Edge headless `--dump-dom` / `--screenshot` (URL-encode spaces, scratch `--user-data-dir`, `--virtual-time-budget=8000` for Wowhead's script). Don't restyle SimC's built-in HTML report.
 
-## Next steps
-1. Healing from the raid's other healers onto everyone (needs a WCL "Healing Taken by source" export), and a per-player damage-taken-by-ability breakdown (the report's "What hurt" is raid-wide). Burning Venom `true_level` is set from `max_player_level` (-1) at construction too, so the adds are level 2: check whether that matters.
-2. A real Resto Druid APL (the current one is out of mana by ~1:30 with full Vashnik damage).
-3. Remaining Vashnik damage sources, encounter variance (e.g. jittered add deaths, so overlaps can happen), regression tests.
+## Debugging
+- Debug/log output is buffered and lost on a crash: use temporary `fprintf( stderr, ... )` traces. No cdb on this machine.
+
+## Current state and next steps
+- Gear and talents of 2026-10-26: limit 119.1% (burst and tank 119.1%, steady and spot 120.6%). Sigil of the Impending Eclipse at 334: no difference in either trinket slot; Hex Lord's Dooming Idol at 334: -0.6% in either slot. Noise ±0.25%.
+- 3-healer question: the 133.3% mark assumes the same raid damage with each healer covering a third; 119.1% is below it, but the sim's raw HPS is below the log's, so it may be pessimistic. Needs logs of raids 3-healing Mythic Vashnik to calibrate.
+1. Stygian Infection (heal-absorb feature + data from the user) and Virulent Fumes.
+2. Calibration gaps (raw HPS, Thriving Vegetation, Bursting Growth, Wild Growth casts) and the Everbloom stacking question.
+3. Speed: cache the noise reruns while the profile doesn't change; per-type comparison of gear sets.
+4. Encounter variance (jittered add deaths and dispel times).
+- Nothing since d55782e103 is committed yet.
 
 ## Working preferences
 - Keep code organised: specific things in their own files, generic files stay generic.
+- Don't create files that won't be committed; keep notes in this file, short and current (git history holds the past).
 - Confirm before large or hard-to-reverse changes. Line endings in this repo are CRLF.

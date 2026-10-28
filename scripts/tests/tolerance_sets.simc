@@ -1,0 +1,2 @@
+# Gear set for the regression test of the damage tolerance search (tolerance=1): the healer's trinket1 swapped.
+profileset."Sigil 334"+=trinket1=,id=280835,bonus_id=6652/13334/12849,ilevel=334

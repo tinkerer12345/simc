@@ -1165,7 +1165,8 @@ void print_player( std::ostream& os, player_t& p )
   const player_collected_data_t& cd = p.collected_data;
 
   const char* actor_type = p.is_enemy() ? "Target" : p.is_add() ? "Add" : "Player";
-  if ( p.is_boss() )
+  // Encounter bosses (encounter=<name>) are printed as "Boss"; other targets as before.
+  if ( p.is_boss() && !p.sim->encounter_str.empty() )
   {
     fmt::print( os, "\n{}: {} {} Boss {}\n", actor_type, p.name(), p.race_str, p.true_level );
   }
