@@ -3,22 +3,22 @@
                            "players":  20,
                            "fights":  199,
                            "wipes":  199,
-                           "simulation_length":  47.63287437185936,
-                           "healer_hps":  790396.0806371637,
-                           "healer_damage_taken":  3011392.4044598515,
-                           "healer_fight_length":  47.63287437185936,
-                           "raid_damage_taken":  54668050.637003362,
+                           "simulation_length":  47.8375728643217,
+                           "healer_hps":  798142.1644904247,
+                           "healer_damage_taken":  3006860.163247525,
+                           "healer_fight_length":  47.8375728643217,
+                           "raid_damage_taken":  54886139.86225149,
                            "raid_frames_units":  20,
-                           "raid_frames_deaths":  16,
-                           "death_recaps":  1
+                           "raid_frames_deaths":  12,
+                           "death_recaps":  2
                        },
     "MID1_Priest_Shadow":  {
-                               "dps":  130914.1519005129,
+                               "dps":  130914.15190051285,
                                "hps":  null,
                                "dtps":  null
                            },
     "MID1_Death_Knight_Blood":  {
-                                    "dps":  69002.76983584589,
+                                    "dps":  69002.76983584593,
                                     "hps":  39728.0972430416,
                                     "dtps":  19130312.2556774
                                 },
@@ -28,7 +28,7 @@
                                "dtps":  null
                            },
     "MID1_Druid_Feral":  {
-                             "dps":  142146.9560752665,
+                             "dps":  148863.68099953485,
                              "hps":  null,
                              "dtps":  null
                          },
@@ -38,7 +38,7 @@
                                 "dtps":  20557459.2378402
                             },
     "MID2_Druid_Feral":  {
-                             "dps":  251713.37059574223,
+                             "dps":  262974.60664285896,
                              "hps":  null,
                              "dtps":  null
                          }
