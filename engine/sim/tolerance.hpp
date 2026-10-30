@@ -83,7 +83,7 @@ struct tolerance_t
 private:
   void create_options();
   test_result_t search( const sim_control_t& base, const std::string& test, double held, double start, double step,
-                        unsigned iters, double prec, int seed, setup_result_t* setup );
+                        unsigned iters, double prec, int seed, setup_result_t* setup, bool start_passes = false );
   probe_t probe( const sim_control_t& base, const std::string& test, double pct, double held, unsigned iters,
                  int seed, setup_result_t* setup );
 };

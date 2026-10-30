@@ -1082,7 +1082,7 @@ if (tolerance) {
   };
   const rowTip = t => `<div class="t-head">${TOL[t.test].label}</div><div class="faint" style="margin-bottom:6px;max-width:340px">${esc(TOL[t.test].what)}</div>
     <div class="t-row"><span>Your limit</span><span>${fmtScore(t.score)}</span></div>
-    ${t.test !== "combined" ? `<div class="t-row"><span>Everything else at</span><span>${fmtScore(t.held)} (your overall limit)</span></div>` : ""}
+    ${t.test !== "combined" ? `<div class="t-row"><span>Everything else at</span><span>${fmtScore(t.held)}${Math.abs(t.held - 1) < 1e-6 ? " (one healer's share)" : ""}</span></div>` : ""}
     ${t.first_fail != null ? `<div class="faint" style="margin-top:6px;max-width:340px">${breakNote(t)}</div>` : ""}`;
   const tolSec = el("section", { id: "tolerance" });
   tolSec.innerHTML = `
@@ -1097,7 +1097,7 @@ if (tolerance) {
       </div>
     </div>
     <div class="panel hr-chart">
-      <div class="hr-row" style="padding-bottom:0"><span class="cs-label">Your limit by kind of damage</span><span></span><span></span></div>
+      <div class="hr-row" style="padding-bottom:0"><span class="cs-label">Your limit by kind of damage</span><span class="faint" style="font-size:12px">One kind raised at a time, everything else at one healer's share</span><span></span></div>
       ${rows.map(t => `<div class="hr-row" tabindex="0" data-test="${t.test}">
         <span class="hr-name">${TOL[t.test].label}</span>
         <span class="hr-track">${ms.map(m => `<i class="hr-ms" style="left:${x(m.score)}"></i>`).join("")}
@@ -1916,18 +1916,25 @@ if (raidMembers.length) {
     // Only healing HoTs are shown, as squares in the HoT's colour with the seconds left (rounded down).
     const HOT_COLORS = { regrowth: "#2e9e4f", rejuvenation: "#8e5bd9", germination: "#c06ad8", rejuvenation_germination: "#c06ad8",
       lifebloom: "#59c94a", wild_growth: "#22a6a0", cenarion_ward: "#c9922e", spring_blossoms: "#d0628f",
-      adaptive_swarm: "#b8a234", rune_of_unleashed_fire_heal_lingering: "#de6a2a" };
+      adaptive_swarm: "#b8a234", rune_of_unleashed_fire_heal_lingering: "#de6a2a",
+      reversion: "#d9a62e", reversion_echo: "#a8853a", dream_breath_heal: "#3fb27f", dream_breath_echo: "#2f8a64" };
     const FALLBACK = ["#3f8fd2", "#c7b03a", "#d45a7a", "#5bb7c9", "#9a7b4f"];
     const hotColor = n => HOT_COLORS[n] || FALLBACK[[...n].reduce((h, c) => h + c.charCodeAt(0), 0) % FALLBACK.length];
-    const HOT_LABELS = { rune_of_unleashed_fire_heal_lingering: "Unleashed Fire (rune)", rejuvenation_germination: "Germination" };
+    const HOT_LABELS = { rune_of_unleashed_fire_heal_lingering: "Unleashed Fire (rune)", rejuvenation_germination: "Germination",
+      reversion_echo: "Reversion (Echo)", dream_breath_heal: "Dream Breath", dream_breath_echo: "Dream Breath (Echo)" };
     const hotLabel = n => HOT_LABELS[n] || prettyName(n);
     // You get a mana bar under your frame (stand-ins don't cast, so theirs would never move).
     const hasMana = u => u.self && (u.max_mana || 0) > 0;
     const manaPct = (s, u) => Math.max(0, Math.min(1, (s.mana?.[u.i] || 0) / (u.max_mana || 1)));
     // HoTs end on death; never show any on a dead unit.
     const effectsOf = (s, u) => (s.alive[u.i] ? (s.effects[u.i] || []).filter(e => e.hot) : []);
-    // Squares on the frames only for the HoTs you track by eye; hovering a frame lists all of them (blooms etc.).
-    const SQUARE_HOTS = new Set(["lifebloom", "regrowth", "rejuvenation", "germination", "rejuvenation_germination"]);
+    // Squares on the frames only for the HoTs you track by eye (per healer class); hovering a frame lists all of them.
+    const SQUARE_HOTS_BY_CLASS = {
+      Druid: ["lifebloom", "regrowth", "rejuvenation", "germination", "rejuvenation_germination"],
+      Evoker: ["reversion", "reversion_echo", "dream_breath_heal", "dream_breath_echo"],
+    };
+    const healerClass = Object.keys(SQUARE_HOTS_BY_CLASS).find(c => specLabel.includes(c));
+    const SQUARE_HOTS = new Set(SQUARE_HOTS_BY_CLASS[healerClass] || []);
     const squareEffectsOf = (s, u) => effectsOf(s, u).filter(e => SQUARE_HOTS.has(e.name));
     const hotNames = [...new Set(snaps.flatMap(s => s.effects.flatMap(list => (list || []).filter(e => e.hot && SQUARE_HOTS.has(e.name)).map(e => e.name))))];
     const hpColor = p => p > 0.5 ? "var(--heal)" : p > 0.25 ? "var(--c4)" : "var(--dmg)";

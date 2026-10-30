@@ -180,6 +180,8 @@ $tset = $ts.setups | Where-Object { $_.role -eq 'set' }
 $score = ($tmain.tests | Where-Object { $_.test -eq 'combined' }).score
 Check $g 'combined score found (50-300%)' ($score -gt 0.5 -and $score -lt 3) $true
 Check $g 'tests (combined + steady)' (@($tmain.tests | ForEach-Object { $_.test }) -join ',') 'combined,steady'
+# A single type is raised from the all-damage limit, with the rest held there: it can never end below that limit.
+Check $g 'single types never below the limit' (@($tmain.tests | Where-Object { $_.test -ne 'combined' -and $_.score -lt $score }).Count) 0
 Check $g 'probes ascending' ((($tmain.tests[0].probes | ForEach-Object { $_.pct }) -join ',') -eq (($tmain.tests[0].probes | ForEach-Object { $_.pct } | Sort-Object) -join ',')) $true
 Check $g 'main keeps its trinket1' ($tmain.gear.trinket1.item -match '\bid=270162\b') $true
 Check $g 'gear set swaps trinket1' ($tset.gear.trinket1.item -match '\bid=280835\b') $true
@@ -208,9 +210,21 @@ $golden['healer_profile'] = [ordered]@{
   death_recaps             = @($healer.collected_data.death_recaps).Count
 }
 
-# The druid profiles guard the restoration work in sc_druid.cpp: the other druid specs must stay identical.
+$evoker = Invoke-Simc 'evoker_healer_profile' @('scripts\preservation_evoker.simc', 'iterations=200', 'threads=1',
+  'deterministic=1', 'encounter_damage_all=0.2032')
+$evokerHealer = $evoker.sim.players | Where-Object { $_.name -eq 'Duskryth' }
+$golden['evoker_healer_profile'] = [ordered]@{
+  wipes               = $evoker.sim.statistics.encounter_wipes
+  healer_hps          = $evokerHealer.collected_data.hps.mean
+  healer_damage_taken = $evokerHealer.collected_data.dtps.mean
+  raid_damage_taken   = (@($evoker.sim.players | Where-Object { $_.name -ne 'Duskryth' }) |
+                         ForEach-Object { $_.collected_data.dtps.mean } | Measure-Object -Sum).Sum
+}
+
+# The druid and evoker profiles guard the restoration and preservation work in sc_druid.cpp and sc_evoker.cpp: the
+# other specs must stay identical (Devastation Flameshaper runs the Flameshaper code Preservation shares).
 foreach ($profile in 'MID1_Priest_Shadow', 'MID1_Death_Knight_Blood', 'MID1_Druid_Balance', 'MID1_Druid_Feral',
-                     'MID1_Druid_Guardian', 'MID2_Druid_Feral') {
+                     'MID1_Druid_Guardian', 'MID2_Druid_Feral', 'MID1_Evoker_Devastation_FS') {
   $tier = $profile.Substring(0, 4)
   $stock = Invoke-Simc $profile @("profiles\$tier\$profile.simc", 'iterations=300', 'threads=4', 'deterministic=1')
   $c = $stock.sim.players[0].collected_data

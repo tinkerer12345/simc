@@ -207,7 +207,8 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
 // Steps up (or down) by the factor step until the breaking point is bracketed, then halves the bracket until it is
 // narrower than prec.
 test_result_t tolerance_t::search( const sim_control_t& base, const std::string& test, double held, double start,
-                                   double step, unsigned iters, double prec, int seed, setup_result_t* setup )
+                                   double step, unsigned iters, double prec, int seed, setup_result_t* setup,
+                                   bool start_passes )
 {
   test_result_t r;
   r.test = test;
@@ -219,7 +220,12 @@ test_result_t tolerance_t::search( const sim_control_t& base, const std::string&
     ( r.probes.back().pass ? lo : hi ) = pct;
   };
 
-  run( start );
+  // A single-type search starts at the all-damage limit, which is known to pass (on more fights): searching from a
+  // re-probe there could fail by chance and then walk that one type down while the others stay at the limit.
+  if ( start_passes )
+    lo = start;
+  else
+    run( start );
   while ( hi < 0 && lo < 16 && !sim->is_canceled() )
     run( lo * step );
   while ( lo < 0 && hi > 0.02 && !sim->is_canceled() )
@@ -242,7 +248,7 @@ void tolerance_t::analyze()
   fmt::print( "\nDamage tolerance ({} fights per step{})...\n", iterations,
               sets.empty() ? "" : fmt::format( ", {} gear sets", sets.size() ) );
 
-  // The profile: all damage raised together (the score), then each damage type with the others held at that score.
+  // The profile: all damage raised together (the score), then each damage type with the others at one healer's share.
   setup_result_t main;
   main.name = "Current gear";
   main.role = "main";
@@ -254,8 +260,11 @@ void tolerance_t::analyze()
     {
       if ( type == "none" || sim->is_canceled() )
         continue;
-      main.tests.push_back( search( base, std::string( type ), score, score, 1.1, type_iterations, type_precision, 0,
-                                    &main ) );
+      // The others are held at one healer's share (100%), clearly survivable: held at the limit itself, any extra
+      // damage tips the edge over by chance and every type reads "no room". Starts at the limit (it passes with
+      // everything there, so with the rest lower too).
+      main.tests.push_back( search( base, std::string( type ), 1.0, score, 1.1, type_iterations, type_precision, 0,
+                                    &main, true ) );
     }
   }
   results.push_back( std::move( main ) );

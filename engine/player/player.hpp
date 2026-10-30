@@ -438,6 +438,7 @@ struct player_t : public actor_t
     school_e school;
   };
   std::vector<incoming_damage_entry_t> incoming_damage; // for tank active mitigation conditionals
+  bool track_incoming_damage; // fill incoming_damage for a non-tank too (set by healing spells that read it)
 
   // Heal
   double iteration_heal, iteration_heal_taken, iteration_absorb, iteration_absorb_taken; // temporary accumulators

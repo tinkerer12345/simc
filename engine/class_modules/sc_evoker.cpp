@@ -119,6 +119,11 @@ struct evoker_td_t : public actor_target_data_t
     dot_t* living_flame;
     dot_t* enkindle;
     dot_t* melt_armor;
+    // Preservation
+    dot_t* reversion;
+    dot_t* reversion_echo;
+    dot_t* dream_breath;
+    dot_t* dream_breath_echo;
   } dots;
 
   struct debuffs_t
@@ -138,9 +143,19 @@ struct evoker_td_t : public actor_target_data_t
     buff_t* shifting_sands;
     buff_t* symbiotic_bloom;
 
+    // Preservation
+    buff_t* echo;                  // value = the share of the next healing spell it replicates
+    buff_t* merithras_reversal;    // Merithra's Blessing: Reversion reverses part of the damage taken
+    buff_t* lifecinders;           // Obsidian Scales on an ally at reduced value
+    buff_t* zephyr;                // less area-of-effect damage taken
+
     // Legendary
     buff_t* unbound_surge;
   } buffs;
+
+  // Reversion: crits extend it, up to a cap per application (cast and Echo copies separately)
+  timespan_t reversion_extension      = 0_ms;
+  timespan_t reversion_echo_extension = 0_ms;
 
   struct chrono_tracker_t
   {
@@ -1296,6 +1311,17 @@ struct evoker_t : public player_t
   std::map<player_t*, buff_t*> allied_major_cds;
   player_t* last_scales_target;
   bool was_empowering;
+  // Preservation
+  std::vector<player_t*> echo_targets;  // allies with my Echo
+  int emerald_blossom_casts;            // Field of Dreams: every other Emerald Blossom
+  struct stasis_entry_t
+  {
+    action_t* action;
+    player_t* target;
+    int empower;
+  };
+  std::vector<stasis_entry_t> stasis_stored;
+  bool stasis_replaying;  // a stored spell is being released: it is not stored again and costs nothing
   // !!!===========================================================================!!!
 
   timespan_t precombat_travel = 0_s;
@@ -1348,6 +1374,10 @@ struct evoker_t : public player_t
     bool force_raid                                            = false;
     std::string shifting_sands_target_if_str                   = "";
     bool sands_shuffle_list                                    = true;
+    // Preservation: seconds between the spells Stasis releases; allies (besides you) Temporal Anomaly's orb passes
+    // through
+    timespan_t stasis_release_delay                            = 0.4_s;
+    int temporal_anomaly_allies                                = 16;
   } option;
 
   // Action pointers
@@ -1359,6 +1389,14 @@ struct evoker_t : public player_t
     action_t* enkindle;
     action_t* essence_bomb;  // FS TWW3 4pc
     action_t* twin_flame;    // FS
+    // Preservation
+    action_t* golden_hour;
+    action_t* merithras_reversal;
+    action_t* living_flame_2pc;  // MID2 2pc
+    action_t* renewing_blaze;
+    action_t* reversion_hot;       // Merithra's Blessing applies Reversion
+    action_t* reversion_echo_hot;  // and its Echo copies the Echo version
+    action_t* emerald_blossom;     // Field of Dreams and Stasis blooms
   } action;
 
   // Buffs
@@ -1401,6 +1439,13 @@ struct evoker_t : public player_t
     propagate_const<buff_t*> unbound_flame;
 
     // Preservation
+    propagate_const<buff_t*> merithras_blessing;  // the next Reversion is Merithra's Blessing
+    propagate_const<buff_t*> twin_echoes;
+    propagate_const<buff_t*> ouroboros;
+    propagate_const<buff_t*> temporal_compression;
+    propagate_const<buff_t*> exhilarating_burst;
+    propagate_const<buff_t*> stasis;        // storing helpful spells
+    propagate_const<buff_t*> stasis_ready;  // 3 spells stored, waiting to be released
 
     // Augmentation
     propagate_const<buff_t*> reactive_hide;
@@ -1458,6 +1503,20 @@ struct evoker_t : public player_t
     // Devastation
 
     // Preservation
+    const spell_data_t* reversion_echo;            // 367364
+    const spell_data_t* dream_breath_heal;         // 355941
+    const spell_data_t* dream_breath_echo;         // 376788
+    const spell_data_t* golden_hour_heal;          // 378213
+    const spell_data_t* temporal_anomaly_shield;   // 373862
+    const spell_data_t* fluttering_seedlings_heal; // 361361
+    const spell_data_t* merithras_blessing_heal;   // 1256581
+    const spell_data_t* merithras_blessing_buff;   // 1256579
+    const spell_data_t* merithras_reversal_heal;   // 1256688
+    const spell_data_t* consume_flame_heal;        // 445495
+    const spell_data_t* renewing_blaze_heal;       // 374349
+    const spell_data_t* naturalize;                // 360823
+    const spell_data_t* inner_flame_buff;          // 1242747
+    const spell_data_t* stasis_release;            // 370564
   } spec;
 
   // Talents
@@ -1571,6 +1630,28 @@ struct evoker_t : public player_t
     const spell_data_t* unbound_flame_spell;  // 1292321
 
     // Preservation Traits
+    player_talent_t echo;
+    player_talent_t dream_breath;
+    player_talent_t reversion;
+    player_talent_t temporal_compression;
+    player_talent_t rewind;
+    player_talent_t fluttering_seedlings;
+    player_talent_t golden_hour;
+    player_talent_t temporal_anomaly;
+    player_talent_t exhilarating_burst;
+    player_talent_t field_of_dreams;
+    player_talent_t time_lord;
+    player_talent_t timeless_magic;
+    player_talent_t nozdormus_teachings;
+    player_talent_t stasis;
+    player_talent_t grace_period;
+    player_talent_t ouroboros;
+    player_talent_t inner_flame;
+    player_talent_t titans_gift;
+    player_talent_t twin_echoes;
+    player_talent_t merithras_blessing_1;  // Essence abilities may upgrade the next Reversion
+    player_talent_t merithras_blessing_2;  // Reversion reverses damage taken
+    player_talent_t merithras_blessing_3;  // Dream Breath always upgrades it
 
     // Augmentation Traits
     player_talent_t ebon_might;
@@ -1754,6 +1835,9 @@ struct evoker_t : public player_t
     propagate_const<cooldown_t*> tip_the_scales;
     propagate_const<cooldown_t*> deep_breath;
     propagate_const<cooldown_t*> hover;
+    propagate_const<cooldown_t*> dream_breath;
+    propagate_const<cooldown_t*> reversion;
+    propagate_const<cooldown_t*> stasis;
   } cooldown;
 
   // Gains
@@ -1779,6 +1863,10 @@ struct evoker_t : public player_t
     propagate_const<proc_t*> tww2_4pc;
     propagate_const<proc_t*> hoarded_power;
     propagate_const<proc_t*> essence_well;
+    propagate_const<proc_t*> preservation_essence_burst;
+    propagate_const<proc_t*> merithras_blessing;
+    propagate_const<proc_t*> field_of_dreams;
+    propagate_const<proc_t*> stasis_released;
   } proc;
 
   // RPPMs
@@ -1895,6 +1983,18 @@ struct evoker_t : public player_t
                                   timespan_t = timespan_t::zero() );
   void extend_ebon( timespan_t );
   void apply_bombardments( player_t* );
+
+  // Preservation Helpers
+  void trigger_merithras_blessing( double chance );
+  double echo_strength( bool titans_gift ) const;
+  void apply_echo( player_t* target, double strength );
+  // Casts a healing spell's Echo copy on every ally with Echo (strength = the Echo's share), consuming the Echoes.
+  void consume_echoes( const std::function<void( player_t*, double )>& cast_copy );
+  // Up to n living allies below full health, lowest health first (ties in random order); first is put in front.
+  std::vector<player_t*> injured_allies( size_t n, player_t* first = nullptr, player_t* exclude = nullptr ) const;
+  void stasis_store( action_t* a, player_t* t, int empower = 0 );
+  void stasis_release();
+  void assess_damage( school_e, result_amount_type, action_state_t* ) override;
 
   // Utility functions
   const spelleffect_data_t* find_spelleffect( const spell_data_t* spell, effect_subtype_t subtype = A_MAX,
@@ -3040,6 +3140,16 @@ public:
     {
       parse_effects( p()->buff.inner_flame, IGNORE_STACKS );
     }
+    else if ( p()->specialization() == EVOKER_PRESERVATION && p()->talent.inner_flame.ok() )
+    {
+      // Preservation's Inner Flame: healing over time (its Essence Burst chance is read where it applies)
+      parse_effects( p()->buff.inner_flame, effect_mask_t( false ).enable( 1 ) );
+    }
+
+    if ( p()->specialization() == EVOKER_PRESERVATION && p()->talent.temporal_compression.ok() )
+    {
+      parse_effects( p()->buff.temporal_compression );
+    }
 
     if ( p()->talent.azure_sweep.enabled() )
     {
@@ -3234,6 +3344,10 @@ struct essence_base_t : public BASE
       {
         BASE::p()->action.twin_flame->execute_on_target( BASE::execute_state->target );
       }
+      if ( BASE::p()->action.living_flame_2pc && BASE::execute_state )
+      {
+        BASE::p()->action.living_flame_2pc->execute_on_target( BASE::execute_state->target );
+      }
       if ( BASE::p()->talent.momentum_shift.ok() )
       {
         BASE::p()->buff.momentum_shift->trigger();
@@ -3257,6 +3371,10 @@ struct essence_base_t : public BASE
   void execute() override
   {
     BASE::execute();
+
+    // Merithra's Blessing: Essence abilities may upgrade the next Reversion
+    if ( !BASE::background && BASE::p()->talent.merithras_blessing_1.ok() )
+      BASE::p()->trigger_merithras_blessing( BASE::p()->talent.merithras_blessing_1->proc_chance() );
 
     if ( !BASE::background && BASE::p()->talent.chronowarden.time_convergence.ok() )
     {
@@ -4373,7 +4491,46 @@ public:
     if ( p()->specialization() == EVOKER_PRESERVATION && t->health_percentage() < p()->health_percentage() )
       tm *= 1.0 + p()->cache.mastery_value();
 
+    // Grace Period: more healing on targets with my Reversion, once per Reversion (the cast's and Echo's)
+    if ( p()->talent.grace_period.ok() )
+    {
+      if ( auto td = find_td( t ) )
+      {
+        double gp = p()->talent.grace_period->effectN( 1 ).percent();
+        if ( td->dots.reversion->is_ticking() )
+          tm *= 1.0 + gp;
+        if ( td->dots.reversion_echo->is_ticking() )
+          tm *= 1.0 + gp;
+      }
+    }
+
     return tm;
+  }
+
+  // target_echo: the share of the next healing spell my Echo on the target replicates (0 = no Echo)
+  std::unique_ptr<expr_t> create_expression( std::string_view name ) override
+  {
+    if ( util::str_compare_ci( name, "target_echo" ) )
+    {
+      return make_fn_expr( name, [ this ] {
+        auto t  = get_expression_target();
+        auto td = t ? find_td( t ) : nullptr;
+        return td && td->buffs.echo->check() ? td->buffs.echo->check_value() : 0.0;
+      } );
+    }
+
+    return ab::create_expression( name );
+  }
+
+  // Exhilarating Burst: critical heals are more effective after gaining Essence Burst
+  double composite_crit_damage_bonus_multiplier() const override
+  {
+    double m = ab::composite_crit_damage_bonus_multiplier();
+
+    if ( p()->buff.exhilarating_burst->check() )
+      m *= 1.0 + p()->talent.exhilarating_burst->effectN( 1 ).percent();
+
+    return m;
   }
 };
 
@@ -5363,6 +5520,10 @@ struct fire_breath_t : public empowered_charge_spell_t
           p()->proc.essence_well->occur();
         }
       }
+
+      // Temporal Compression is used up by the next empower spell
+      if ( p()->specialization() == EVOKER_PRESERVATION )
+        p()->buff.temporal_compression->expire();
     }
 
     double tick_time_pct_multiplier( const action_state_t* state ) const override
@@ -6936,6 +7097,9 @@ struct living_flame_t : public evoker_spell_t
       p()->buff.ancient_flame->expire();
     p()->buff.scarlet_adaptation->expire();
 
+    // Preservation (healer sims): the extra flames heal injured allies, each with its own Essence Burst chance
+    bool pres = p()->specialization() == EVOKER_PRESERVATION;
+
     if ( p()->buff.leaping_flames->up() && damage->num_targets_hit <= p()->buff.leaping_flames->check() )
     {
       if ( damage->num_targets_hit > 1 )
@@ -6945,11 +7109,18 @@ struct living_flame_t : public evoker_spell_t
       {
         // Leaping flames are hitting extra targets, the primary target is already a leaping flame used.
         p()->buff.leaping_flames->decrement( 1 );
-        heal->execute_on_target( p() );
+        player_t* heal_target = p();
+        if ( pres )
+        {
+          auto injured = p()->injured_allies( 1 );
+          if ( !injured.empty() )
+            heal_target = injured[ 0 ];
+        }
+        heal->execute_on_target( heal_target );
         if ( heal->num_targets_hit > 1 )
           p()->buff.leaping_flames->decrement( heal->num_targets_hit - 1 );
         for ( int i = 0; i < heal->num_targets_hit; i++ )
-          if ( rng().roll( p()->option.heal_eb_chance ) )
+          if ( pres || rng().roll( p()->option.heal_eb_chance ) )
             total_heal_hits++;
       }
     }
@@ -7004,7 +7175,21 @@ struct living_flame_t : public evoker_spell_t
       }
     }
 
-    if ( p()->talent.ruby_essence_burst.ok() )
+    if ( pres && p()->talent.essence_burst.ok() )
+    {
+      double eb_chance =
+          p()->talent.essence_burst->effectN( 1 ).percent() * ( 1.0 + p()->buff.inner_flame->check_stack_value() );
+
+      for ( int i = 0; i < total_damage_hits + total_heal_hits; i++ )
+      {
+        if ( rng().roll( eb_chance ) )
+        {
+          p()->buff.essence_burst->trigger();
+          p()->proc.preservation_essence_burst->occur();
+        }
+      }
+    }
+    else if ( p()->talent.ruby_essence_burst.ok() )
     {
       double eb_chance =
           p()->talent.ruby_essence_burst->effectN( 1 ).percent() * ( 1.0 + p()->buff.inner_flame->check_stack_value() );
@@ -7045,6 +7230,26 @@ struct obsidian_scales_t : public evoker_spell_t
   obsidian_scales_t( evoker_t* p, std::string_view options_str )
     : evoker_spell_t( "obsidian_scales", p, p->talent.obsidian_scales, options_str )
   {
+    if ( p->specialization() == EVOKER_PRESERVATION )
+      harmful = false;
+  }
+
+  void execute() override
+  {
+    evoker_spell_t::execute();
+
+    // Preservation (healer sims): the damage reduction on you, and Lifecinders on the most injured other ally
+    if ( p()->specialization() == EVOKER_PRESERVATION )
+    {
+      p()->buff.obsidian_scales->trigger();
+
+      if ( p()->talent.flameshaper.lifecinders.ok() )
+      {
+        auto allies = p()->injured_allies( 1, nullptr, p() );
+        if ( !allies.empty() )
+          td( allies[ 0 ] )->buffs.lifecinders->trigger( 1, 1.0 );  // a nominal value (see pct_absorb_buff_t)
+      }
+    }
   }
 };
 
@@ -8332,6 +8537,1129 @@ public:
 };
 }  // end namespace spells
 
+// ==========================================================================
+// Preservation healing (healer sims)
+// ==========================================================================
+// Created only for the Preservation spec (and gated on its talents), so Devastation and Augmentation are unchanged.
+// Positions are not simulated: cones and blooms pick the most injured allies, Temporal Anomaly's orb random allies.
+namespace preservation
+{
+using heals::evoker_heal_t;
+using heals::essence_heal_t;
+
+// Spells Stasis can store: released later as a fresh, free cast on the stored target (and at the stored empower level).
+struct stasis_spell_t
+{
+  virtual ~stasis_spell_t() = default;
+  virtual void stasis_replay( player_t* target, int empower ) = 0;
+};
+
+// A damage reduction on an ally, modelled as an absorb of a share of each hit, taken before other absorbs. Its value is a
+// nominal 1 (an absorb at 0 is expired after the first hit) and never drops.
+constexpr double preservation_pct_absorb_value = 1.0;
+
+struct pct_absorb_buff_t : public absorb_buff_t
+{
+  double pct = 0.0;
+  std::function<bool( const action_state_t* )> applies;  // whether the hit is reduced (every hit if empty)
+  std::function<void( double )> on_absorb;              // after a hit was reduced, with the amount
+
+  pct_absorb_buff_t( evoker_td_t& td, std::string_view n, const spell_data_t* s )
+    : absorb_buff_t( actor_pair_t( td.target, td.source ), n, s )
+  {
+    set_absorb_high_priority( true );
+    auto& priority = td.target->absorb_priority;
+    if ( range::find( priority, data().id() ) == priority.end() )
+      priority.push_back( data().id() );
+  }
+
+  double consume( double amount, action_state_t* s ) override
+  {
+    if ( pct <= 0 || ( applies && !applies( s ) ) )
+      return 0.0;
+
+    double absorbed = amount * pct;
+
+    if ( absorb_source )
+      absorb_source->add_result( absorbed, 0, result_amount_type::ABSORB, RESULT_HIT, BLOCK_RESULT_UNBLOCKED, player );
+    if ( on_absorb )
+      on_absorb( absorbed );
+
+    return absorbed;
+  }
+};
+
+// A Preservation heal. While a scaled copy executes (an Echo's, at the Echo's share), echo_mul is that share.
+struct pres_heal_t : public evoker_heal_t
+{
+  double echo_mul = 1.0;
+
+  pres_heal_t( std::string_view n, evoker_t* p, const spell_data_t* s, std::string_view o = {} )
+    : evoker_heal_t( n, p, s, o )
+  {
+    harmful = false;
+  }
+
+  double composite_persistent_multiplier( const action_state_t* s ) const override
+  {
+    return evoker_heal_t::composite_persistent_multiplier( s ) * echo_mul;
+  }
+
+  void execute_scaled( player_t* t, double mul )
+  {
+    echo_mul = mul;
+    execute_on_target( t );
+    echo_mul = 1.0;
+  }
+
+  // Consume Flame: healing an ally detonates seconds of their Dream Breath
+  void trigger_consume_flame( player_t* t, timespan_t duration )
+  {
+    if ( !p()->talent.flameshaper.consume_flame.ok() )
+      return;
+
+    auto td = p()->get_target_data( t );
+    dot_t* d = td->dots.dream_breath->is_ticking() ? td->dots.dream_breath : td->dots.dream_breath_echo;
+    handle_consume_flame( d, duration, p()->talent.flameshaper.consume_flame->effectN( 6 ).percent() );
+  }
+};
+
+// Heals with a fixed amount (passed to execute_on_target); healing modifiers already applied or ignored.
+struct fixed_heal_t : public evoker_heal_t
+{
+  fixed_heal_t( evoker_t* p, std::string_view n, const spell_data_t* s ) : evoker_heal_t( n, p, s )
+  {
+    background = true;
+    harmful    = false;
+    may_crit   = false;
+  }
+
+  void init() override
+  {
+    evoker_heal_t::init();
+    snapshot_flags = update_flags = 0;
+  }
+};
+
+// Renewing Blaze: Obsidian Scales heals back the damage it prevented, over time (amount passed in).
+struct renewing_blaze_t : public residual_action::residual_periodic_action_t<evoker_heal_t>
+{
+  renewing_blaze_t( evoker_t* p ) : residual_action_t( "renewing_blaze", p, p->spec.renewing_blaze_heal )
+  {
+    harmful = false;
+  }
+
+  void init() override
+  {
+    residual_action_t::init();
+    snapshot_flags = update_flags = 0;
+  }
+};
+
+// Consume Flame: the Dream Breath it detonates carries the HoT's multipliers (target ones are re-applied here).
+struct consume_flame_heal_t : public evoker_heal_t
+{
+  consume_flame_heal_t( evoker_t* p ) : evoker_heal_t( "consume_flame", p, p->spec.consume_flame_heal )
+  {
+    background = true;
+    harmful    = false;
+  }
+
+  void init() override
+  {
+    evoker_heal_t::init();
+    snapshot_flags = update_flags = STATE_CRIT | STATE_TGT_CRIT | STATE_TGT_MUL_DA;
+  }
+};
+
+// Golden Hour: Reversion instantly heals a share of the damage taken in the last seconds (amount passed in).
+struct golden_hour_t : public evoker_heal_t
+{
+  golden_hour_t( evoker_t* p ) : evoker_heal_t( "golden_hour", p, p->spec.golden_hour_heal )
+  {
+    background = true;
+    harmful    = false;
+  }
+};
+
+// Reversion's heal over time: the cast's (366155) or the Echo version (367364), two separate HoTs. On application Golden
+// Hour heals a share of the recent damage taken and it may grant Essence Burst; crits extend it, up to a cap.
+struct reversion_t : public pres_heal_t, public stasis_spell_t
+{
+  bool echo_version;
+  timespan_t extension;
+  timespan_t max_extension;
+  reversion_t* echo_copy;
+
+  reversion_t( evoker_t* p, std::string_view options_str, bool echo = false, bool is_background = false )
+    : pres_heal_t( echo ? "reversion_echo" : "reversion", p, echo ? p->spec.reversion_echo : p->talent.reversion,
+                   options_str ),
+      echo_version( echo ),
+      extension( 2_s ),
+      max_extension( 12_s ),
+      echo_copy( nullptr )
+    {
+    cooldown->hasted = true;
+
+    if ( echo || is_background )
+    {
+      // copies applied by other spells: free, no cooldown (the background cast copy shares the cast's HoT and stats)
+      background = true;
+      base_costs[ RESOURCE_MANA ] = 0;
+      cooldown = p->get_cooldown( name_str + "_copy" );
+      cooldown->duration = 0_ms;
+      cooldown->charges  = 1;
+    }
+    else
+    {
+      echo_copy = p->get_secondary_action<reversion_t>( "reversion_echo", "", true );
+      add_child( echo_copy );
+    }
+  }
+
+  bool ready() override
+  {
+    // Merithra's Blessing replaces Reversion while it's up
+    if ( p()->buff.merithras_blessing->check() )
+      return false;
+
+    return pres_heal_t::ready();
+  }
+
+  void execute() override
+  {
+    pres_heal_t::execute();
+
+    if ( p()->talent.essence_burst.ok() &&
+         rng().roll( p()->talent.essence_burst->effectN( 2 ).percent() *
+                     ( 1.0 + p()->buff.inner_flame->check_stack_value() ) ) )
+    {
+      p()->buff.essence_burst->trigger();
+      p()->proc.preservation_essence_burst->occur();
+    }
+
+    if ( !background )
+    {
+      p()->buff.temporal_compression->trigger();
+      p()->consume_echoes( [ this ]( player_t* t, double s ) { echo_copy->execute_scaled( t, s ); } );
+      p()->stasis_store( this, target );
+    }
+  }
+
+  void impact( action_state_t* s ) override
+  {
+    pres_heal_t::impact( s );
+
+    auto td = p()->get_target_data( s->target );
+    ( echo_version ? td->reversion_echo_extension : td->reversion_extension ) = 0_ms;
+
+    if ( p()->talent.golden_hour.ok() )
+    {
+      auto window = timespan_t::from_seconds( p()->talent.golden_hour->effectN( 2 ).base_value() );
+      double amount =
+          s->target->compute_incoming_damage( window ) * p()->talent.golden_hour->effectN( 1 ).percent() * echo_mul;
+      if ( amount > 0 )
+        p()->action.golden_hour->execute_on_target( s->target, amount );
+    }
+
+    if ( p()->talent.merithras_blessing_2.ok() && !td->buffs.merithras_reversal->check() )
+      td->buffs.merithras_reversal->trigger( 1, preservation_pct_absorb_value );
+  }
+
+  void tick( dot_t* d ) override
+  {
+    pres_heal_t::tick( d );
+
+    // not on the final tick: that runs from the dot's end event, which is already gone (adjust_duration would crash)
+    if ( d->state->result != RESULT_CRIT || d->remains() <= 0_ms )
+      return;
+
+    auto td  = p()->get_target_data( d->target );
+    auto& ext = echo_version ? td->reversion_echo_extension : td->reversion_extension;
+    if ( ext < max_extension )
+    {
+      d->adjust_duration( extension );
+      ext += extension;
+    }
+  }
+
+  void stasis_replay( player_t* t, int ) override
+  {
+    if ( t->is_sleeping() )
+      return;
+
+    p()->action.reversion_hot->execute_on_target( t );
+    p()->consume_echoes( [ this ]( player_t* a, double s ) {
+      debug_cast<pres_heal_t*>( p()->action.reversion_echo_hot )->execute_scaled( a, s );
+    } );
+  }
+};
+
+// One bloom of Merithra's Blessing (a heal on one ally).
+struct merithras_bloom_t : public pres_heal_t
+{
+  merithras_bloom_t( evoker_t* p ) : pres_heal_t( "merithras_blessing_bloom", p, p->spec.merithras_blessing_heal )
+  {
+    background = true;
+    aoe        = 0;
+    base_costs[ RESOURCE_MANA ] = 0;
+    name_str_reporting = "merithras_blessing";
+  }
+};
+
+// Merithra's Blessing: replaces Reversion while the proc is up (and uses a Reversion charge if one is ready). Blooms on
+// the target, then on the most injured allies (the target again if nobody else is injured), and applies Reversion.
+// Every Echo copies all of it (with the Echo version of Reversion).
+struct merithras_blessing_t : public evoker_heal_t, public stasis_spell_t
+{
+  merithras_bloom_t* bloom;
+  int blooms;
+
+  merithras_blessing_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "merithras_blessing", p, p->spec.merithras_blessing_heal, options_str ),
+      bloom( p->get_secondary_action<merithras_bloom_t>( "merithras_blessing_bloom" ) ),
+      blooms( std::max( 1, as<int>( p->spec.merithras_blessing_heal->effectN( 2 ).chain_target() ) ) )
+  {
+    harmful = false;
+    aoe     = 0;
+    // the blooms heal
+    spell_power_mod.direct = 0;
+    base_dd_min = base_dd_max = 0;
+    may_crit = false;
+
+    add_child( bloom );
+  }
+
+  bool ready() override
+  {
+    if ( !p()->buff.merithras_blessing->check() )
+      return false;
+
+    return evoker_heal_t::ready();
+  }
+
+  void bloom_on( player_t* t, double mul )
+  {
+    bloom->execute_scaled( t, mul );
+
+    auto others = p()->injured_allies( blooms - 1, nullptr, t );
+    for ( int i = 0; i < blooms - 1; i++ )
+      bloom->execute_scaled( i < as<int>( others.size() ) ? others[ i ] : t, mul );
+  }
+
+  // Reversion goes on the target and on each Echo's ally only (the kill log's 214 Golden Hours = its 19 Merithra's
+  // Blessings plus the ~195 Echoes they consumed)
+  void cast_on( player_t* t )
+  {
+    bloom_on( t, 1.0 );
+    p()->action.reversion_hot->execute_on_target( t );
+
+    p()->consume_echoes( [ this ]( player_t* a, double s ) {
+      bloom_on( a, s );
+      debug_cast<pres_heal_t*>( p()->action.reversion_echo_hot )->execute_scaled( a, s );
+    } );
+
+    p()->buff.merithras_blessing->expire();
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    cast_on( target );
+
+    // (a hasted cooldown recharges through its action)
+    auto rev_cd = p()->cooldown.reversion;
+    if ( rev_cd->current_charge > 0 )
+      rev_cd->start( rev_cd->action ? rev_cd->action : p()->action.reversion_hot );
+
+    p()->stasis_store( this, target );
+  }
+
+  void stasis_replay( player_t* t, int ) override
+  {
+    if ( t->is_sleeping() )
+      return;
+
+    // a fresh cast: Merithra's Blessing if the proc is up now, else Reversion
+    if ( p()->buff.merithras_blessing->check() )
+      cast_on( t );
+    else
+      debug_cast<reversion_t*>( p()->action.reversion_hot )->stasis_replay( t, 0 );
+  }
+};
+
+// Echo: heals the target and makes the next healing spell also cast on them at the Echo's share. Twin Echoes (from
+// Emerald Blossom) puts it on another ally too; Titan's Gift strengthens Echoes cast with Essence Burst.
+// Echo's heal on the extra ally from Twin Echoes (free; shares Echo's stats)
+struct echo_heal_t : public pres_heal_t
+{
+  echo_heal_t( evoker_t* p ) : pres_heal_t( "echo", p, p->talent.echo )
+  {
+    background = true;
+    base_costs[ RESOURCE_ESSENCE ] = base_costs[ RESOURCE_MANA ] = 0;
+  }
+};
+
+struct echo_t : public essence_heal_t, public stasis_spell_t
+{
+  double titan_mul = 1.0;
+  echo_heal_t* twin_heal;
+
+  echo_t( evoker_t* p, std::string_view options_str )
+    : essence_heal_t( "echo", p, p->talent.echo, options_str ),
+      twin_heal( p->get_secondary_action<echo_heal_t>( "echo" ) )
+  {
+    harmful = false;
+  }
+
+  // Echo also costs mana (less with Timeless Magic), unless Essence Burst makes it free
+  void consume_resource() override
+  {
+    bool free = p()->buff.essence_burst->check();
+
+    essence_heal_t::consume_resource();
+
+    if ( free || background )
+      return;
+
+    auto prev        = resource_current;
+    resource_current = RESOURCE_MANA;
+    double mana      = cost() * ( 1.0 + p()->talent.timeless_magic->effectN( 3 ).percent() );
+    resource_current = prev;
+
+    if ( mana > 0 )
+    {
+      player->resource_loss( RESOURCE_MANA, mana, nullptr, this );
+      stats->consume_resource( RESOURCE_MANA, mana );
+    }
+  }
+
+  double composite_da_multiplier( const action_state_t* s ) const override
+  {
+    return essence_heal_t::composite_da_multiplier( s ) * titan_mul;
+  }
+
+  void spread( player_t* t, bool titan )
+  {
+    double strength = p()->echo_strength( titan );
+    p()->apply_echo( t, strength );
+
+    if ( !p()->buff.twin_echoes->check() )
+      return;
+
+    p()->buff.twin_echoes->decrement();
+    double twin = strength * p()->buff.twin_echoes->data().effectN( 2 ).percent();
+
+    // another ally without a stronger Echo, the most injured first
+    std::vector<player_t*> allies;
+    for ( auto a : sim->player_no_pet_list )
+    {
+      if ( a->is_sleeping() || a == t )
+        continue;
+      auto e = td( a )->buffs.echo;
+      if ( !e->check() || e->check_value() < twin )
+        allies.push_back( a );
+    }
+    if ( allies.empty() )
+      return;
+
+    rng().shuffle( allies.begin(), allies.end() );
+    auto it = std::min_element( allies.begin(), allies.end(), []( const player_t* l, const player_t* r ) {
+      return l->health_percentage() < r->health_percentage();
+    } );
+    p()->apply_echo( *it, twin );
+
+    // the extra ally gets Echo's heal too (a top log: 59 Echoes, 113 Echo heals)
+    double heal_mul = titan ? 1.0 + p()->talent.titans_gift->effectN( 1 ).percent() : 1.0;
+    twin_heal->execute_scaled( *it, heal_mul * p()->buff.twin_echoes->data().effectN( 2 ).percent() );
+  }
+
+  void execute() override
+  {
+    bool titan = p()->talent.titans_gift.ok() && p()->buff.essence_burst->check();
+    titan_mul  = titan ? 1.0 + p()->talent.titans_gift->effectN( 1 ).percent() : 1.0;
+
+    essence_heal_t::execute();
+
+    titan_mul = 1.0;
+
+    spread( target, titan );
+    p()->buff.ouroboros->trigger();
+    p()->buff.temporal_compression->trigger();
+    p()->stasis_store( this, target );
+  }
+
+  void stasis_replay( player_t* t, int ) override
+  {
+    if ( t->is_sleeping() )
+      return;
+
+    spread( t, false );
+    p()->buff.ouroboros->trigger();
+  }
+};
+
+// Dream Breath's Echo copy (376788): the instant heal and its own HoT, at the cast's empower level.
+struct dream_breath_echo_t : public pres_heal_t
+{
+  int empower = 1;
+  timespan_t dot_dur_per_emp;
+
+  dream_breath_echo_t( evoker_t* p )
+    : pres_heal_t( "dream_breath_echo", p, p->spec.dream_breath_echo ), dot_dur_per_emp( 4_s )
+  {
+    background     = true;
+    base_tick_time = 2_s;
+    dot_duration =
+        16_s + timespan_t::from_millis( p->talent.flameshaper.deep_exhalation->effectN( 2 ).base_value() );
+  }
+
+  timespan_t reduction_from_empower() const
+  {
+    return std::max( 0, empower - 1 ) * dot_dur_per_emp;
+  }
+
+  timespan_t composite_dot_duration( const action_state_t* s ) const override
+  {
+    return pres_heal_t::composite_dot_duration( s ) - reduction_from_empower();
+  }
+
+  double bonus_da( const action_state_t* s ) const override
+  {
+    return pres_heal_t::bonus_da( s ) +
+           reduction_from_empower() / 2_s * s->composite_spell_power() * spell_tick_power_coefficient( s );
+  }
+};
+
+// Dream Breath's release: heals you and the most injured allies in the cone, instantly and over time; higher empower
+// levels move healing from the HoT into the instant heal. Merithra's Blessing (third rank) upgrades the next Reversion.
+struct dream_breath_heal_t : public empowered_release_t<evoker_heal_t>, public stasis_spell_t
+{
+  using base_t = empowered_release_t<evoker_heal_t>;
+
+  timespan_t dot_dur_per_emp;
+  size_t allies;
+  dream_breath_echo_t* echo_copy;
+
+  dream_breath_heal_t( evoker_t* p )
+    : base_t( "dream_breath_heal", p, p->spec.dream_breath_heal ),
+      dot_dur_per_emp( 4_s ),
+      allies( as<size_t>( p->talent.dream_breath->effectN( 1 ).base_value() ) ),
+      echo_copy( p->get_secondary_action<dream_breath_echo_t>( "dream_breath_echo" ) )
+  {
+    harmful        = false;
+    aoe            = -1;
+    base_tick_time = 2_s;
+    dot_duration =
+        16_s + timespan_t::from_millis( p->talent.flameshaper.deep_exhalation->effectN( 2 ).base_value() );
+  }
+
+  size_t available_targets( std::vector<player_t*>& tl ) const override
+  {
+    tl.clear();
+    tl.push_back( player );
+    for ( auto t : p()->injured_allies( allies, nullptr, player ) )
+      tl.push_back( t );
+    return tl.size();
+  }
+
+  timespan_t reduction_from_empower( const action_state_t* s ) const
+  {
+    return std::max( 0, empower_value( s ) - 1 ) * dot_dur_per_emp;
+  }
+
+  timespan_t composite_dot_duration( const action_state_t* s ) const override
+  {
+    return base_t::composite_dot_duration( s ) - reduction_from_empower( s );
+  }
+
+  double bonus_da( const action_state_t* s ) const override
+  {
+    return base_t::bonus_da( s ) +
+           reduction_from_empower( s ) / 2_s * s->composite_spell_power() * spell_tick_power_coefficient( s );
+  }
+
+  void execute() override
+  {
+    target_cache.is_valid = false;
+
+    base_t::execute();
+
+    if ( p()->talent.merithras_blessing_3.ok() )
+      p()->trigger_merithras_blessing( p()->talent.merithras_blessing_3->effectN( 2 ).percent() );
+
+    if ( p()->talent.flameshaper.essence_well.ok() &&
+         rng().roll( p()->talent.flameshaper.essence_well->effectN( 1 ).percent() ) )
+    {
+      p()->buff.essence_burst->trigger();
+      p()->proc.essence_well->occur();
+    }
+
+    p()->buff.temporal_compression->expire();
+
+    int emp = empower_value( execute_state );
+    p()->consume_echoes( [ this, emp ]( player_t* t, double s ) {
+      echo_copy->empower = emp;
+      echo_copy->execute_scaled( t, s );
+    } );
+
+    p()->stasis_store( this, player, emp );
+  }
+
+  void stasis_replay( player_t*, int empower ) override
+  {
+    auto s = get_state();
+    set_target( player );
+    s->target = player;
+    snapshot_state( s, amount_type( s ) );
+    cast_state( s )->empower = static_cast<empower_e>( empower );
+    pre_execute_state        = s;
+    execute();
+  }
+};
+
+struct dream_breath_t : public empowered_charge_t<evoker_heal_t>
+{
+  dream_breath_t( evoker_t* p, std::string_view options_str )
+    : empowered_charge_t<evoker_heal_t>( "dream_breath", p, p->talent.dream_breath, options_str )
+  {
+    harmful = false;
+    create_release_spell<dream_breath_heal_t>( "dream_breath_heal" );
+  }
+};
+
+// Temporal Anomaly's shield ($SP*6, more with versatility); shields stack.
+struct temporal_anomaly_shield_t : public evoker_action_t<absorb_t>
+{
+  timespan_t duration;
+
+  temporal_anomaly_shield_t( evoker_t* p )
+    : evoker_action_t<absorb_t>( "temporal_anomaly_shield", p, p->spec.temporal_anomaly_shield ),
+      duration( p->spec.temporal_anomaly_shield->duration() *
+                ( 1.0 + p->talent.timeless_magic->effectN( 1 ).percent() ) )
+  {
+    background             = true;
+    may_crit               = false;
+    spell_power_mod.direct = 6.0;
+  }
+
+  absorb_buff_t* create_buff( const action_state_t* s ) override
+  {
+    auto b = evoker_action_t<absorb_t>::create_buff( s );
+    b->set_duration( duration );
+    b->set_cumulative( true );
+    return b;
+  }
+};
+
+// Temporal Anomaly: an orb that shields you and the allies in its path and puts a weaker Echo on the first of them
+// (passing over stronger Echoes). Nozdormu's Teachings: also cuts the empower spells' cooldowns. The allies it passes
+// through: evoker.temporal_anomaly_allies (the kill log's shields absorbed ~317k per cast, about 17 full shields).
+struct temporal_anomaly_t : public evoker_heal_t, public stasis_spell_t
+{
+  temporal_anomaly_shield_t* shield;
+  int allies;
+
+  temporal_anomaly_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "temporal_anomaly", p, p->talent.temporal_anomaly, options_str ),
+      shield( p->get_secondary_action<temporal_anomaly_shield_t>( "temporal_anomaly_shield" ) ),
+      allies( as<int>( p->talent.temporal_anomaly->effectN( 2 ).base_value() ) )
+  {
+    harmful          = false;
+    cooldown->hasted = true;
+    add_child( shield );
+  }
+
+  void fire()
+  {
+    std::vector<player_t*> path;
+    for ( auto t : sim->player_no_pet_list )
+      if ( !t->is_sleeping() && t != player )
+        path.push_back( t );
+    rng().shuffle( path.begin(), path.end() );
+
+    if ( as<int>( path.size() ) > p()->option.temporal_anomaly_allies )
+      path.resize( p()->option.temporal_anomaly_allies );
+
+    shield->execute_on_target( player );
+    for ( auto t : path )
+      shield->execute_on_target( t );
+
+    double strength = p()->talent.temporal_anomaly->effectN( 4 ).percent() *
+                      ( 1.0 + p()->talent.time_lord->effectN( 1 ).percent() );
+    int echoes = 0;
+    for ( auto t : path )
+    {
+      if ( echoes >= allies )
+        break;
+      auto e = td( t )->buffs.echo;
+      if ( e->check() && e->check_value() >= strength )
+        continue;
+      p()->apply_echo( t, strength );
+      echoes++;
+    }
+
+    if ( p()->talent.nozdormus_teachings.ok() )
+    {
+      auto cdr = -timespan_t::from_seconds( p()->talent.nozdormus_teachings->effectN( 1 ).base_value() );
+      p()->cooldown.dream_breath->adjust( cdr );
+      p()->cooldown.fire_breath->adjust( cdr );
+    }
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    fire();
+    p()->buff.temporal_compression->trigger();
+    p()->stasis_store( this, player );
+  }
+
+  void stasis_replay( player_t*, int ) override
+  {
+    fire();
+  }
+};
+
+// Emerald Blossom's heal and Fluttering Seedlings (Inner Radiance: more effective on yourself).
+struct blossom_heal_t : public pres_heal_t
+{
+  blossom_heal_t( evoker_t* p, std::string_view n, const spell_data_t* s ) : pres_heal_t( n, p, s )
+  {
+    background = true;
+    aoe        = 0;
+  }
+
+  double composite_target_multiplier( player_t* t ) const override
+  {
+    double m = pres_heal_t::composite_target_multiplier( t );
+
+    if ( t == player && p()->talent.inner_radiance.ok() )
+      m *= 1.0 + p()->talent.inner_radiance->effectN( 1 ).percent();
+
+    return m;
+  }
+
+  void impact( action_state_t* s ) override
+  {
+    pres_heal_t::impact( s );
+
+    trigger_consume_flame( s->target,
+                           timespan_t::from_millis( p()->talent.flameshaper.consume_flame->effectN( 1 ).base_value() ) );
+  }
+};
+
+// Emerald Blossom (Preservation): after 1.5 sec heals the target and other injured allies (up to 5); Fluttering Seedlings
+// heal more, plus one per ally it missed; every other one grows a second blossom (Field of Dreams). Ouroboros and
+// Titan's Gift strengthen it; casting it gives Twin Echoes. It does not consume Echo.
+struct emerald_blossom_t : public heals::emerald_blossom_t, public stasis_spell_t
+{
+  blossom_heal_t* bloom_heal;
+  blossom_heal_t* seedling;
+  size_t max_allies;
+  int seedlings;
+  int extra_seedlings;
+
+  emerald_blossom_t( evoker_t* p, std::string_view options_str )
+    : heals::emerald_blossom_t( p, options_str ),
+      bloom_heal( p->get_secondary_action<blossom_heal_t>( "emerald_blossom_bloom", "emerald_blossom_bloom",
+                                                           p->spec.emerald_blossom_heal ) ),
+      seedling( p->get_secondary_action<blossom_heal_t>( "fluttering_seedlings", "fluttering_seedlings",
+                                                         p->spec.fluttering_seedlings_heal ) ),
+      // (the spell data's value already includes Bountiful Bloom)
+      max_allies( as<size_t>( p->spec.emerald_blossom_heal->effectN( 2 ).base_value() ) ),
+      seedlings( as<int>( p->talent.fluttering_seedlings->effectN( 1 ).base_value() ) ),
+      extra_seedlings( as<int>( p->talent.fluttering_seedlings->effectN( 3 ).base_value() ) )
+  {
+    min_travel_time = 0;
+    bloom_heal->name_str_reporting = "emerald_blossom";
+    add_child( bloom_heal );
+    add_child( seedling );
+  }
+
+  // The raid stands together, so a blossom lands on the players Dream Breath's cone just hit: injured
+  // allies with Dream Breath first (the target itself stays first). Without this the sim's Consume Flame triggered a
+  // third as often as in a top log (145 vs 350).
+  std::vector<player_t*> blossom_targets( size_t n, player_t* first )
+  {
+    auto l = p()->injured_allies( sim->player_no_pet_list.size(), first );
+    auto has_dream_breath = [ this ]( player_t* a ) {
+      auto td = p()->get_target_data( a );
+      return td->dots.dream_breath->is_ticking() || td->dots.dream_breath_echo->is_ticking();
+    };
+    std::stable_partition( l.begin() + ( first && !l.empty() && l[ 0 ] == first ? 1 : 0 ), l.end(), has_dream_breath );
+
+    if ( l.size() > n )
+      l.resize( n );
+    return l;
+  }
+
+  void bloom( player_t* t, double mul, bool from_cast )
+  {
+    auto healed = blossom_targets( max_allies, t->is_sleeping() ? nullptr : t );
+    for ( auto a : healed )
+      bloom_heal->execute_scaled( a, mul );
+
+    if ( !from_cast )
+      return;  // a Field of Dreams blossom sends no seedlings (fits the kill log)
+
+    if ( p()->talent.fluttering_seedlings.ok() )
+    {
+      int n = seedlings + std::min( extra_seedlings, as<int>( max_allies - healed.size() ) );
+      // (seedlings fly up to 40 yd: the most injured allies)
+      auto targets = p()->injured_allies( n );
+      for ( int i = 0; i < n && !targets.empty(); i++ )
+        seedling->execute_scaled( targets[ i % targets.size() ], mul );
+    }
+
+    if ( p()->talent.field_of_dreams.ok() && ++p()->emerald_blossom_casts % 2 == 0 &&
+         rng().roll( p()->talent.field_of_dreams->effectN( 1 ).percent() ) )
+    {
+      auto spot = p()->injured_allies( 1 );
+      if ( !spot.empty() )
+      {
+        p()->proc.field_of_dreams->occur();
+        bloom( spot[ 0 ], 1.0, false );
+      }
+    }
+  }
+
+  void schedule_bloom( player_t* t, double mul )
+  {
+    make_event( *sim, data().duration(), [ this, t, mul ] { bloom( t, mul, true ); } );
+  }
+
+  void execute() override
+  {
+    bool titan = p()->talent.titans_gift.ok() && p()->buff.essence_burst->check();
+    double mul = ( titan ? 1.0 + p()->talent.titans_gift->effectN( 2 ).percent() : 1.0 ) *
+                 ( 1.0 + p()->buff.ouroboros->check_stack_value() );
+    p()->buff.ouroboros->expire();
+
+    heals::emerald_blossom_t::execute();
+
+    p()->buff.twin_echoes->trigger();
+    p()->stasis_store( this, target );
+    schedule_bloom( target, mul );
+  }
+
+  void impact( action_state_t* s ) override
+  {
+    essence_heal_t::impact( s );  // the blossom heals when it bursts (schedule_bloom)
+  }
+
+  // Essence Burst makes it cost no mana either
+  void consume_resource() override
+  {
+    if ( p()->buff.essence_burst->check() )
+      essence_heal_t::consume_resource();
+    else
+      heals::emerald_blossom_t::consume_resource();
+  }
+
+  void stasis_replay( player_t* t, int ) override
+  {
+    double mul = 1.0 + p()->buff.ouroboros->check_stack_value();
+    p()->buff.ouroboros->expire();
+    p()->buff.twin_echoes->trigger();
+    schedule_bloom( t, mul );
+  }
+};
+
+// Verdant Embrace's heal; Consume Flame detonates the ally's Dream Breath.
+struct verdant_embrace_heal_t : public pres_heal_t
+{
+  verdant_embrace_heal_t( evoker_t* p ) : pres_heal_t( "verdant_embrace_heal", p, p->find_spell( 361195 ) )
+  {
+    background = true;
+  }
+
+  void impact( action_state_t* s ) override
+  {
+    pres_heal_t::impact( s );
+
+    trigger_consume_flame( s->target,
+                           timespan_t::from_millis( p()->talent.flameshaper.consume_flame->effectN( 5 ).base_value() ) );
+  }
+};
+
+// Verdant Embrace (Preservation): Echo copies it; the MID2 4pc grants Essence Burst.
+struct verdant_embrace_t : public evoker_heal_t, public stasis_spell_t
+{
+  verdant_embrace_heal_t* heal;
+  action_t* panacea;
+
+  verdant_embrace_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "verdant_embrace", p, p->talent.verdant_embrace, options_str ),
+      heal( p->get_secondary_action<verdant_embrace_heal_t>( "verdant_embrace_heal" ) ),
+      panacea( p->get_secondary_action<heals::panacea_t>( "panacea_ve", "panacea_ve" ) )
+  {
+    harmful = false;
+    add_child( heal );
+    add_child( panacea );
+  }
+
+  void cast_on( player_t* t )
+  {
+    heal->execute_on_target( t );
+    if ( p()->talent.panacea.ok() )
+      panacea->execute_on_target( p() );
+    p()->consume_echoes( [ this ]( player_t* a, double s ) { heal->execute_scaled( a, s ); } );
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    cast_on( target );
+
+    if ( p()->talent.ancient_flame.ok() )
+      p()->buff.ancient_flame->trigger();
+
+    if ( p()->sets->has_set_bonus( EVOKER_PRESERVATION, MID2, B4 ) )
+      p()->buff.essence_burst->trigger();
+
+    p()->stasis_store( this, target );
+  }
+
+  void stasis_replay( player_t* t, int ) override
+  {
+    if ( !t->is_sleeping() )
+      cast_on( t );
+  }
+};
+
+// Twin Flame (Preservation): consuming Essence Burst heals the target, bouncing to injured allies (Fire Torrent).
+struct twin_flame_heal_t : public pres_heal_t
+{
+  twin_flame_heal_t( evoker_t* p ) : pres_heal_t( "twin_flame", p, p->talent.flameshaper.twin_flame_heal_spell )
+  {
+    background = true;
+    aoe        = 1 + as<int>( p->talent.flameshaper.fire_torrent->effectN( 1 ).base_value() );
+  }
+
+  size_t available_targets( std::vector<player_t*>& tl ) const override
+  {
+    tl.clear();
+    if ( !target->is_sleeping() && !target->is_enemy() )
+      tl.push_back( target );
+    for ( auto t : p()->injured_allies( aoe, nullptr, target ) )
+      tl.push_back( t );
+    return tl.size();
+  }
+
+  void execute() override
+  {
+    target_cache.is_valid = false;
+    pres_heal_t::execute();
+  }
+};
+
+// MID2 2pc: consuming Essence Burst sends a Living Flame at the target, or an injured ally if the target is at full
+// health.
+struct living_flame_2pc_t : public pres_heal_t
+{
+  double effectiveness;
+
+  living_flame_2pc_t( evoker_t* p )
+    : pres_heal_t( "living_flame_2pc", p, p->spec.living_flame_heal ),
+      effectiveness( p->sets->set( EVOKER_PRESERVATION, MID2, B2 )->effectN( 1 ).percent() )
+  {
+    background   = true;
+    dot_duration = 0_ms;
+    s_data_reporting = p->sets->set( EVOKER_PRESERVATION, MID2, B2 );
+  }
+
+  double composite_da_multiplier( const action_state_t* s ) const override
+  {
+    return pres_heal_t::composite_da_multiplier( s ) * effectiveness;
+  }
+
+  void execute() override
+  {
+    if ( target->is_enemy() || target->is_sleeping() || target->health_percentage() >= 100 )
+    {
+      auto l = p()->injured_allies( 1 );
+      set_target( l.empty() ? player : l[ 0 ] );
+    }
+
+    pres_heal_t::execute();
+  }
+
+  // It is a Living Flame: it may grant Essence Burst (more under Inner Flame; Titanic Precision rolls again on a crit).
+  // A top log gains Essence Burst as these flames land after Emerald Blossom and Echo casts.
+  void impact( action_state_t* s ) override
+  {
+    pres_heal_t::impact( s );
+
+    if ( !p()->talent.essence_burst.ok() )
+      return;
+
+    double chance = p()->talent.essence_burst->effectN( 1 ).percent() * ( 1.0 + p()->buff.inner_flame->check_stack_value() );
+    int rolls     = 1 + ( s->result == RESULT_CRIT && p()->talent.flameshaper.titanic_precision.ok()
+                              ? as<int>( p()->talent.flameshaper.titanic_precision->effectN( 1 ).base_value() )
+                              : 0 );
+    for ( int i = 0; i < rolls; i++ )
+    {
+      if ( rng().roll( chance ) )
+      {
+        p()->buff.essence_burst->trigger();
+        p()->proc.preservation_essence_burst->occur();
+      }
+    }
+  }
+};
+
+// Rewind: heals every ally for a share of the damage they took in the last seconds (at least a minimum), over a few
+// seconds; ignores healing modifiers, can't crit.
+struct rewind_hot_t : public residual_action::residual_periodic_action_t<evoker_heal_t>
+{
+  rewind_hot_t( evoker_t* p ) : residual_action_t( "rewind_hot", p, p->talent.rewind )
+  {
+    harmful             = false;
+    dot_duration        = 5_s;
+    base_tick_time      = 1_s;
+    hasted_ticks        = false;
+    name_str_reporting  = "rewind";
+  }
+
+  void init() override
+  {
+    residual_action_t::init();
+    snapshot_flags = update_flags = 0;
+  }
+};
+
+struct rewind_t : public evoker_heal_t
+{
+  rewind_hot_t* hot;
+
+  rewind_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "rewind", p, p->talent.rewind, options_str ),
+      hot( p->get_secondary_action<rewind_hot_t>( "rewind_hot" ) )
+  {
+    harmful                = false;
+    dot_duration           = 0_ms;
+    spell_power_mod.tick   = 0;
+    may_crit = tick_may_crit = false;
+    add_child( hot );
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    auto window = timespan_t::from_seconds( data().effectN( 2 ).base_value() );
+    double pct  = data().effectN( 3 ).percent();
+    double min  = composite_total_spell_power() * data().effectN( 1 ).sp_coeff() * 5;
+
+    for ( auto t : sim->player_no_pet_list )
+      if ( !t->is_sleeping() )
+        residual_action::trigger( hot, t, std::max( min, pct * t->compute_incoming_damage( window ) ) );
+  }
+};
+
+// Stasis: stores your next 3 healing spells; reactivating it (or 30 sec after the third) releases them.
+struct stasis_t : public evoker_heal_t
+{
+  stasis_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "stasis", p, p->talent.stasis, options_str )
+  {
+    harmful = false;
+  }
+
+  // (the cooldown starts on this cast: the kill log stores at 0:00, 1:39, 3:24 and 5:18 with a release 0:31 in between)
+  bool ready() override
+  {
+    if ( p()->buff.stasis->check() || p()->buff.stasis_ready->check() )
+      return false;
+
+    return evoker_heal_t::ready();
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    p()->stasis_stored.clear();
+    p()->buff.stasis->trigger();
+
+    if ( p()->talent.inner_flame.ok() )
+      p()->buff.inner_flame->trigger();
+  }
+};
+
+struct stasis_release_t : public evoker_heal_t
+{
+  stasis_release_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "stasis_release", p, p->spec.stasis_release, options_str )
+  {
+    harmful = false;
+  }
+
+  bool ready() override
+  {
+    if ( p()->stasis_stored.empty() || !( p()->buff.stasis->check() || p()->buff.stasis_ready->check() ) )
+      return false;
+
+    return evoker_heal_t::ready();
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    p()->stasis_release();
+  }
+};
+
+// Zephyr: you and the nearest allies take less area-of-effect damage.
+struct zephyr_t : public evoker_heal_t
+{
+  zephyr_t( evoker_t* p, std::string_view options_str ) : evoker_heal_t( "zephyr", p, p->talent.zephyr, options_str )
+  {
+    harmful = false;
+    aoe     = 0;
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    std::vector<player_t*> allies;
+    for ( auto t : sim->player_no_pet_list )
+      if ( !t->is_sleeping() && t != player )
+        allies.push_back( t );
+    rng().shuffle( allies.begin(), allies.end() );
+    allies.insert( allies.begin(), player );
+
+    auto n = as<size_t>( 1 + data().effectN( 3 ).base_value() );
+    for ( size_t i = 0; i < n && i < allies.size(); i++ )
+      td( allies[ i ] )->buffs.zephyr->trigger( 1, preservation_pct_absorb_value );
+  }
+};
+
+// Naturalize: removes an encounter debuff (see sim_t::encounter_dispel); the cooldown only starts when it does.
+struct naturalize_t : public evoker_heal_t
+{
+  naturalize_t( evoker_t* p, std::string_view options_str )
+    : evoker_heal_t( "naturalize", p, p->spec.naturalize, options_str )
+  {
+    harmful = false;
+  }
+
+  void execute() override
+  {
+    evoker_heal_t::execute();
+
+    if ( sim->encounter_dispel && !sim->encounter_dispel( target ) )
+      cooldown->reset( false );
+  }
+};
+}  // namespace preservation
+
 // Namespace buffs post spells
 namespace buffs
 {
@@ -8884,6 +10212,68 @@ evoker_td_t::evoker_td_t( player_t* target, evoker_t* evoker )
   dots.living_flame = target->get_dot( "living_flame_damage", evoker );
   dots.melt_armor   = target->get_dot( "melt_armor_dot", evoker );
 
+  dots.reversion         = target->get_dot( "reversion", evoker );
+  dots.reversion_echo    = target->get_dot( "reversion_echo", evoker );
+  dots.dream_breath      = target->get_dot( "dream_breath_heal", evoker );
+  dots.dream_breath_echo = target->get_dot( "dream_breath_echo", evoker );
+
+  bool pres_ally = evoker->specialization() == EVOKER_PRESERVATION && !target->is_enemy();
+
+  buffs.echo = make_buff_fallback( pres_ally && evoker->talent.echo.ok(), *this, "echo", evoker->talent.echo );
+  if ( pres_ally && evoker->talent.echo.ok() )
+  {
+    buffs.echo->set_duration( evoker->talent.echo->duration() *
+                              ( 1.0 + evoker->talent.timeless_magic->effectN( 1 ).percent() ) )
+        ->set_stack_change_callback( [ evoker, target ]( buff_t*, int old, int cur ) {
+          if ( !old && cur )
+            evoker->echo_targets.push_back( target );
+          else if ( old && !cur )
+            range::erase_remove( evoker->echo_targets, target );
+        } );
+  }
+
+  auto pct_absorb = [ this, pres_ally ]( bool ok, std::string_view n, const spell_data_t* s, double pct,
+                                         stats_t* source ) -> buff_t* {
+    if ( !pres_ally || !ok )
+      return make_buff_fallback( false, *this, n );
+
+    auto b = make_buff<preservation::pct_absorb_buff_t>( *this, n, s );
+    b->pct = pct;
+    b->set_absorb_source( source );
+    return b;
+  };
+
+  // Merithra's Blessing: Reversion reverses part of the damage taken, healing it back
+  buffs.merithras_reversal =
+      pct_absorb( evoker->talent.merithras_blessing_2.ok(), "merithras_reversal", evoker->talent.merithras_blessing_2,
+                  evoker->talent.merithras_blessing_2->effectN( 1 ).base_value() / 1000.0,
+                  evoker->action.merithras_reversal ? evoker->action.merithras_reversal->stats : nullptr );
+  if ( auto b = dynamic_cast<preservation::pct_absorb_buff_t*>( buffs.merithras_reversal ) )
+  {
+    b->set_duration( 0_ms );
+    b->applies = [ this ]( const action_state_t* ) {
+      return dots.reversion->is_ticking() || dots.reversion_echo->is_ticking();
+    };
+    b->on_absorb = [ evoker, target ]( double amount ) {
+      evoker->action.merithras_reversal->execute_on_target( target, amount );
+    };
+  }
+
+  // Lifecinders: Obsidian Scales on an ally at part of its value
+  buffs.lifecinders = pct_absorb( evoker->talent.flameshaper.lifecinders.ok() && evoker->talent.obsidian_scales.ok(),
+                                  "lifecinders", evoker->talent.flameshaper.lifecinders,
+                                  -evoker->talent.obsidian_scales->effectN( 1 ).percent() *
+                                      evoker->talent.flameshaper.lifecinders->effectN( 2 ).percent(),
+                                  evoker->get_stats( "lifecinders" ) );
+  buffs.lifecinders->set_duration( evoker->talent.obsidian_scales->duration() );
+
+  // Zephyr: less area-of-effect damage taken
+  buffs.zephyr = pct_absorb( evoker->talent.zephyr.ok(), "zephyr", evoker->talent.zephyr,
+                             -evoker->talent.zephyr->effectN( 1 ).percent(), evoker->get_stats( "zephyr" ) );
+  buffs.zephyr->set_duration( evoker->talent.zephyr->duration() );
+  if ( auto b = dynamic_cast<preservation::pct_absorb_buff_t*>( buffs.zephyr ) )
+    b->applies = []( const action_state_t* s ) { return s->n_targets > 1; };
+
   debuffs.in_firestorm = make_buff_fallback( evoker->talent.feed_the_flames.ok(), *this, "in_firestorm" )
                              ->set_max_stack( 20 )
                              ->set_duration( 0_ms );
@@ -9127,6 +10517,10 @@ evoker_t::evoker_t( sim_t* sim, std::string_view name, race_e r )
     allied_major_cds(),
     last_scales_target( nullptr ),
     was_empowering( false ),
+    echo_targets(),
+    emerald_blossom_casts( 0 ),
+    stasis_stored(),
+    stasis_replaying( false ),
     naszuro(),
     allied_augmentations(),
     allied_ebon_callbacks(),
@@ -9154,6 +10548,9 @@ evoker_t::evoker_t( sim_t* sim, std::string_view name, race_e r )
   cooldown.tip_the_scales = get_cooldown( "tip_the_scales" );
   cooldown.hover          = get_cooldown( "hover" );
   cooldown.deep_breath    = get_cooldown( "deep_breath" );
+  cooldown.dream_breath   = get_cooldown( "dream_breath" );
+  cooldown.reversion      = get_cooldown( "reversion" );
+  cooldown.stasis         = get_cooldown( "stasis" );
 
   resource_regeneration             = regen_type::DYNAMIC;
   regen_caches[ CACHE_HASTE ]       = true;
@@ -9279,8 +10676,9 @@ unsigned int evoker_t::specialization_aura_id()
 
 void evoker_t::init_action_list()
 {
-  // 2022-08-07: Healing is not supported
-  if ( !sim->allow_experimental_specializations && primary_role() == ROLE_HEAL )
+  // 2022-08-07: Healing is not supported (except Preservation in encounter healer sims)
+  bool encounter_healer = specialization() == EVOKER_PRESERVATION && !sim->encounter_str.empty();
+  if ( !sim->allow_experimental_specializations && primary_role() == ROLE_HEAL && !encounter_healer )
   {
     if ( !quiet )
       sim->error( "Role heal for evoker '{}' is currently not supported.", name() );
@@ -9626,6 +11024,13 @@ void evoker_t::init_finished()
   auto CT = []( player_t* p, std::string_view n ) { return p->find_talent_spell( talent_tree::CLASS, n ); };
   auto ST = []( player_t* p, std::string_view n ) { return p->find_talent_spell( talent_tree::SPECIALIZATION, n ); };
   auto HT = []( player_t* p, std::string_view n ) { return p->find_talent_spell( talent_tree::HERO, n ); };
+
+  // Golden Hour and Rewind heal a share of each ally's recent damage taken
+  if ( specialization() == EVOKER_PRESERVATION && ( talent.golden_hour.ok() || talent.rewind.ok() ) )
+  {
+    for ( auto p : sim->player_no_pet_list )
+      p->track_incoming_damage = true;
+  }
 
   int dps = 0;
 
@@ -9998,6 +11403,10 @@ void evoker_t::init_procs()
   proc.tww2_4pc                              = get_proc( "Essence Bursts from TWW Season 2 4pc" );
   proc.hoarded_power                         = get_proc( "Hoarded Power" );
   proc.essence_well                          = get_proc( "Essence Well" );
+  proc.preservation_essence_burst            = get_proc( "Essence Burst (Living Flame, Reversion)" );
+  proc.merithras_blessing                    = get_proc( "Merithra's Blessing" );
+  proc.field_of_dreams                       = get_proc( "Field of Dreams" );
+  proc.stasis_released                       = get_proc( "Stasis released" );
 }
 
 void evoker_t::init_base_stats()
@@ -10031,7 +11440,10 @@ void evoker_t::init_background_actions()
 
   if ( talent.flameshaper.consume_flame.ok() )
   {
-    background_actions.consume_flame = get_secondary_action<spells::consume_flame_t>( "consume_flame" );
+    if ( specialization() == EVOKER_PRESERVATION )
+      background_actions.consume_flame = get_secondary_action<preservation::consume_flame_heal_t>( "consume_flame" );
+    else
+      background_actions.consume_flame = get_secondary_action<spells::consume_flame_t>( "consume_flame" );
   }
 }
 
@@ -10128,6 +11540,10 @@ void evoker_t::init_spells()
   talent.aerial_mastery       = CT( "Aerial Mastery" );
   talent.overawe              = CT( "Overawe" );
   talent.time_spiral          = CT( "Time Spiral" );  // Row 10
+  // healing traits, used by Preservation
+  talent.renewing_blaze       = CT( "Renewing Blaze" );
+  talent.zephyr               = CT( "Zephyr" );
+  talent.inner_radiance       = CT( "Inner Radiance" );
   // Devastation Traits
   talent.pyre                         = ST( "Pyre" );                // Row 1
   talent.ruby_essence_burst           = ST( "Ruby Essence Burst" );  // Row 2
@@ -10183,6 +11599,43 @@ void evoker_t::init_spells()
   talent.unbound_flame_buff           = find_spell( 1292323 );
   talent.unbound_flame_spell          = find_spell( 1292321 );
   // Preservation Traits
+  talent.echo                 = ST( "Echo" );
+  talent.dream_breath         = ST( "Dream Breath" );
+  talent.reversion            = ST( "Reversion" );
+  talent.temporal_compression = ST( "Temporal Compression" );
+  talent.rewind               = ST( "Rewind" );
+  talent.fluttering_seedlings = ST( "Fluttering Seedlings" );
+  talent.golden_hour          = ST( "Golden Hour" );
+  talent.temporal_anomaly     = ST( "Temporal Anomaly" );
+  talent.exhilarating_burst   = ST( "Exhilarating Burst" );
+  talent.field_of_dreams      = ST( "Field of Dreams" );
+  talent.time_lord            = ST( "Time Lord" );
+  talent.timeless_magic       = ST( "Timeless Magic" );
+  talent.nozdormus_teachings  = ST( "Nozdormu's Teachings" );
+  talent.stasis               = ST( "Stasis" );
+  talent.grace_period         = ST( "Grace Period" );
+  talent.ouroboros            = ST( "Ouroboros" );
+  talent.inner_flame          = ST( "Inner Flame" );
+  talent.titans_gift          = ST( "Titan's Gift" );
+  talent.twin_echoes          = ST( "Twin Echoes" );
+  talent.merithras_blessing_1 = find_talent_spell( talent_tree::SPECIALIZATION, 1256577 );
+  talent.merithras_blessing_2 = find_talent_spell( talent_tree::SPECIALIZATION, 1256682 );
+  talent.merithras_blessing_3 = find_talent_spell( talent_tree::SPECIALIZATION, 1256689 );
+
+  spec.reversion_echo            = find_spell( 367364 );
+  spec.dream_breath_heal         = find_spell( 355941 );
+  spec.dream_breath_echo         = find_spell( 376788 );
+  spec.golden_hour_heal          = find_spell( 378213 );
+  spec.temporal_anomaly_shield   = find_spell( 373862 );
+  spec.fluttering_seedlings_heal = find_spell( 361361 );
+  spec.merithras_blessing_heal   = find_spell( 1256581 );
+  spec.merithras_blessing_buff   = find_spell( 1256579 );
+  spec.merithras_reversal_heal   = find_spell( 1256688 );
+  spec.consume_flame_heal        = find_spell( 445495 );
+  spec.renewing_blaze_heal       = find_spell( 374349 );
+  spec.naturalize                = find_specialization_spell( "Naturalize" );
+  spec.inner_flame_buff          = find_spell( 1242747 );
+  spec.stasis_release            = find_spell( 370564 );
 
   // Augmentation Traits
   talent.ebon_might           = ST( "Ebon Might" );
@@ -10485,7 +11938,26 @@ void evoker_t::create_actions()
 
   if ( talent.flameshaper.twin_flame.enabled() )
   {
-    action.twin_flame = get_secondary_action<twin_flame_t>( "twin_flame" );
+    if ( specialization() == EVOKER_PRESERVATION )
+      action.twin_flame = get_secondary_action<preservation::twin_flame_heal_t>( "twin_flame" );
+    else
+      action.twin_flame = get_secondary_action<twin_flame_t>( "twin_flame" );
+  }
+
+  if ( specialization() == EVOKER_PRESERVATION )
+  {
+    using namespace preservation;
+
+    action.golden_hour        = get_secondary_action<golden_hour_t>( "golden_hour" );
+    action.merithras_reversal = get_secondary_action<fixed_heal_t>( "merithras_blessing_reversal",
+                                                                     "merithras_blessing_reversal",
+                                                                     spec.merithras_reversal_heal );
+    action.renewing_blaze     = get_secondary_action<renewing_blaze_t>( "renewing_blaze" );
+    action.reversion_hot      = get_secondary_action<reversion_t>( "reversion", "", false, true );
+    action.reversion_echo_hot = get_secondary_action<reversion_t>( "reversion_echo", "", true );
+
+    if ( sets->has_set_bonus( EVOKER_PRESERVATION, MID2, B2 ) )
+      action.living_flame_2pc = get_secondary_action<living_flame_2pc_t>( "living_flame_2pc" );
   }
 
   player_t::create_actions();
@@ -10723,6 +12195,37 @@ void evoker_t::create_buffs()
                      ->set_default_value_from_effect( 1, 0.01 );
 
   // Preservation
+  bool pres = specialization() == EVOKER_PRESERVATION;
+
+  buff.merithras_blessing = MBF( pres && talent.merithras_blessing_1.ok(), this, "merithras_blessing",
+                                 spec.merithras_blessing_buff );
+  buff.twin_echoes = MBF( pres && talent.twin_echoes.ok(), this, "twin_echoes", find_spell( 1242759 ) );
+  buff.ouroboros   = MBF( pres && talent.ouroboros.ok(), this, "ouroboros", find_spell( 387350 ) )
+                       ->set_default_value_from_effect( 1 );
+  buff.temporal_compression =
+      MBF( pres && talent.temporal_compression.ok(), this, "temporal_compression", find_spell( 362877 ) );
+  buff.exhilarating_burst =
+      MBF( pres && talent.exhilarating_burst.ok(), this, "exhilarating_burst", find_spell( 377102 ) );
+  buff.stasis = MBF( pres && talent.stasis.ok(), this, "stasis", talent.stasis )->set_cooldown( 0_ms );
+  buff.stasis_ready = MBF( pres && talent.stasis.ok(), this, "stasis_ready", spec.stasis_release )
+                          ->set_duration( timespan_t::from_seconds( talent.stasis->effectN( 2 ).base_value() ) )
+                          ->set_expire_callback( [ this ]( buff_t*, int, timespan_t ) { stasis_release(); } );
+
+  if ( pres )
+  {
+    // Essence Attunement: Essence Burst stacks
+    if ( talent.essence_attunement.ok() )
+      buff.essence_burst->set_max_stack( 1 + as<int>( talent.essence_attunement->effectN( 1 ).base_value() ) );
+
+    // Exhilarating Burst: gaining Essence Burst makes critical heals stronger for a while
+    if ( talent.exhilarating_burst.ok() )
+    {
+      buff.essence_burst->add_stack_change_callback( [ this ]( buff_t*, int old, int cur ) {
+        if ( cur > old )
+          buff.exhilarating_burst->trigger();
+      } );
+    }
+  }
 
   // Augmentation
   buff.ebon_might_self_buff =
@@ -10826,10 +12329,20 @@ void evoker_t::create_buffs()
                                         ->set_default_value_from_effect( 1 )
                                         ->set_pct_buff_type( STAT_PCT_BUFF_INTELLECT );
   // Flameshaper
-  buff.inner_flame = MBF( sets->has_set_bonus( HERO_FLAMESHAPER, TWW3, B2 ), this, "inner_flame",
-                          talent.flameshaper.inner_flame_buff_base )
-                         ->set_default_value( talent.flameshaper.inner_flame_buff->effectN( 2 ).percent() )
-                         ->set_stack_behavior( buff_stack_behavior::ASYNCHRONOUS );
+  if ( specialization() == EVOKER_PRESERVATION && talent.inner_flame.ok() )
+  {
+    // Preservation's Inner Flame (from Stasis): more healing over time, doubled Essence Burst chances
+    buff.inner_flame = MB( this, "inner_flame", spec.inner_flame_buff )
+                           ->set_duration( timespan_t::from_seconds( talent.inner_flame->effectN( 3 ).base_value() ) )
+                           ->set_default_value_from_effect( 2 );
+  }
+  else
+  {
+    buff.inner_flame = MBF( sets->has_set_bonus( HERO_FLAMESHAPER, TWW3, B2 ), this, "inner_flame",
+                            talent.flameshaper.inner_flame_buff_base )
+                           ->set_default_value( talent.flameshaper.inner_flame_buff->effectN( 2 ).percent() )
+                           ->set_stack_behavior( buff_stack_behavior::ASYNCHRONOUS );
+  }
 
   // Scalecommander
   buff.mass_disintegrate_stacks = MBF( talent.scalecommander.mass_disintegrate.ok(), this, "mass_disintegrate_stacks",
@@ -10903,6 +12416,8 @@ void evoker_t::create_options()
   add_option( opt_bool( "evoker.force_raid", option.force_raid ) );
   add_option( opt_string( "evoker.shifting_sands_target_if_str", option.shifting_sands_target_if_str ) );
   add_option( opt_bool( "evoker.sands_shuffle_list", option.sands_shuffle_list ) );
+  add_option( opt_timespan( "evoker.stasis_release_delay", option.stasis_release_delay, 0_s, 5_s ) );
+  add_option( opt_int( "evoker.temporal_anomaly_allies", option.temporal_anomaly_allies, 1, 39 ) );
 }
 
 void evoker_t::analyze( sim_t& sim )
@@ -10981,6 +12496,10 @@ void evoker_t::reset()
   active_infernos_blessings.clear();
   last_scales_target = nullptr;
   was_empowering     = false;
+  echo_targets.clear();
+  emerald_blossom_casts = 0;
+  stasis_stored.clear();
+  stasis_replaying = false;
 
   // Reset Chrono Flame Buckets
   if ( talent.chronowarden.chrono_flame.enabled() )
@@ -11053,6 +12572,34 @@ evoker_td_t* evoker_t::get_target_data( player_t* target ) const
 action_t* evoker_t::create_action( std::string_view name, std::string_view options_str )
 {
   using namespace spells;
+
+  if ( specialization() == EVOKER_PRESERVATION )
+  {
+    if ( name == "echo" )
+      return new preservation::echo_t( this, options_str );
+    if ( name == "reversion" )
+      return new preservation::reversion_t( this, options_str );
+    if ( name == "merithras_blessing" )
+      return new preservation::merithras_blessing_t( this, options_str );
+    if ( name == "dream_breath" )
+      return new preservation::dream_breath_t( this, options_str );
+    if ( name == "temporal_anomaly" )
+      return new preservation::temporal_anomaly_t( this, options_str );
+    if ( name == "emerald_blossom" )
+      return new preservation::emerald_blossom_t( this, options_str );
+    if ( name == "verdant_embrace" )
+      return new preservation::verdant_embrace_t( this, options_str );
+    if ( name == "rewind" )
+      return new preservation::rewind_t( this, options_str );
+    if ( name == "stasis" )
+      return new preservation::stasis_t( this, options_str );
+    if ( name == "stasis_release" )
+      return new preservation::stasis_release_t( this, options_str );
+    if ( name == "zephyr" )
+      return new preservation::zephyr_t( this, options_str );
+    if ( name == "naturalize" )
+      return new preservation::naturalize_t( this, options_str );
+  }
 
   if ( name == "azure_strike" )
     return new azure_strike_t( this, options_str );
@@ -11169,6 +12716,11 @@ std::unique_ptr<expr_t> evoker_t::create_expression( std::string_view expr_str )
           return last_scales_target != nullptr &&
                  get_target_data( last_scales_target )->buffs.blistering_scales->check();
         } );
+      // Preservation: allies with my Echo, spells stored in Stasis
+      if ( util::str_compare_ci( splits[ 1 ], "echoes" ) )
+        return make_fn_expr( "echoes", [ this ] { return echo_targets.size(); } );
+      if ( util::str_compare_ci( splits[ 1 ], "stasis_stored" ) )
+        return make_fn_expr( "stasis_stored", [ this ] { return stasis_stored.size(); } );
       if ( util::str_compare_ci( splits[ 1 ], "use_clipping" ) )
         return expr_t::create_constant( "use_clipping", option.use_clipping );
       if ( util::str_compare_ci( splits[ 1 ], "use_early_chaining" ) )
@@ -11471,6 +13023,128 @@ void evoker_t::apply_bombardments( player_t* target )
     cd->reset( false );
     sim->print_debug( "{} resets cooldown of bombardments on target {} as bombardments is applied.", this->name_str,
                       target->name_str );
+  }
+}
+
+// Preservation Helpers =====================================================
+
+void evoker_t::trigger_merithras_blessing( double chance )
+{
+  if ( rng().roll( chance ) )
+  {
+    buff.merithras_blessing->trigger();
+    proc.merithras_blessing->occur();
+  }
+}
+
+// An Echo's share of the next healing spell: Time Lord adds to it, Titan's Gift too for Echoes cast with Essence Burst
+double evoker_t::echo_strength( bool titans_gift ) const
+{
+  double s = talent.echo->effectN( 2 ).percent() * ( 1.0 + talent.time_lord->effectN( 1 ).percent() );
+
+  if ( titans_gift )
+    s *= 1.0 + talent.titans_gift->effectN( 1 ).percent();
+
+  return s;
+}
+
+void evoker_t::apply_echo( player_t* target, double strength )
+{
+  auto echo = get_target_data( target )->buffs.echo;
+  echo->trigger( 1, std::max( strength, echo->check() ? echo->check_value() : 0.0 ) );
+}
+
+void evoker_t::consume_echoes( const std::function<void( player_t*, double )>& cast_copy )
+{
+  // Spells released from Stasis leave Echoes alone: a top Mythic log releases 8 Dream Breaths into active Echoes, yet
+  // its Echo copies of Dream Breath total 13 hits.
+  if ( echo_targets.empty() || stasis_replaying )
+    return;
+
+  auto targets = echo_targets;
+  for ( auto t : targets )
+  {
+    auto echo       = get_target_data( t )->buffs.echo;
+    double strength = echo->check_value();
+    echo->expire();
+
+    if ( !t->is_sleeping() )
+      cast_copy( t, strength );
+  }
+}
+
+std::vector<player_t*> evoker_t::injured_allies( size_t n, player_t* first, player_t* exclude ) const
+{
+  std::vector<player_t*> l;
+  for ( auto t : sim->player_no_pet_list )
+    if ( !t->is_sleeping() && t != exclude && t != first && t->health_percentage() < 100 )
+      l.push_back( t );
+
+  sim->rng().shuffle( l.begin(), l.end() );
+  std::stable_sort( l.begin(), l.end(), []( const player_t* a, const player_t* b ) {
+    return a->health_percentage() < b->health_percentage();
+  } );
+
+  if ( first && !first->is_sleeping() && first != exclude && first->health_percentage() < 100 )
+    l.insert( l.begin(), first );
+
+  if ( l.size() > n )
+    l.resize( n );
+
+  return l;
+}
+
+void evoker_t::stasis_store( action_t* a, player_t* t, int empower )
+{
+  if ( stasis_replaying || !buff.stasis->check() )
+    return;
+
+  stasis_stored.push_back( { a, t, empower } );
+
+  if ( as<int>( stasis_stored.size() ) >= as<int>( talent.stasis->max_stacks() ) )
+  {
+    buff.stasis->expire();
+    buff.stasis_ready->trigger();
+  }
+}
+
+void evoker_t::stasis_release()
+{
+  if ( stasis_stored.empty() )
+    return;
+
+  auto entries = std::move( stasis_stored );
+  stasis_stored.clear();
+  buff.stasis->expire();
+  buff.stasis_ready->expire();
+  proc.stasis_released->occur();
+
+  // the stored spells come out one after another
+  for ( size_t i = 0; i < entries.size(); i++ )
+  {
+    auto e = entries[ i ];
+    make_event( *sim, option.stasis_release_delay * as<double>( i ), [ this, e ] {
+      if ( auto spell = dynamic_cast<preservation::stasis_spell_t*>( e.action ) )
+      {
+        stasis_replaying = true;
+        spell->stasis_replay( e.target, e.empower );
+        stasis_replaying = false;
+      }
+    } );
+  }
+}
+
+// Renewing Blaze: Obsidian Scales heals back the damage it prevented
+void evoker_t::assess_damage( school_e school, result_amount_type type, action_state_t* s )
+{
+  player_t::assess_damage( school, type, s );
+
+  if ( specialization() == EVOKER_PRESERVATION && talent.renewing_blaze.ok() && buff.obsidian_scales->check() &&
+       s->result_mitigated > 0 )
+  {
+    double dr        = -buff.obsidian_scales->check_value();
+    double prevented = s->result_mitigated * dr / ( 1.0 - dr );
+    residual_action::trigger( action.renewing_blaze, this, prevented * talent.renewing_blaze->effectN( 1 ).percent() );
   }
 }
 

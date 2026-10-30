@@ -14303,37 +14303,6 @@ std::unique_ptr<expr_t> druid_t::create_expression( std::string_view name )
   if ( util::str_compare_ci( name, "combo_points" ) )
     return make_ref_expr( "combo_points", resources.current[ RESOURCE_COMBO_POINT ] );
 
-  // Healing decisions (restoration APLs):
-  //   injured_allies.<pct>  living allies (pets excluded) below <pct>% health
-  //   raid_health.pct       average health % of living allies
-  if ( util::str_compare_ci( splits[ 0 ], "injured_allies" ) && splits.size() == 2 )
-  {
-    auto pct = util::to_double( splits[ 1 ] );
-    return make_fn_expr( name, [ this, pct ]() {
-      int n = 0;
-      for ( auto t : sim->player_no_pet_list )
-        if ( !t->is_sleeping() && t->health_percentage() < pct )
-          n++;
-      return n;
-    } );
-  }
-
-  if ( util::str_compare_ci( name, "raid_health.pct" ) )
-  {
-    return make_fn_expr( name, [ this ]() {
-      double sum = 0.0;
-      int n = 0;
-      for ( auto t : sim->player_no_pet_list )
-      {
-        if ( t->is_sleeping() )
-          continue;
-        sum += t->health_percentage();
-        n++;
-      }
-      return n ? sum / n : 100.0;
-    } );
-  }
-
   if ( ( util::str_compare_ci( splits[ 0 ], "active_dot" ) || util::str_compare_ci( splits[ 0 ], "active_dots" ) ) &&
        splits.size() == 2 )
   {

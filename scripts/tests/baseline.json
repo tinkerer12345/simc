@@ -12,34 +12,45 @@
                            "raid_frames_deaths":  12,
                            "death_recaps":  2
                        },
+    "evoker_healer_profile":  {
+                                  "wipes":  0,
+                                  "healer_hps":  327933.74346163016,
+                                  "healer_damage_taken":  4992062.99838706,
+                                  "raid_damage_taken":  111044978.96641563
+                              },
     "MID1_Priest_Shadow":  {
-                               "dps":  130914.15190051285,
+                               "dps":  130914.15190051293,
                                "hps":  null,
                                "dtps":  null
                            },
     "MID1_Death_Knight_Blood":  {
-                                    "dps":  69002.76983584593,
-                                    "hps":  39728.0972430416,
+                                    "dps":  69002.76983584598,
+                                    "hps":  39728.09724304157,
                                     "dtps":  19130312.2556774
                                 },
     "MID1_Druid_Balance":  {
-                               "dps":  130733.89991002358,
+                               "dps":  130733.89991002361,
                                "hps":  null,
                                "dtps":  null
                            },
     "MID1_Druid_Feral":  {
-                             "dps":  148863.68099953485,
+                             "dps":  148863.680999535,
                              "hps":  null,
                              "dtps":  null
                          },
     "MID1_Druid_Guardian":  {
-                                "dps":  76559.63847130533,
-                                "hps":  28560.18923085383,
+                                "dps":  76559.63847130537,
+                                "hps":  28560.189230853837,
                                 "dtps":  20557459.2378402
                             },
     "MID2_Druid_Feral":  {
-                             "dps":  262974.60664285896,
+                             "dps":  262974.6066428588,
                              "hps":  null,
                              "dtps":  null
-                         }
+                         },
+    "MID1_Evoker_Devastation_FS":  {
+                                       "dps":  131364.86679938064,
+                                       "hps":  null,
+                                       "dtps":  null
+                                   }
 }

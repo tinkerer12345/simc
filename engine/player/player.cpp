@@ -1099,6 +1099,8 @@ player_t::player_t( sim_t* s, player_e t, util::string_view n, race_e r )
     priority_iteration_dmg( 0 ),
     iteration_dmg_taken( 0 ),
     dpr( 0 ),
+    incoming_damage(),
+    track_incoming_damage( false ),
     // Heal
     iteration_heal( 0 ),
     iteration_heal_taken( 0 ),
@@ -8391,6 +8393,10 @@ void collect_dmg_taken_data( player_t& p, const action_state_t* s, double /* res
     // store value in incoming damage array for conditionals
     p.incoming_damage.push_back( {p.sim->current_time(), s->result_amount, s->action->get_school()} );
   }
+  else if ( p.track_incoming_damage )
+  {
+    p.incoming_damage.push_back( {p.sim->current_time(), s->result_amount, s->action->get_school()} );
+  }
 }
 }  // namespace assess_dmg_helper_functions
 
@@ -11921,6 +11927,39 @@ std::unique_ptr<expr_t> player_t::create_expression( util::string_view expressio
   if ( expression_str == "dispellable" )
     return make_fn_expr( expression_str, [ this ] {
       return sim->encounter_dispellable ? sim->encounter_dispellable( this ) : 0.0;
+    } );
+
+  // Healing decisions (healer APLs):
+  //   injured_allies.<pct>  living allies (pets excluded) below <pct>% health
+  //   raid_health.pct       average health % of living allies
+  if ( util::str_prefix_ci( expression_str, "injured_allies." ) )
+  {
+    auto parts = util::string_split<util::string_view>( expression_str, "." );
+    if ( parts.size() == 2 )
+    {
+      auto pct = util::to_double( parts[ 1 ] );
+      return make_fn_expr( expression_str, [ this, pct ] {
+        int n = 0;
+        for ( auto t : sim->player_no_pet_list )
+          if ( !t->is_sleeping() && t->health_percentage() < pct )
+            n++;
+        return n;
+      } );
+    }
+  }
+
+  if ( util::str_compare_ci( expression_str, "raid_health.pct" ) )
+    return make_fn_expr( expression_str, [ this ] {
+      double sum = 0.0;
+      int n      = 0;
+      for ( auto t : sim->player_no_pet_list )
+      {
+        if ( t->is_sleeping() )
+          continue;
+        sum += t->health_percentage();
+        n++;
+      }
+      return n ? sum / n : 100.0;
     } );
 
   if ( expression_str == "ptr" )

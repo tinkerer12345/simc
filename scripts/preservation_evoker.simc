@@ -1,0 +1,98 @@
+iterations=1000
+max_time=345
+vary_combat_length=0
+
+evoker="Duskryth"
+level=90
+race=dracthyr
+region=eu
+server=silvermoon
+role=heal
+# SimC players have infinite health by default; healers must be able to die.
+infinite_health=0
+# Record the last 20 seconds before each death for the healer report's cause-of-death panel.
+death_recap=20
+professions=tailoring=100/enchanting=100
+spec=preservation
+# Duskryth's own talents and gear (SimC addon export, 2026-10-30, raid loadout)
+talents=CwbBPJc41CfcseY0baneJ1IHrBAAAAAYmZwMjZYGzmhZmZbYAAgZMj5BMGzIMDAAAwMzMZGzMPwsMzMAYGzALgFwMMhsZYzwAYmZMA
+set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
+omnium_talents=136814:1/136815:1/136817:1/136819:1/136822:1
+
+head=,id=271501,enchant_id=7961,bonus_id=13334/6652/13696/13692/13698/12846,redirected_base_stats=268230
+neck=,id=268265,gem_id=240983/240908,bonus_id=40/13668/13334/13987/12854
+shoulder=,id=268231,enchant_id=8031,bonus_id=6652/13662/13334/12846
+back=,id=268253,bonus_id=6652/13662/13334/12852
+chest=,id=271504,enchant_id=7987,bonus_id=13334/6652/13846/12854/13690/13698/1587,redirected_base_stats=271876
+wrist=,id=244584,bonus_id=12214/13667/12497/13751/14001/8960/12384/8791/13836/13696,content_tuning=3615,crafted_stats=49/36,crafting_quality=5
+hands=,id=271502,bonus_id=6652/13335/13691/13697/12854,redirected_base_stats=268238
+waist=,id=268216,bonus_id=6652/13696/13662/13334/12854
+legs=,id=271500,enchant_id=7937,bonus_id=13334/6652/13693/13698/13696/12854,redirected_base_stats=268237
+feet=,id=244577,enchant_id=7993,bonus_id=12214/13667/12497/13751/14001/8960/12384/8791/13836,content_tuning=3615,crafted_stats=40/32,crafting_quality=5
+finger1=,id=268249,enchant_id=7997,gem_id=240908,bonus_id=6652/13668/13334/12846
+finger2=,id=251136,enchant_id=7997,gem_id=240908,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
+trinket1=,id=270164,bonus_id=6652/13335/12854,content_tuning=7359
+trinket2=,id=270167,bonus_id=6652/13335/12854
+main_hand=,id=251123,enchant_id=8041,bonus_id=13440/6652/12701/12854
+
+# Rotation: the Icy Veins and spiritbloom.pro raid guides (Midnight Season 2, Flameshaper), the pacing of a top parse on
+# Mythic Vashnik (Hidaii) and feedback from an Evoker developer (Harrek). Resource rules: Essence Burst always into
+# Emerald Blossom right away (never wasted at 2 stacks, never on Echo), natural Essence into Echo, Echoes consumed with
+# Merithra's Blessing, Living Flame only on the boss (the healing version costs full mana).
+# Stasis = Dream Breath, Dream Breath, Temporal Anomaly: both Dream Breath charges pooled, a top-rank Fire Breath right
+# before it (Leaping Flames), and nothing else helpful while it stores (an Echo, blossom or dispel would be stored).
+actions=dream_breath,empower_to=1,if=buff.stasis.up
+actions+=/temporal_anomaly,if=buff.stasis.up&cooldown.dream_breath.charges_fractional<1
+actions+=/living_flame,if=buff.stasis.up
+actions+=/variable,name=stasis_soon,value=cooldown.stasis.remains<3&cooldown.dream_breath.charges_fractional>=1.8&cooldown.temporal_anomaly.remains<4
+actions+=/tip_the_scales,if=variable.stasis_soon&cooldown.fire_breath.ready&!buff.leaping_flames.up
+actions+=/fire_breath,empower_to=3,if=variable.stasis_soon&!buff.leaping_flames.up
+actions+=/stasis,if=cooldown.dream_breath.charges_fractional>=1.8&cooldown.temporal_anomaly.remains<1
+# Released about 15 sec after storing (as Hidaii does), sooner if the raid is in trouble
+actions+=/stasis_release,if=buff.stasis_ready.up&(raid_health.pct<70|buff.stasis_ready.remains<15)
+# The healer under test dispels its own Exploding Infection of each wave once it has stacked up a little
+actions+=/naturalize,target_if=max:target.dispellable,if=target.dispellable>=3|target.dispellable>=2&raid_health.pct>=80
+actions+=/use_item,name=gebbos_bottomless_bag
+# Emergencies
+actions+=/rewind,if=raid_health.pct<55
+actions+=/zephyr,if=encounter.imbibe.remains<3
+actions+=/obsidian_scales,if=injured_allies.50>=2
+# Essence Burst into Emerald Blossom on whoever needs it most right now (the 2pc Living Flame follows it)
+actions+=/emerald_blossom,target_if=min:target.health.pct,if=buff.essence_burst.up
+# Inner Flame (15 sec after Stasis): as many blossoms as possible; procs from Leaping Flames, Temporal Anomaly +
+# Merithra's Blessing and Reversion (Inner Flame doubles Living Flame's and Reversion's Essence Burst chance)
+actions+=/living_flame,if=buff.inner_flame.up&buff.leaping_flames.up
+actions+=/temporal_anomaly,if=cooldown.stasis.remains>8
+actions+=/merithras_blessing,target_if=min:target.health.pct,if=evoker.echoes>=3|buff.inner_flame.up|buff.merithras_blessing.remains<4
+actions+=/reversion,target_if=min:target.health.pct,if=buff.inner_flame.up
+# (and Living Flame on the boss, 40% Essence Burst chance in the window, rather than Echo)
+actions+=/living_flame,if=buff.inner_flame.up
+# Dream Breath starts a ramp before Echoes go out; the second charge is kept for the next Stasis
+actions+=/dream_breath,empower_to=1,if=evoker.echoes=0&(cooldown.stasis.remains>cooldown.dream_breath.full_recharge_time+20|cooldown.dream_breath.charges_fractional>=1.95)
+actions+=/echo,target_if=min:target_echo*100+target.health.pct,if=essence>=2&!buff.essence_burst.up
+actions+=/verdant_embrace,target_if=min:target.health.pct,if=evoker.echoes=0&!buff.essence_burst.up&target.health.pct<85
+# Fire Breath at its top rank for Leaping Flames (about every 30 sec), Living Flame on the boss in downtime
+actions+=/fire_breath,empower_to=3,if=!buff.leaping_flames.up&cooldown.stasis.remains>20
+actions+=/living_flame
+
+# Record raid frames (everyone's health and mana, and our HoTs) in the sample fight for the healer report.
+raid_frames=1
+
+# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
+# With us: 20 players, and we are the only one healing. Health and damage reduction are placeholders.
+raid_tanks=2
+raid_healers=3
+raid_ranged=7
+raid_melee=7
+raid_member_health=900000
+raid_member_damage_reduction=0.10
+raid_member_avoidance=0
+raid_tank_health=1300000
+# Tank mitigation from the Mythic log: Dripping Fangs' Nature DoT ~35% mitigated, Melee and the bite (physical) ~70%
+# (35% here plus 57% physical-only). Gives Melee 27-31M, bites ~5M and DoT ticks ~31M per fight, as in the log.
+raid_tank_damage_reduction=0.35
+raid_tank_physical_reduction=0.57
+
+encounter=Vashnik
+difficulty=mythic
+enemy_health=1000000000

@@ -1,0 +1,8 @@
+# Gear sets to compare with your current gear (preservation_evoker_sim.bat passes this file to SimC with tolerance=1).
+# One SimC profileset per set: profileset."Name"+=<profile line>, one line per change, the lines from the SimC addon
+# export ("Gear from Bags"). Each set is your current gear with these lines swapped in. Add ilevel=<n> to an item to
+# compare it at another item level. An empty file compares nothing.
+
+# The cloaks in your bags, in place of Silken Voodoo Drape (328)
+profileset."Speakeasy Shroud 321 for Silken Voodoo Drape"+=back=,id=251132,bonus_id=13440/6652/13662/12699/12846,content_tuning=1279
+profileset."Amani Summoning Shawl 318 for Silken Voodoo Drape"+=back=,id=268248,bonus_id=6652/13662/13334/12849
