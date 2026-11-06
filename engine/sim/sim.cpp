@@ -4014,6 +4014,8 @@ void sim_t::create_options()
   add_option( opt_float( "raid_tank_health", raid_stand_in.tank_health, 1, std::numeric_limits<double>::max() ) );
   add_option( opt_float( "raid_tank_damage_reduction", raid_stand_in.tank_damage_reduction, 0, 0.95 ) );
   add_option( opt_float( "raid_tank_physical_reduction", raid_stand_in.tank_physical_reduction, 0, 0.95 ) );
+  add_option( opt_bool( "raid_health_from_healer", raid_stand_in.health_from_healer ) );
+  add_option( opt_float( "raid_tank_health_factor", raid_stand_in.tank_health_factor, 0.1, 10 ) );
   add_option( opt_func( "tank_dummy", parse_player ) );
   add_option( opt_func( "pet", parse_player ) );
   add_option( opt_func( "guardian", parse_player ) );

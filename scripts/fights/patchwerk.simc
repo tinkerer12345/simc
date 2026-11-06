@@ -1,0 +1,25 @@
+# Patchwerk for healers: a generic test fight that needs no update for a new season. Everyone has the healer's own
+# max health (tanks x1.44) and every hit is a share of it, so the fight grows with the healer's gear; the health is read
+# once from the current gear, so every gear set faces the same fight. The same load all fight (nothing escalates), at
+# the intensity of the Mythic Vashnik kill: at one healer's share (100%) each player loses ~2.2% of their health per
+# second before mitigation, as burst 46%, steady 30%, spot 21%, avoidable 2%, plus tank damage on the tanks.
+# Use after a healer profile: simc.exe <healer>.simc fights\patchwerk.simc ...
+max_time=300
+vary_combat_length=0
+
+# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
+# With the healer under test: 20 players, and it is the only one healing.
+raid_tanks=2
+raid_healers=3
+raid_ranged=7
+raid_melee=7
+raid_health_from_healer=1
+raid_tank_health_factor=1.44
+raid_member_damage_reduction=0.10
+raid_member_avoidance=0
+# Tank mitigation as calibrated on the Vashnik kill: 35% on everything, another 57% on physical damage.
+raid_tank_damage_reduction=0.35
+raid_tank_physical_reduction=0.57
+
+encounter=Patchwerk
+enemy_health=1000000000

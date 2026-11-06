@@ -3,6 +3,7 @@
 // Send questions to natehieter@gmail.com
 // ==========================================================================
 
+#include "class_modules/raid/sc_raid_member.hpp"
 #include "dbc/trait_data.hpp"
 #include "interfaces/sc_js.hpp"
 #include "rapidjson/document.h"
@@ -1582,6 +1583,12 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
     reasons[ "tanks_dead" ]          = sim.encounter_wipes_tanks_dead;
     reasons[ "raid_low" ]            = sim.encounter_wipes_raid_low;
     stats_root[ "encounter_wipe_raid_pct" ] = sim.encounter_wipe_raid_pct;
+    if ( sim.raid_stand_in.members > 0 )
+    {
+      // The stand-ins' max health (with raid_health_from_healer=1, the healer's own).
+      stats_root[ "raid_member_health" ] = raid::member_health( &sim, false );
+      stats_root[ "raid_tank_health" ]   = raid::member_health( &sim, true );
+    }
   }
 
   if ( sim.tolerance && !sim.tolerance->results.empty() )

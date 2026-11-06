@@ -48,9 +48,18 @@ struct raid_member_t final : public player_t
 
     // Health comes only from the configured pool; stamina buffs from the raid still add on top.
     base.stats.attribute[ ATTR_STAMINA ] = 0;
-    resources.base[ RESOURCE_HEALTH ] =
-        role == ROLE_TANK ? sim->raid_stand_in.tank_health : sim->raid_stand_in.health;
+    resources.base[ RESOURCE_HEALTH ] = member_health( sim, role == ROLE_TANK );
   }
+
+  // With raid_health_from_healer=1 the health is only known once the healer (earlier in the actor list) is set up.
+  void init_finished() override
+  {
+    player_t::init_finished();
+    resolve_health( sim );
+    resources.base[ RESOURCE_HEALTH ] = member_health( sim, role == ROLE_TANK );
+  }
+
+  static void resolve_health( sim_t* sim );
 
   double composite_mitigation_multiplier( const action_state_t* s, school_e school, bool direct ) const override
   {
@@ -65,7 +74,53 @@ struct raid_member_t final : public player_t
     return m;
   }
 };
+
+// Reads the healer's max health once per sim, at init (before any worker thread starts). A child sim (a worker thread,
+// or a tolerance step with another gear set) takes its parent's, so every gear set in a run faces the same raid and
+// damage: more Stamina on an item doesn't make the fight hit harder.
+void raid_member_t::resolve_health( sim_t* sim )
+{
+  auto& rs = sim->raid_stand_in;
+  if ( !rs.health_from_healer || rs.resolved_health > 0 )
+    return;
+
+  for ( const sim_t* s = sim->parent; s; s = s->parent )
+  {
+    if ( s->raid_stand_in.resolved_health > 0 )
+    {
+      rs.resolved_health = s->raid_stand_in.resolved_health;
+      return;
+    }
+  }
+
+  // The healer: the first player that isn't a stand-in.
+  auto it = range::find_if( sim->player_no_pet_list, []( player_t* p ) {
+    return !p->is_enemy() && !dynamic_cast<raid_member_t*>( p );
+  } );
+  if ( it == sim->player_no_pet_list.end() )
+    throw std::invalid_argument( "raid_health_from_healer=1 needs a player (the healer) besides the stand-ins." );
+
+  // Max health from the healer's gear and talents, outside of combat buffs. Before the first reset its current stats
+  // are still empty, so compute with its initial stats as reset() will (and put everything back).
+  player_t* healer = *it;
+  auto current     = healer->current;
+  healer->current  = healer->initial;
+  healer->cache.invalidate_all();
+  healer->init_resources( true );
+  rs.resolved_health = healer->resources.max[ RESOURCE_HEALTH ];
+  healer->current = current;
+  healer->cache.invalidate_all();
+  sim->print_debug( "Raid stand-in health from {}: {}", *healer, rs.resolved_health );
+}
 }  // namespace
+
+double member_health( const sim_t* sim, bool tank )
+{
+  const auto& rs = sim->raid_stand_in;
+  if ( !rs.health_from_healer || rs.resolved_health <= 0 )
+    return tank ? rs.tank_health : rs.health;
+  return tank ? rs.resolved_health * rs.tank_health_factor : rs.resolved_health;
+}
 
 void create_raid_members( sim_t* sim, util::string_view kind, int count )
 {

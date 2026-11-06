@@ -758,6 +758,10 @@ const bossName = boss ? boss.name : "Encounter";
 // Only boss encounters (encounter=<name>) write a difficulty; plain enemy= sims have none.
 const difficulty = sim.options?.encounter_difficulty ? prettyName(sim.options.encounter_difficulty) : "";
 const bossTitle = bossName + (difficulty ? " (" + difficulty + ")" : "");
+// The generic test fight (encounter=Patchwerk): every hit is a share of the raid's health, which is the healer's own.
+const isPatchwerk = /^patchwerk$/i.test(sim.options?.encounter || bossName);
+const raidHealth = sim.statistics?.raid_member_health || 0;
+const tankHealth = sim.statistics?.raid_tank_health || 0;
 document.title = healerName + " vs " + bossTitle;
 $("#brand").innerHTML = esc(healerName) + " <span>vs " + esc(bossTitle) + "</span>";
 
@@ -1056,18 +1060,32 @@ const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.
 // ----- your limit (current gear)
 if (tolerance) {
   const share = tolerance.levels.healer_share;
+  // What each kind of damage is in this fight.
+  const WHAT = isPatchwerk ? {
+    steady: "Damage on the whole raid all fight long, every 2 sec.",
+    burst: "Big hits on the whole raid every 30 sec, twice as big every 2 min.",
+    spot: "Damage over time on 3 players at a time, and a debuff for you to dispel that grows until you do.",
+    tank: "Melee on the active tank and a tank buster every 30 sec (the tanks swap).",
+    avoidable: "A hit on one player every 20 sec, from mistakes.",
+  } : {
+    steady: "Damage on the whole raid all fight long: Toxic Vapor, Burning Presence.",
+    burst: "Big hits on the whole raid: the Expulsions, Malignant Catalyst, Caustic Surge, Caustic Explosion.",
+    spot: "Hits on a few raiders at a time: Plague Froth, Catalytic Bile, Congealing Bolt, Exploding Infection.",
+    tank: "Damage on the tanks: Dripping Fangs and melee.",
+    avoidable: "Damage from mistakes, as often as on your kill: Plague Wave.",
+  };
   const TOL = {
     combined: { label: "All damage", color: "var(--ink-2)", what: "Every kind of damage raised together. This is your limit." },
-    steady: { label: "Constant damage", color: "var(--mana)", what: "Damage on the whole raid all fight long: Toxic Vapor, Burning Presence." },
-    burst: { label: "Burst damage", color: "var(--dmg)", what: "Big hits on the whole raid: the Expulsions, Malignant Catalyst, Caustic Surge, Caustic Explosion." },
-    spot: { label: "Damage on a few players", color: "var(--c3)", what: "Hits on a few raiders at a time: Plague Froth, Catalytic Bile, Congealing Bolt, Exploding Infection." },
-    tank: { label: "Tank damage", color: "var(--c4)", what: "Damage on the tanks: Dripping Fangs and melee." },
-    avoidable: { label: "Avoidable damage", color: "var(--ink-3)", what: "Damage from mistakes, as often as on your kill: Plague Wave." },
+    steady: { label: "Constant damage", color: "var(--mana)", what: WHAT.steady },
+    burst: { label: "Burst damage", color: "var(--dmg)", what: WHAT.burst },
+    spot: { label: "Damage on a few players", color: "var(--c3)", what: WHAT.spot },
+    tank: { label: "Tank damage", color: "var(--c4)", what: WHAT.tank },
+    avoidable: { label: "Avoidable damage", color: "var(--ink-3)", what: WHAT.avoidable },
   };
   const combined = tolerance.tests.find(t => t.test === "combined");
   const tests = Object.keys(TOL).map(k => tolerance.tests.find(t => t.test === k)).filter(t => t && t.score != null);
   const ms = (tolerance.levels.milestones || []).slice().sort((a, b) => a.score - b.score);
-  const msNote = m => /3-healer/i.test(m.label) ? "each healer covers a third of the healing instead of a quarter" : "";
+  const msNote = m => /3-healer/i.test(m.label) ? "what each healer covered in a 3-heal Mythic kill" : "";
   const rows = tests.slice().sort((a, b) => a.score - b.score);  // lowest to highest
   const hi = Math.max(1.1, ...rows.map(t => t.score), ...ms.map(m => m.score)) * 1.06;
   const x = v => (Math.min(v, hi) / hi * 100).toFixed(2) + "%";
@@ -1091,8 +1109,9 @@ if (tolerance) {
       <div><div class="cs-label">Your limit</div><div class="ch-big">${combined?.score != null ? fmtScore(combined.score) : "–"}</div></div>
       <div class="ch-text">
         <p>The most damage you can heal before raiders start dying (more than 1 fight in 20).</p>
-        <p><b>100%</b> is one healer's share of the damage on Mythic ${esc(bossName)}: a quarter of what the 4 healers healed on your kill
-          (${fmtPct(share, 1)} of all the damage your raid took). ${combined?.score == null ? ""
+        <p><b>100%</b> is ${isPatchwerk
+          ? `one healer's share of a Mythic raid's damage, as on a Mythic Vashnik kill (${fmtPct(share, 1)} of all the damage the raid took): every player loses about 2% of their health per second. Everyone has your health${raidHealth ? ` (${fmtNum(raidHealth)}; tanks ${fmtNum(tankHealth)})` : ""} and every hit is a share of it, so the fight grows with your gear.`
+          : `one healer's share of the damage on Mythic ${esc(bossName)}: a quarter of what the 4 healers healed on your kill (${fmtPct(share, 1)} of all the damage your raid took).`} ${combined?.score == null ? ""
           : combined.score >= 1 ? `You can heal <b>${fmtPct(combined.score - 1, 1)} more</b> than that.` : `You fall <b>${fmtPct(1 - combined.score, 1)} short</b> of it.`}</p>
       </div>
     </div>
@@ -1107,7 +1126,7 @@ if (tolerance) {
       <div class="hr-axis"><span></span><span class="ticks">${ticks.join("")}</span><span></span></div>
       <div class="hr-legend"><span><i class="hr-key zero"></i>100%: one healer's share</span>${ms.map(m =>
         `<span title="${esc(msNote(m))}"><i class="hr-key"></i><b>${fmtScore(m.score)}</b> ${esc(m.label)}${msNote(m) ? " *" : ""}</span>`).join("")}</div>
-      ${ms.some(m => msNote(m)) ? `<p class="faint" style="padding:0 22px 6px;font-size:12px">* A 3-healer setup: ${esc(msNote(ms.find(m => msNote(m))))}, at the same raid damage.</p>` : ""}
+      ${ms.some(m => msNote(m)) ? `<p class="faint" style="padding:0 22px 6px;font-size:12px">* A 3-healer setup: ${esc(msNote(ms.find(m => msNote(m))))} (the rest of the raid heals itself more there).</p>` : ""}
     </div>`;
   app.appendChild(tolSec);
   tolSec.querySelectorAll(".hr-row[data-test]").forEach(row => bindInfoTip(row, rowTip(tests.find(q => q.test === row.dataset.test))));

@@ -1,6 +1,4 @@
 iterations=1000
-max_time=345
-vary_combat_length=0
 
 druid="Silverblooms"
 level=90
@@ -49,9 +47,9 @@ actions.precombat+=/rejuvenation,target=Protection_Warrior
 # Heart of the Wild weave (finish it first once started): Cat Form, Heart of the Wild = empowered Feral Frenzy for 5
 # combo points, Ferocious Bite at 5 for damage and Master Shapeshifter mana; the next heal shifts back. Started only
 # while the raid is healthy. Never Convoke in a DPS form.
-actions=variable,name=ramp,value=cooldown.tranquility.remains<15&encounter.imbibe.remains<15
-# Tranquility as an Imbibe's Expulsions land (the ramp below sets it up), or in an emergency
-actions+=/tranquility,if=encounter.imbibe.ago<3|raid_health.pct<60
+actions=variable,name=ramp,value=cooldown.tranquility.remains<15&encounter.big_burst.remains<15
+# Tranquility as a big burst lands (Vashnik: an Imbibe's Expulsions; the ramp below sets it up), or in an emergency
+actions+=/tranquility,if=encounter.big_burst.ago<3|raid_health.pct<60
 actions+=/heart_of_the_wild,if=buff.cat_form.up
 actions+=/ferocious_bite,if=buff.cat_form.up&combo_points>=5
 # Feral Frenzy's 5 claws (one combo point each) land over 1 sec: stay in Cat Form until they have
@@ -70,14 +68,14 @@ actions+=/use_item,name=hex_lords_dooming_idol,if=cooldown.convoke_the_spirits.r
 actions+=/natures_swiftness,if=cooldown.convoke_the_spirits.remains<=gcd.max
 actions+=/regrowth,target_self=1,if=buff.natures_swiftness.up
 actions+=/convoke_the_spirits,if=!buff.natures_swiftness.up
-# Tranquility ramp, from 15 sec before an Imbibe's Expulsions land (encounter.imbibe.remains: the encounter's script)
+# Tranquility ramp, from 15 sec before a big burst lands (encounter.big_burst.remains: the encounter's script)
 # while Tranquility will be ready: dump Swiftmend charges but keep the last, Wild Growth, Regrowths until 5 are out
 # (Rejuvenations from the filler), then Swiftmend yourself with the last charge and spread its Soul of the Forest
 # Rejuvenation to 3 allies; Tranquility as the damage lands (Flourish extends every HoT by 2 sec per tick), then
 # Regrowths (below).
-actions+=/swiftmend,target_self=1,if=variable.ramp&encounter.imbibe.remains<=4
+actions+=/swiftmend,target_self=1,if=variable.ramp&encounter.big_burst.remains<=4
 actions+=/rejuvenation,target_if=min:target.health.pct,if=variable.ramp&buff.soul_of_the_forest_tree.up
-actions+=/swiftmend,target_if=min:target.health.pct,if=variable.ramp&encounter.imbibe.remains>4&charges>=2
+actions+=/swiftmend,target_if=min:target.health.pct,if=variable.ramp&encounter.big_burst.remains>4&charges>=2
 actions+=/wild_growth,target_if=min:target.health.pct,if=variable.ramp
 actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+target.health.pct,if=variable.ramp&active_dot.regrowth<5
 actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.ramp&active_dot.rejuvenation<12
@@ -113,23 +111,3 @@ actions+=/wrath
 
 # Record raid frames (everyone's health and mana, and our HoTs) in the sample fight for the healer report.
 raid_frames=1
-
-# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
-# With us: 20 players, and we are the only one healing. Health and damage reduction are placeholders.
-raid_tanks=2
-raid_healers=3
-raid_ranged=7
-raid_melee=7
-raid_member_health=900000
-raid_member_damage_reduction=0.10
-raid_member_avoidance=0
-raid_tank_health=1300000
-# Tank mitigation from the Mythic log: Dripping Fangs' Nature DoT ~35% mitigated, Melee and the bite (physical) ~70%
-# (35% here plus 57% physical-only). Gives Melee 27-31M, bites ~5M and DoT ticks ~31M per fight, as in the log.
-raid_tank_damage_reduction=0.35
-raid_tank_physical_reduction=0.57
-
-encounter=Vashnik
-difficulty=mythic
-enemy_health=1000000000
- 

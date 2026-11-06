@@ -163,13 +163,45 @@ $expectedDeaths = @(7.683, 22.010, 37.181 | ForEach-Object { 27 + $_ }) + @(11.6
   @(13.422, 30.474, 46.334 | ForEach-Object { 195 + $_ }) + @(24.551, 45.711, 61.269 | ForEach-Object { 279 + $_ })
 Check $g 'add deaths at' ($addDeaths | ForEach-Object { [math]::Round($_, 3) }) ($expectedDeaths | Sort-Object | ForEach-Object { [math]::Round($_, 3) })
 
+# ---------------------------------------------------------------- Patchwerk (the generic healer test fight)
+# Every hit is a share of the stand-ins' health: H = 1M (tanks T = 1.44M), x0.001 (encounter_damage_all), 4 players.
+Write-Host 'Patchwerk mechanics...'
+$pwProfile = 'scripts\tests\patchwerk_mechanics.simc'
+$pw = Invoke-Simc 'patchwerk' @($pwProfile, 'iterations=5', 'threads=1', 'deterministic=1')
+$pwDmg = Get-BossDamage $pw
+$g = 'patchwerk'
+$H = 1000000 * 0.001; $T = 1440000 * 0.001; $N = 4
+Check $g 'fight length (s)' $pw.sim.statistics.simulation_length.mean 300
+Check $g 'wipes' $pw.sim.statistics.encounter_wipes 0
+Check $g 'raid health in the JSON' $pw.sim.statistics.raid_member_health 1000000
+$burst = 0.0498 * $H * 30 * 4 / 5  # a normal burst per player; a big one is twice that
+$pwHit = [ordered]@{ raid_pulse = 0.0321 * 2 * $H; avoidable_hit = 0.0026 * 20 * $N * $H; spot_dot = 0.0228 * 8 * $N / 3 / 6 * $H
+  melee = 0.229 * 2 * $T; tank_buster = 0.0422 * 30 * $T; tank_buster_dot = 0.1054 * 30 / 16 * $T }
+foreach ($k in $pwHit.Keys) { Check $g "$k per hit" ($pwDmg[$k].hit_sum / [math]::Max(1.0, $pwDmg[$k].hit_n)) $pwHit[$k] 1e-4 }  # hits are rounded
+# 8 normal bursts (0:20 + 30 sec steps, every 4th big) and 2 big ones, each 60% on impact + 4 x 10%, on all 4 players
+Check $g 'raid_burst total' $pwDmg['raid_burst'].raw (8 * $burst * $N) 1e-6
+Check $g 'big_raid_burst total' $pwDmg['big_raid_burst'].raw (2 * 2 * $burst * $N) 1e-6
+Check $g 'raid_burst hits' $pwDmg['raid_burst'].hits (8 * 5 * $N)
+$pwLogFile = Join-Path $work 'patchwerk_log.txt'
+Start-Simc 'patchwerk_logged' @($pwProfile, 'iterations=1', 'threads=1', 'log=1', "output=$pwLogFile")
+$pwLog = Get-Content $pwLogFile
+$pwTime = { param($pattern) @($pwLog | Select-String -Pattern $pattern | ForEach-Object { [double]($_.Line -split ' ')[0] }) }
+Check $g 'big bursts land at' (@(& $pwTime "Action 'big_raid_burst' \(0\) hits Player 'Balance_Druid'") | Sort-Object -Unique) @(110, 111, 112, 113, 114, 230, 231, 232, 233, 234)
+Check $g 'first tank buster' ((& $pwTime "Action 'tank_buster' \(0\) hits")[0]) 10
+Check $g 'first dispellable_dot tick' ((& $pwTime "Action 'dispellable_dot' \(0\) hits")[0]) 36.5
+# Health from the healer: the stand-ins take the healer's health (tanks x1.44).
+$pwHealer = Invoke-Simc 'patchwerk_healer' @('scripts\restoration_druid.simc', 'scripts\fights\patchwerk.simc', 'iterations=20', 'threads=1',
+  'deterministic=1', 'encounter_damage_all=0.2032')
+$pwH = $pwHealer.sim.statistics.raid_member_health
+Check $g 'raid health from the healer (not the 900k default)' ([int]($pwH -gt 500000 -and $pwH -ne 900000)) 1
+Check $g 'tank health = raid health x 1.44' $pwHealer.sim.statistics.raid_tank_health ($pwH * 1.44) 1e-9
 # ---------------------------------------------------------------- Damage tolerance search (engine, tolerance=1)
 # A small, coarse search: the healer profile plus one gear set (tests\tolerance_sets.simc) and one noise rerun. Checks
 # the results land in the JSON, the gear set swaps the healer's item (not the boss's) and the profileset is not also
 # run as a normal profileset.
 Write-Host 'Damage tolerance search...'
 $g = 'tolerance'
-$tol = Invoke-Simc 'tolerance' @('scripts\restoration_druid.simc', 'scripts\tests\tolerance_sets.simc', 'threads=4',
+$tol = Invoke-Simc 'tolerance' @('scripts\restoration_druid.simc', 'scripts\fights\vashnik.simc', 'scripts\tests\tolerance_sets.simc', 'threads=4',
   'iterations=20', 'tolerance=1', 'tolerance_share=0.2032', 'tolerance_iterations=60', 'tolerance_type_iterations=60',
   'tolerance_precision=0.02', 'tolerance_type_precision=0.05', 'tolerance_tests=steady', 'tolerance_noise_runs=1')
 $ts = $tol.sim.tolerance
@@ -192,7 +224,7 @@ Check $g 'no normal profileset run' ($null -eq $tol.sim.profilesets) $true
 Write-Host 'Healer profile and stock SimC...'
 $golden = [ordered]@{}
 
-$druid = Invoke-Simc 'healer_profile' @('scripts\restoration_druid.simc', 'iterations=200', 'threads=1', 'deterministic=1')
+$druid = Invoke-Simc 'healer_profile' @('scripts\restoration_druid.simc', 'scripts\fights\vashnik.simc', 'iterations=200', 'threads=1', 'deterministic=1')
 $healer = $druid.sim.players | Where-Object { $_.name -eq 'Silverblooms' }
 $others = @($druid.sim.players | Where-Object { $_.name -ne 'Silverblooms' })
 $frames = $healer.collected_data.raid_frames
@@ -210,7 +242,12 @@ $golden['healer_profile'] = [ordered]@{
   death_recaps             = @($healer.collected_data.death_recaps).Count
 }
 
-$evoker = Invoke-Simc 'evoker_healer_profile' @('scripts\preservation_evoker.simc', 'iterations=200', 'threads=1',
+$golden['patchwerk_healer_profile'] = [ordered]@{
+  raid_member_health  = $pwHealer.sim.statistics.raid_member_health
+  healer_hps          = ($pwHealer.sim.players | Where-Object { $_.name -eq 'Silverblooms' }).collected_data.hps.mean
+  raid_damage_taken   = ($pwHealer.sim.players | ForEach-Object { $_.collected_data.dtps.mean } | Measure-Object -Sum).Sum
+}
+$evoker = Invoke-Simc 'evoker_healer_profile' @('scripts\preservation_evoker.simc', 'scripts\fights\vashnik.simc', 'iterations=200', 'threads=1',
   'deterministic=1', 'encounter_damage_all=0.2032')
 $evokerHealer = $evoker.sim.players | Where-Object { $_.name -eq 'Duskryth' }
 $golden['evoker_healer_profile'] = [ordered]@{

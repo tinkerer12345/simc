@@ -12,6 +12,11 @@
                            "raid_frames_deaths":  12,
                            "death_recaps":  2
                        },
+    "patchwerk_healer_profile":  {
+                                     "raid_member_health":  884340.0,
+                                     "healer_hps":  352263.70545840749,
+                                     "raid_damage_taken":  108419245.23373869
+                                 },
     "evoker_healer_profile":  {
                                   "wipes":  0,
                                   "healer_hps":  327933.74346163016,
@@ -19,7 +24,7 @@
                                   "raid_damage_taken":  111044978.96641563
                               },
     "MID1_Priest_Shadow":  {
-                               "dps":  130914.15190051293,
+                               "dps":  130914.1519005129,
                                "hps":  null,
                                "dtps":  null
                            },
@@ -29,12 +34,12 @@
                                     "dtps":  19130312.2556774
                                 },
     "MID1_Druid_Balance":  {
-                               "dps":  130733.89991002361,
+                               "dps":  130733.89991002358,
                                "hps":  null,
                                "dtps":  null
                            },
     "MID1_Druid_Feral":  {
-                             "dps":  148863.680999535,
+                             "dps":  148863.68099953485,
                              "hps":  null,
                              "dtps":  null
                          },
@@ -44,12 +49,12 @@
                                 "dtps":  20557459.2378402
                             },
     "MID2_Druid_Feral":  {
-                             "dps":  262974.6066428588,
+                             "dps":  262974.60664285908,
                              "hps":  null,
                              "dtps":  null
                          },
     "MID1_Evoker_Devastation_FS":  {
-                                       "dps":  131364.86679938064,
+                                       "dps":  131364.86679938067,
                                        "hps":  null,
                                        "dtps":  null
                                    }

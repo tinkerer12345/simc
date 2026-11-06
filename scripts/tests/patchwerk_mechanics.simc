@@ -1,0 +1,18 @@
+# Regression test profile for the Patchwerk encounter (the generic healer test fight). 2 tanks and 2 ranged with fixed
+# health and no mitigation; every hit is a share of that health, so the damage is scaled down to 0.1% (nobody dies).
+max_time=300
+vary_combat_length=0
+optimal_raid=0
+encounter_damage_all=0.001
+
+raid_tanks=2
+raid_ranged=2
+raid_member_health=1000000
+raid_member_damage_reduction=0
+raid_member_avoidance=0
+raid_tank_health=1440000
+raid_tank_damage_reduction=0
+raid_tank_physical_reduction=0
+
+encounter=Patchwerk
+enemy_health=1000000000

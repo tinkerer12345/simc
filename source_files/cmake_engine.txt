@@ -30,6 +30,7 @@ class_modules/apl/warlock.hpp
 class_modules/bosses/sc_bosses.hpp
 class_modules/bosses/sc_encounter_damage.hpp
 class_modules/bosses/sc_vashnik.hpp
+class_modules/bosses/sc_patchwerk.hpp
 class_modules/raid/sc_raid_member.hpp
 class_modules/class_module.hpp
 class_modules/sc_enemy.hpp
@@ -247,6 +248,7 @@ class_modules/sc_druid.cpp
 class_modules/bosses/sc_bosses.cpp
 class_modules/bosses/sc_encounter_damage.cpp
 class_modules/bosses/sc_vashnik.cpp
+class_modules/bosses/sc_patchwerk.cpp
 class_modules/raid/sc_raid_member.cpp
 class_modules/sc_enemy.cpp
 class_modules/sc_evoker.cpp

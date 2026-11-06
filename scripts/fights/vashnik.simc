@@ -1,0 +1,24 @@
+# Mythic Vashnik as killed on 2026-10-26: the boss's script and the raid calibrated to that kill.
+# Use after a healer profile: simc.exe <healer>.simc fights\vashnik.simc ...
+max_time=345
+vary_combat_length=0
+
+# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
+# With the healer under test: 20 players, and it is the only one healing.
+raid_tanks=2
+raid_healers=3
+raid_ranged=7
+raid_melee=7
+# Health and damage reduction are placeholders (the stand-ins of the kill's raid).
+raid_member_health=900000
+raid_member_damage_reduction=0.10
+raid_member_avoidance=0
+raid_tank_health=1300000
+# Tank mitigation from the Mythic log: Dripping Fangs' Nature DoT ~35% mitigated, Melee and the bite (physical) ~70%
+# (35% here plus 57% physical-only). Gives Melee 27-31M, bites ~5M and DoT ticks ~31M per fight, as in the log.
+raid_tank_damage_reduction=0.35
+raid_tank_physical_reduction=0.57
+
+encounter=Vashnik
+difficulty=mythic
+enemy_health=1000000000

@@ -177,6 +177,11 @@ struct sim_t : private sc_thread_t
     double tank_health           = 1300000;
     double tank_damage_reduction = 0.15;
     double tank_physical_reduction = 0.0;  // armor + active mitigation, on physical damage only, on top of the above
+    // raid_health_from_healer=1: everyone gets the healer's own max health (tanks x tank_health_factor) instead of
+    // health / tank_health. Read once per run (child sims inherit it), so gear sets all face the same raid.
+    bool health_from_healer   = false;
+    double tank_health_factor = 1.44;
+    double resolved_health    = 0;  // the healer's health, once read
   } raid_stand_in;
   int         stat_cache;
   int         max_aoe_enemies;

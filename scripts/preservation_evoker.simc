@@ -1,6 +1,4 @@
 iterations=1000
-max_time=345
-vary_combat_length=0
 
 evoker="Duskryth"
 level=90
@@ -55,7 +53,7 @@ actions+=/naturalize,target_if=max:target.dispellable,if=target.dispellable>=3|t
 actions+=/use_item,name=gebbos_bottomless_bag
 # Emergencies
 actions+=/rewind,if=raid_health.pct<55
-actions+=/zephyr,if=encounter.imbibe.remains<3
+actions+=/zephyr,if=encounter.big_burst.remains<3
 actions+=/obsidian_scales,if=injured_allies.50>=2
 # Essence Burst into Emerald Blossom on whoever needs it most right now (the 2pc Living Flame follows it)
 actions+=/emerald_blossom,target_if=min:target.health.pct,if=buff.essence_burst.up
@@ -77,22 +75,3 @@ actions+=/living_flame
 
 # Record raid frames (everyone's health and mana, and our HoTs) in the sample fight for the healer report.
 raid_frames=1
-
-# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
-# With us: 20 players, and we are the only one healing. Health and damage reduction are placeholders.
-raid_tanks=2
-raid_healers=3
-raid_ranged=7
-raid_melee=7
-raid_member_health=900000
-raid_member_damage_reduction=0.10
-raid_member_avoidance=0
-raid_tank_health=1300000
-# Tank mitigation from the Mythic log: Dripping Fangs' Nature DoT ~35% mitigated, Melee and the bite (physical) ~70%
-# (35% here plus 57% physical-only). Gives Melee 27-31M, bites ~5M and DoT ticks ~31M per fight, as in the log.
-raid_tank_damage_reduction=0.35
-raid_tank_physical_reduction=0.57
-
-encounter=Vashnik
-difficulty=mythic
-enemy_health=1000000000

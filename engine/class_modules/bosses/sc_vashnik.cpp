@@ -531,9 +531,9 @@ struct vashnik_t final : public enemy::enemy_t
       return 0.0;
     };
     // Scripted damage the healer can plan for: "imbibe" = the Expulsions landing (end of the Imbibe cast), "catalyst"
-    // = Malignant Catalyst, "burst" = whichever is next.
+    // = Malignant Catalyst, "burst" = whichever is next, "big_burst" = the Expulsions (the generic name, as in Patchwerk).
     sim->encounter_timer = [ this ]( util::string_view name, bool ago ) {
-      bool imbibe = name == "imbibe" || name == "burst";
+      bool imbibe = name == "imbibe" || name == "big_burst" || name == "burst";
       bool catalyst = name == "catalyst" || name == "burst";
       if ( !imbibe && !catalyst )
         return -1.0;
