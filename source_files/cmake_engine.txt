@@ -170,6 +170,7 @@ sim/progress_bar.hpp
 sim/raid_event.hpp
 sim/reforge_plot.hpp
 sim/tolerance.hpp
+sim/tolerance_stats.hpp
 sim/scale_factor_control.hpp
 sim/sim.hpp
 sim/sim_control.hpp
@@ -370,6 +371,7 @@ sim/progress_bar.cpp
 sim/raid_event.cpp
 sim/reforge_plot.cpp
 sim/tolerance.cpp
+sim/tolerance_stats.cpp
 sim/scale_factor_control.cpp
 sim/sim.cpp
 sim/sim_ostream.cpp
@@ -383,4 +385,4 @@ util/rng.cpp
 util/timespan.cpp
 util/util.cpp
 util/xml.cpp
-)
+)

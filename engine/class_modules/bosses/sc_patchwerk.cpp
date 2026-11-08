@@ -26,7 +26,9 @@ namespace
  * Damage per kind:
  * - steady: raid_pulse hits everyone every 2 sec.
  * - burst: raid_burst every burst_interval (30 sec) from 0:20, every big_burst_every-th one (4th) a big_raid_burst
- *   twice as large: 60% on impact, then 4 ticks of 10% one second apart.
+ *   twice as large: 60% on impact, then 4 ticks of 10% one second apart. By default the bursts keep burst damage per
+ *   second the same whatever the interval (fewer, bigger bursts); burst_scales_with_interval=0 keeps each burst the
+ *   size it has at the defaults (every 30 sec, every 4th big), so a longer interval means less burst damage in total.
  * - spot: spot_dot on 3 random players every 8 sec (6 ticks, 1 sec), and every 30 sec from 0:35 a dispellable_dot on
  *   one random player, the healer's to dispel: it gains a stack every 1.5 sec tick and lasts 30 sec (lethal if
  *   ignored, like Vashnik's Exploding Infection).
@@ -41,6 +43,8 @@ constexpr double steady_rate             = 0.0321;  // H per second, per player
 constexpr timespan_t steady_interval     = 2_s;
 constexpr double burst_rate              = 0.0498;
 constexpr timespan_t burst_first         = 20_s;
+constexpr timespan_t default_burst_interval = 30_s;
+constexpr int default_big_burst_every    = 4;
 constexpr double big_burst_size          = 2.0;  // x a normal burst
 constexpr double burst_impact_share      = 0.6;
 constexpr int burst_ticks                = 4;  // the rest, one second apart
@@ -68,8 +72,9 @@ constexpr int buster_dot_ticks            = 16;  // every 2 sec
 
 struct patchwerk_t final : public enemy::enemy_t
 {
-  timespan_t burst_interval = 30_s;
-  int big_burst_every       = 4;
+  timespan_t burst_interval = default_burst_interval;
+  int big_burst_every       = default_big_burst_every;
+  bool burst_scales_with_interval = true;
 
   raid_damage_t* raid_pulse      = nullptr;
   raid_damage_t* raid_burst      = nullptr;
@@ -102,6 +107,7 @@ struct patchwerk_t final : public enemy::enemy_t
   {
     add_option( opt_timespan( "burst_interval", burst_interval, 5_s, 600_s ) );
     add_option( opt_int( "big_burst_every", big_burst_every, 1, 100 ) );
+    add_option( opt_bool( "burst_scales_with_interval", burst_scales_with_interval ) );
     enemy::enemy_t::create_options();
   }
 
@@ -113,11 +119,14 @@ struct patchwerk_t final : public enemy::enemy_t
   double tank_health() const { return raid::member_health( sim, true ); }
 
   // A normal burst's total damage per player; big ones are big_burst_size times as large, and the average over a cycle
-  // of big_burst_every bursts is burst_rate.
+  // of big_burst_every bursts is burst_rate (at the default interval and big_burst_every, unless
+  // burst_scales_with_interval).
   double burst_damage() const
   {
-    double cycle = burst_interval.total_seconds() * big_burst_every;
-    return burst_rate * health() * cycle / ( big_burst_every - 1 + big_burst_size );
+    timespan_t interval = burst_scales_with_interval ? burst_interval : default_burst_interval;
+    int every           = burst_scales_with_interval ? big_burst_every : default_big_burst_every;
+    double cycle        = interval.total_seconds() * every;
+    return burst_rate * health() * cycle / ( every - 1 + big_burst_size );
   }
 
   bool is_big( int burst_index ) const

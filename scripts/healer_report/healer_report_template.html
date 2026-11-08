@@ -8,22 +8,25 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
+/* Colour palettes (the floating palette button, remembered): graphite (default), midnight, forest, light, pastel.
+   --accent is the report's own colour; --heal / --dmg stay good / bad (upgrade / downgrade) in every palette. */
 :root {
-  color-scheme: light;
-  --bg: #eef2f0;
-  --panel: #ffffff;
-  --panel-2: #f6f8f7;
-  --ink: #15201c;
-  --ink-2: #4b5a54;
-  --ink-3: #6f7e78;
-  --line: #dce3e0;
-  --grid: #e7ecea;
-  --heal: #17996a;
-  --heal-soft: #a6dcc5;
-  --dmg: #d4562a;
-  --dmg-soft: #f2bba5;
-  --mana: #2f74d0;
-  --focus: #2f74d0;
+  color-scheme: dark;
+  --bg: #131416;
+  --panel: #1b1c1f;
+  --panel-2: #222327;
+  --ink: #ececef;
+  --ink-2: #b2b3ba;
+  --ink-3: #8b8c94;
+  --line: #2d2e34;
+  --grid: #26272c;
+  --heal: #5cc794;
+  --heal-soft: #2b5a45;
+  --dmg: #ec7a5c;
+  --dmg-soft: #6b3523;
+  --mana: #6ea4f2;
+  --focus: #a9a6f7;
+  --accent: #a9a6f7;
   --c3: #8b6fd6;
   --c4: #d19a2e;
   --c5: #2fa7b8;
@@ -35,45 +38,34 @@
   --school-frost: #5cb8f0;
   --school-shadow: #8e5bd9;
   --school-arcane: #e06bd8;
-  --shadow: 0 1px 2px rgba(21, 32, 28, .06), 0 4px 16px rgba(21, 32, 28, .05);
-}
-@media (prefers-color-scheme: dark) {
-  :root:where(:not([data-theme="light"])) {
-    color-scheme: dark;
-    --bg: #0f1513;
-    --panel: #161e1b;
-    --panel-2: #1b2522;
-    --ink: #e6edea;
-    --ink-2: #a9b7b1;
-    --ink-3: #849390;
-    --line: #26322e;
-    --grid: #202b27;
-    --heal: #27a574;
-    --heal-soft: #1f5a45;
-    --dmg: #e2683d;
-    --dmg-soft: #6b3523;
-    --mana: #4a8be3;
-    --focus: #4a8be3;
-    --shadow: none;
-  }
-}
-:root[data-theme="dark"] {
-  color-scheme: dark;
-  --bg: #0f1513;
-  --panel: #161e1b;
-  --panel-2: #1b2522;
-  --ink: #e6edea;
-  --ink-2: #a9b7b1;
-  --ink-3: #849390;
-  --line: #26322e;
-  --grid: #202b27;
-  --heal: #27a574;
-  --heal-soft: #1f5a45;
-  --dmg: #e2683d;
-  --dmg-soft: #6b3523;
-  --mana: #4a8be3;
-  --focus: #4a8be3;
   --shadow: none;
+}
+:root[data-theme="midnight"] {
+  color-scheme: dark;
+  --bg: #0e1320; --panel: #151b2b; --panel-2: #1b2236; --ink: #e6eaf5; --ink-2: #a9b2ca; --ink-3: #7f89a4;
+  --line: #262e44; --grid: #1f263a; --heal: #4fc59a; --heal-soft: #1f5a45; --dmg: #f07a62; --dmg-soft: #6b3523;
+  --mana: #6ea8ff; --focus: #7cc4ff; --accent: #7cc4ff; --shadow: none;
+}
+:root[data-theme="forest"] {
+  color-scheme: dark;
+  --bg: #0f1513; --panel: #161e1b; --panel-2: #1b2522; --ink: #e6edea; --ink-2: #a9b7b1; --ink-3: #849390;
+  --line: #26322e; --grid: #202b27; --heal: #27a574; --heal-soft: #1f5a45; --dmg: #e2683d; --dmg-soft: #6b3523;
+  --mana: #4a8be3; --focus: #4a8be3; --accent: #27a574; --shadow: none;
+}
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f1f2f4; --panel: #ffffff; --panel-2: #f7f7f9; --ink: #1b1c20; --ink-2: #4f515a; --ink-3: #74767f;
+  --line: #e0e1e6; --grid: #ebecef; --heal: #17996a; --heal-soft: #a6dcc5; --dmg: #d4562a; --dmg-soft: #f2bba5;
+  --mana: #2f74d0; --focus: #5b57d6; --accent: #5b57d6;
+  --shadow: 0 1px 2px rgba(20, 20, 30, .06), 0 4px 16px rgba(20, 20, 30, .05);
+}
+:root[data-theme="pastel"] {
+  color-scheme: light;
+  /* Dusty rose: no white surfaces, soft contrast. */
+  --bg: #ead7e3; --panel: #f4e6ef; --panel-2: #eddbe7; --ink: #3d2a3b; --ink-2: #6a4e66; --ink-3: #8d7088;
+  --line: #ddc2d4; --grid: #e6cfde; --heal: #2f8f73; --heal-soft: #b5dccd; --dmg: #c85a74; --dmg-soft: #f0c2cd;
+  --mana: #6f7fcc; --focus: #c95f99; --accent: #c95f99; --c4: #b97a2a;
+  --shadow: 0 1px 2px rgba(90, 40, 80, .06), 0 6px 20px rgba(90, 40, 80, .07);
 }
 
 * { box-sizing: border-box; }
@@ -125,7 +117,7 @@ p { margin: 0; }
 
 main { max-width: 1240px; margin: 0 auto; padding: 28px 24px 80px; }
 section { margin-top: 48px; }
-.section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 16px; flex-wrap: wrap; }
+.section-head { display: flex; flex-direction: column; align-items: flex-start; gap: 8px; margin-bottom: 16px; }
 .section-head p { color: var(--ink-2); max-width: 70ch; }
 .panel { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--shadow); }
 
@@ -134,9 +126,9 @@ section { margin-top: 48px; }
 .side { padding: 24px 28px; position: relative; overflow: hidden; }
 .side.healer { border-radius: 14px 0 0 14px; border-right: none; }
 .side.boss { border-radius: 0 14px 14px 0; border-left: none; }
-.side::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--heal); }
+.side::before { content: ""; position: absolute; inset: 0 auto 0 0; width: 5px; background: var(--accent); }
 .side.boss::before { inset: 0 0 0 auto; background: var(--dmg); }
-.side .role { font-size: 13px; font-weight: 600; color: var(--heal); }
+.side .role { font-size: 13px; font-weight: 600; color: var(--accent); }
 .side.boss .role { color: var(--dmg); }
 .side .name { font-size: 36px; font-weight: 800; letter-spacing: -0.02em; margin: 2px 0 4px; }
 .side .sub { color: var(--ink-2); }
@@ -279,7 +271,7 @@ a.wh-item:hover { text-decoration: underline; }
   background: color-mix(in srgb, var(--ink) 3%, var(--panel)); }
 .cs-omnium a.rune { font-size: 13px; }
 .arr { display: inline-block; font-size: 11px; margin-right: 2px; }
-.arr.up { color: var(--heal); }
+.arr.up { color: var(--heal); display: inline-block; }
 .arr.down { color: var(--dmg); }
 .arr.same { color: var(--ink-3); }
 .tip-toggle { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2);
@@ -287,9 +279,47 @@ a.wh-item:hover { text-decoration: underline; }
 .tip-toggle b { color: var(--ink); }
 .tt-switch { width: 26px; height: 15px; border-radius: 999px; background: var(--line); position: relative; flex: none; transition: background .15s; }
 .tt-switch::after { content: ""; position: absolute; top: 2px; left: 2px; width: 11px; height: 11px; border-radius: 50%; background: #fff; transition: left .15s; }
-.tip-toggle[aria-pressed="true"] .tt-switch { background: var(--heal); }
+.tip-toggle[aria-pressed="true"] .tt-switch { background: var(--accent); }
 .tip-toggle[aria-pressed="true"] .tt-switch::after { left: 13px; }
 .cmp-tools { display: flex; justify-content: flex-end; padding: 6px 22px 0; }
+
+/* ---------- measurement tables ---------- */
+.meas { margin-top: 14px; padding: 4px 0 8px; }
+.meas + .meas { margin-top: 18px; }
+.meas-title { padding: 12px 22px 4px; }
+.tbl-wrap, .meas > table { overflow-x: auto; }
+.meas table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.meas th, .meas td { padding: 9px 14px; text-align: left; border-top: 1px solid var(--line); vertical-align: middle; }
+.meas thead th { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); border-top: 0; }
+.meas thead th small { display: block; text-transform: none; letter-spacing: 0; font-weight: 500; }
+.meas tbody th { font-weight: 600; }
+.meas th:first-child { padding-left: 22px; }
+.meas th:last-child, .meas td:last-child { padding-right: 22px; }
+.meas td b { font-weight: 700; }
+.nw { white-space: nowrap; }
+.drop { display: inline-block; position: relative; width: 90px; height: 8px; background: var(--grid); border-radius: 4px; margin-right: 10px; vertical-align: middle; }
+.drop i { position: absolute; top: 0; bottom: 0; background: var(--dmg); border-radius: 4px; }
+.cmp-table td { text-align: right; white-space: nowrap; font-weight: 700; }
+.cmp-table thead th:not(:first-child) { text-align: right; }
+.cmp-table tr.base td { color: var(--ink-2); font-weight: 600; }
+.cmp-table tbody th { min-width: 260px; }
+.cmp-table tbody th small { display: block; font-weight: 500; font-size: 12px; margin-top: 4px; max-width: 52ch; color: var(--ink-2); }
+.cmp-table tbody th small.better { color: var(--heal); }
+.cmp-table tbody th small.worse { color: var(--dmg); }
+.cmp-table td.info { opacity: .75; }
+.cmp-swap { display: block; }
+.cmp-tools { gap: 12px; align-items: center; flex-wrap: wrap; }
+.lvl-toggle { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; overflow: hidden; margin-right: auto; }
+.lvl-toggle button { border: 0; background: var(--panel); color: var(--ink-2); font: inherit; font-size: 13px; padding: 6px 14px; cursor: pointer; }
+.lvl-toggle button[aria-pressed="true"] { background: var(--ink); color: var(--panel); font-weight: 600; }
+.check-table td { white-space: nowrap; }
+.check-table tbody th { min-width: 280px; }
+.chip { display: inline-block; padding: 3px 11px; border-radius: 999px; font-weight: 700; font-size: 13px; border: 1.5px solid currentColor; }
+.chip.equal { color: var(--ink-3); }
+.chip.tradeoff, .tradeoff { color: var(--c4); }
+.heal-table td { text-align: right; }
+.heal-table thead th:not(:first-child) { text-align: right; }
+.heal-table tr.base th, .heal-table tr.base td { font-weight: 700; }
 @media (max-width: 760px) { .cs-cols { grid-template-columns: 1fr; } .cs-col + .cs-col { border-left: 0; border-top: 1px solid var(--line); } }
 /* damage you can heal */
 .can-heal { display: flex; gap: 24px; align-items: center; flex-wrap: wrap; padding: 20px 24px; }
@@ -473,10 +503,10 @@ a.wh-item:hover { text-decoration: underline; }
 
 /* ---------- buffs ---------- */
 .uptimes { padding: 8px 20px 16px; display: grid; gap: 10px; }
-.up { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 52px; gap: 14px; align-items: center; font-size: 15px; }
-.up .track { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
-.up .fill { height: 100%; background: var(--mana); border-radius: 4px; }
-.up .pct { text-align: right; font-weight: 600; }
+.uptimes .up { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr) 52px; gap: 14px; align-items: center; font-size: 15px; }
+.uptimes .up .track { height: 8px; background: var(--grid); border-radius: 4px; overflow: hidden; }
+.uptimes .up .fill { height: 100%; background: var(--mana); border-radius: 4px; }
+.uptimes .up .pct { text-align: right; font-weight: 600; }
 
 /* ---------- details ---------- */
 details.panel { padding: 0; }
@@ -511,6 +541,115 @@ code.block { display: block; padding: 12px; background: var(--panel-2); border-r
   .bd-head, .bd-row { grid-template-columns: minmax(0, 1fr) 80px; }
   .bd-head span:nth-child(2), .bd-row .barcell { display: none; }
 }
+
+/* ---------- stat chips with icons (gear sheet) ---------- */
+.cs-stats { gap: 10px 12px; }
+.cs-stat { flex-direction: row; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; border-radius: 12px;
+  background: color-mix(in srgb, var(--sc) 9%, var(--panel)); border: 1px solid color-mix(in srgb, var(--sc) 22%, var(--line)); }
+.cs-stat .si { width: 30px; height: 30px; border-radius: 9px; display: grid; place-items: center; flex: none;
+  background: color-mix(in srgb, var(--sc) 20%, transparent); color: var(--sc); }
+.cs-stat .si svg { width: 17px; height: 17px; }
+.cs-stat .sv { display: flex; flex-direction: column; line-height: 1.15; }
+.cs-stat .sv span { font-size: 10.5px; }
+.cs-stat .sv b { font-size: 16px; }
+.cs-stat .sv b small { font-size: 12px; font-weight: 600; color: var(--ink-3); margin-left: 4px; }
+.gi-pts { font-size: 11.5px; font-weight: 700; color: var(--heal); margin-top: 3px; }
+.cs-extras { padding: 16px 20px 18px; border-top: 1px solid var(--line); background: color-mix(in srgb, var(--ink) 3%, var(--panel)); display: grid; gap: 14px; }
+.ex-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 14px; align-items: start; }
+.ex-card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 12px 14px; }
+.ex-head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 8px; border-bottom: 1px solid var(--line); margin-bottom: 4px; }
+.ex-count { font-size: 12px; color: var(--ink-3); }
+.ex-rows { display: grid; }
+.ex-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 5px 0; font-size: 13px; }
+.ex-row + .ex-row { border-top: 1px dashed var(--grid); }
+.ex-name { min-width: 0; }
+.ex-name .gi-gem, .ex-name .gi-ench { font-size: 13px; margin: 0; }
+.ex-detail { color: var(--ink-3); font-size: 12px; white-space: nowrap; text-align: right; }
+.ex-detail b { color: var(--ink); }
+.cs-extras p { font-size: 13px; margin-top: 6px; }
+.ex-buffs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.ex-buffs .cs-label { margin-right: 6px; }
+.ex-chip { font-size: 12.5px; padding: 3px 10px 3px 6px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); }
+.stats-note { font-size: 12px; color: var(--ink-3); margin-top: 8px; }
+.kv-chips { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-top: 18px; }
+.kv-chips .cs-stat { padding: 5px 10px 5px 5px; }
+.facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 16px; margin: 18px 0 0; padding-top: 16px; border-top: 1px solid var(--line); }
+.facts div { min-width: 0; }
+.facts dt { font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.facts dd { margin: 0; font-size: 18px; font-weight: 700; }
+.facts dd.n { font-size: 12px; font-weight: 500; color: var(--ink-3); }
+.abilities.compact { gap: 5px; margin-top: 14px; }
+.abilities.compact li { align-items: center; font-size: 14px; }
+.abilities .kind { font-size: 11px; font-weight: 600; color: var(--ink-3); border: 1px solid var(--line); border-radius: 999px; padding: 0 7px; margin-left: 6px; }
+
+/* ---------- section intros and "How it works" ---------- */
+.section-head p { max-width: 82ch; }
+/* As wide as the section's panels; open, the text flows in two columns on wide screens so lines stay readable. */
+details.explain { margin-top: 2px; align-self: stretch; }
+details.explain > summary { cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600;
+  color: var(--accent); padding: 3px 10px 3px 8px; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--line)); }
+details.explain > summary::-webkit-details-marker { display: none; }
+details.explain > summary::before { content: "▸"; transition: transform .15s; display: inline-block; }
+details.explain[open] > summary::before { transform: rotate(90deg); }
+.explain-body { margin-top: 10px; padding: 18px 22px; border-radius: 14px; background: var(--panel); border: 1px solid var(--line);
+  color: var(--ink-2); font-size: 14px; line-height: 1.6; columns: 2 420px; column-gap: 40px; column-rule: 1px solid var(--line); }
+.explain-body b { color: var(--ink); }
+.explain-body p { margin: 0 0 12px; }
+.explain-body h4 { margin: 0 0 6px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink); break-after: avoid; }
+.explain-body p + h4, .explain-body ul + h4 { margin-top: 18px; }
+.explain-body ul { margin: 0 0 12px; padding-left: 20px; display: grid; gap: 4px; break-inside: avoid; }
+.explain-body p, .explain-body li { break-inside: avoid; }
+.ex-table { width: 100%; border-collapse: collapse; font-size: 13px; margin: 0 0 12px; break-inside: avoid; }
+.ex-table th, .ex-table td { padding: 4px 8px; text-align: right; border-bottom: 1px solid var(--line); }
+.ex-table th:first-child, .ex-table td:first-child { text-align: left; }
+.ex-table th { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); }
+.ex-table td.dead { color: var(--dmg); font-weight: 600; }
+.ex-table tr.sum td { border-bottom: 0; font-weight: 700; color: var(--ink); }
+.explain-body code { font-size: 12.5px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 5px; padding: 0 5px; }
+
+/* ---------- upgrades summary (top of the gear check) ---------- */
+.up-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 16px; }
+.up-card { padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; }
+.up-card h3 { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
+.up-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.up-list .gain.tradeoff { color: var(--c4); }
+.up-sub { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
+.up-worth { font-size: 14px; color: var(--ink-2); padding: 10px 12px; border-radius: 10px; border-left: 3px solid var(--accent); background: var(--panel-2); }
+.up-worth b { color: var(--ink); }
+.up-num { padding: 10px 12px; border-radius: 10px; background: var(--panel-2); border: 1px solid var(--line); min-width: 0; }
+.up-num .l { font-size: 11.5px; color: var(--ink-3); font-weight: 600; }
+.up-num .v { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; line-height: 1.2; }
+.up-num .n { font-size: 12px; color: var(--ink-3); }
+.up-num.best { border-color: color-mix(in srgb, var(--heal) 45%, var(--line)); background: color-mix(in srgb, var(--heal) 8%, var(--panel-2)); }
+.up-num.best .v { color: var(--heal); }
+.up-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.up-list li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; font-size: 14px; }
+.up-list li small { display: block; color: var(--ink-3); font-size: 12px; }
+.up-list .gain { font-weight: 800; color: var(--heal); white-space: nowrap; }
+.up-none { color: var(--ink-2); font-size: 14px; }
+.up-foot { font-size: 12.5px; color: var(--ink-3); border-top: 1px solid var(--line); padding-top: 10px; }
+.vs .lim-pat { font-size: 12px; color: var(--ink-2); }
+.vs .lim-pat b { color: var(--ink); }
+
+/* ---------- floating buttons: palette and in-game tooltips ---------- */
+.dock { position: fixed; right: 18px; bottom: 18px; z-index: 40; display: flex; flex-direction: column; align-items: flex-end; gap: 8px; }
+.dock-btn { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 14px 0 10px; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--line); background: color-mix(in srgb, var(--panel) 92%, transparent); color: var(--ink-2);
+  font: inherit; font-size: 13px; box-shadow: 0 6px 20px rgba(0, 0, 0, .25); backdrop-filter: blur(8px); }
+.dock-btn:hover { color: var(--ink); border-color: var(--accent); }
+.dock-btn svg { width: 18px; height: 18px; color: var(--accent); flex: none; }
+.dock-btn b { color: var(--ink); }
+.dock .tip-toggle { height: 40px; box-shadow: 0 6px 20px rgba(0, 0, 0, .25); background: color-mix(in srgb, var(--panel) 92%, transparent); backdrop-filter: blur(8px); }
+.palettes { display: none; padding: 10px; border-radius: 14px; border: 1px solid var(--line); background: var(--panel); box-shadow: 0 10px 30px rgba(0, 0, 0, .3); gap: 4px; flex-direction: column; min-width: 190px; }
+.palettes.open { display: flex; }
+.palettes button { display: flex; align-items: center; gap: 10px; border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 13px;
+  padding: 7px 10px; border-radius: 9px; cursor: pointer; text-align: left; }
+.palettes button:hover { background: var(--panel-2); color: var(--ink); }
+.palettes button[aria-pressed="true"] { background: var(--panel-2); color: var(--ink); font-weight: 700; }
+.swatch { display: inline-flex; width: 38px; height: 18px; border-radius: 6px; overflow: hidden; border: 1px solid rgba(128, 128, 128, .35); flex: none; }
+.swatch i { flex: 1; }
+@media (max-width: 600px) { .dock { right: 12px; bottom: 12px; } .dock-btn .lbl, .dock .tip-toggle .lbl { display: none; } }
+@media print { .dock { display: none; } }
 </style>
 </head>
 <body>
@@ -526,11 +665,18 @@ code.block { display: block; padding: 12px; background: var(--panel-2); border-r
       <a href="#mana">Mana &amp; buffs</a>
       <a href="#details">Details</a>
     </nav>
-    <button class="theme-btn" id="themeBtn" type="button">Theme</button>
   </div>
 </header>
 
 <main id="app"></main>
+<div class="dock" id="dock">
+  <div class="palettes" id="palettes" role="menu" aria-label="Colour palette"></div>
+  <button class="dock-btn" id="paletteBtn" type="button" aria-haspopup="true" aria-expanded="false" title="Colour palette">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3a9 9 0 1 0 0 18c1.1 0 1.8-.8 1.8-1.8 0-.5-.2-.9-.5-1.2-.3-.3-.5-.7-.5-1.2 0-1 .8-1.8 1.8-1.8H17a4 4 0 0 0 4-4c0-4.4-4-8-9-8z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15" cy="7.5" r="1.2"/></svg>
+    <span class="lbl">Palette: <b id="paletteName"></b></span></button>
+  <button class="tip-toggle" id="tipBtn" type="button" aria-pressed="true" title="Show the in-game item tooltip when hovering an item">
+    <span class="tt-switch" aria-hidden="true"></span><span class="lbl">In-game tooltips: </span><b class="tt-state">On</b></button>
+</div>
 <div class="tooltip" id="tooltip" role="status" aria-live="polite"></div>
 
 <script id="simc-data" type="application/json">__SIMC_DATA__</script>
@@ -613,21 +759,41 @@ function movingAvg(arr, w) {
 }
 
 // ---------------------------------------------------------------- theme
+// Colour palettes, picked from the floating button at the bottom right and remembered. Swatches: background, panel,
+// accent, good, bad.
 const root = document.documentElement;
-const themeBtn = $("#themeBtn");
-function currentTheme() {
-  return root.dataset.theme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+const PALETTES = [
+  { key: "graphite", name: "Graphite", sw: ["#131416", "#222327", "#a9a6f7", "#5cc794", "#ec7a5c"] },
+  { key: "midnight", name: "Midnight", sw: ["#0e1320", "#1b2236", "#7cc4ff", "#4fc59a", "#f07a62"] },
+  { key: "forest", name: "Forest", sw: ["#0f1513", "#1b2522", "#27a574", "#27a574", "#e2683d"] },
+  { key: "light", name: "Light", sw: ["#f1f2f4", "#ffffff", "#5b57d6", "#17996a", "#d4562a"] },
+  { key: "pastel", name: "Pastel", sw: ["#ead7e3", "#f4e6ef", "#c95f99", "#2f8f73", "#c85a74"] },
+];
+const paletteMenu = $("#palettes"), paletteBtn = $("#paletteBtn");
+function setPalette(key, save) {
+  const p = PALETTES.find(x => x.key === key) || PALETTES[0];
+  if (p.key === "graphite") delete root.dataset.theme; else root.dataset.theme = p.key;
+  $("#paletteName").textContent = p.name;
+  paletteMenu.querySelectorAll("button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.key === p.key)));
+  if (save) try { localStorage.setItem("simc-healer-theme", p.key); } catch (e) {}
 }
-function setThemeLabel() { themeBtn.textContent = currentTheme() === "dark" ? "Light mode" : "Dark mode"; }
-// Dark by default; the toggle can still switch to light and is remembered.
-root.dataset.theme = "dark";
-try { const saved = localStorage.getItem("simc-healer-theme"); if (saved) root.dataset.theme = saved; } catch (e) {}
-setThemeLabel();
-themeBtn.addEventListener("click", () => {
-  root.dataset.theme = currentTheme() === "dark" ? "light" : "dark";
-  try { localStorage.setItem("simc-healer-theme", root.dataset.theme); } catch (e) {}
-  setThemeLabel();
+paletteMenu.innerHTML = PALETTES.map(p => `<button type="button" role="menuitemradio" data-key="${p.key}">
+  <span class="swatch" aria-hidden="true">${p.sw.map(c => `<i style="background:${c}"></i>`).join("")}</span>${p.name}</button>`).join("");
+paletteMenu.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
+  setPalette(b.dataset.key, true); paletteMenu.classList.remove("open"); paletteBtn.setAttribute("aria-expanded", "false");
+}));
+paletteBtn.addEventListener("click", () => {
+  const open = paletteMenu.classList.toggle("open");
+  paletteBtn.setAttribute("aria-expanded", String(open));
 });
+document.addEventListener("click", e => {
+  if (!e.target.closest("#dock")) { paletteMenu.classList.remove("open"); paletteBtn.setAttribute("aria-expanded", "false"); }
+});
+{
+  let saved = null;
+  try { saved = localStorage.getItem("simc-healer-theme"); } catch (e) {}
+  setPalette(saved === "dark" ? "graphite" : saved, false);  // "dark" was the old dark mode
+}
 
 // ---------------------------------------------------------------- data
 let data;
@@ -765,6 +931,24 @@ const tankHealth = sim.statistics?.raid_tank_health || 0;
 document.title = healerName + " vs " + bossTitle;
 $("#brand").innerHTML = esc(healerName) + " <span>vs " + esc(bossTitle) + "</span>";
 
+// Icons and colours for the character stats (gear sheet), by stat name.
+const svgIcon = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+const STAT_ICONS = [
+  { test: /item level/i, color: "#b47cf0", svg: svgIcon(`<path d="M12 3l7 3v6c0 4.5-3 7.6-7 9-4-1.4-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/>`) },
+  { test: /intellect/i, color: "#e8b84a", svg: svgIcon(`<path d="M12 3l1.9 5.6L19.5 10l-5.6 1.9L12 17.5l-1.9-5.6L4.5 10l5.6-1.4z"/><path d="M19 17l.7 1.8 1.8.7-1.8.7L19 22l-.7-1.8-1.8-.7 1.8-.7z"/>`) },
+  { test: /crit/i, color: "#ef6f5e", svg: svgIcon(`<circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3.5"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/>`) },
+  { test: /haste/i, color: "#f2c94c", svg: svgIcon(`<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>`) },
+  { test: /mastery/i, color: "#5aa9f0", svg: svgIcon(`<path d="M12 2l3 6 6.5 1-4.7 4.6 1.1 6.4L12 17l-5.9 3 1.1-6.4L2.5 9 9 8z"/>`) },
+  { test: /versatility/i, color: "#4fc59a", svg: svgIcon(`<path d="M4 9h13l-3-3M20 15H7l3 3"/>`) },
+];
+const statIcon = label => STAT_ICONS.find(s => s.test.test(label)) || { color: "var(--ink-3)", svg: svgIcon(`<circle cx="12" cy="12" r="4"/>`) };
+// A stat with its icon, in the header and on the gear sheet.
+const statChip = (k, v, sub = "") => {
+  const ic = statIcon(k);
+  return `<div class="cs-stat" style="--sc:${ic.color}"><div class="si" aria-hidden="true">${ic.svg}</div>
+    <div class="sv"><span>${esc(k)}</span><b>${esc(v)}${sub ? ` <small>${esc(sub)}</small>` : ""}</b></div></div>`;
+};
+
 // ----- matchup
 const st = cd.buffed_stats?.stats || {};
 const attrs = cd.buffed_stats?.attribute || {};
@@ -778,13 +962,16 @@ const specLabel = classLabel && specRaw.toLowerCase().includes(classLabel.toLowe
 
 const gearSum = keyTest => sum(gearList.map(([, g]) => sum(Object.entries(g).filter(([k, v]) => typeof v === "number" && keyTest(k)).map(([, v]) => v))));
 const hasBuffed = st.crit_pct != null;
+// With snapshot_stats in the profile's pre-pull actions: the character sheet as in game (gear, gems, enchants and
+// buffs), ratings exact with the percentage they give.
+const rating = (r, pct) => r != null ? [Math.round(r).toLocaleString("en-US"), pct != null ? (pct * 100).toFixed(1) + "%" : ""] : ["–", ""];
 const healerKV = hasBuffed ? [
   ["Item level", avgIlvl ? String(Math.round(avgIlvl * 10) / 10) : "–"],
-  ["Intellect", attrs.intellect ? fmtNum(attrs.intellect) : "–"],
-  ["Crit", (st.crit_pct * 100).toFixed(1) + "%"],
-  ["Haste", st.haste_pct != null ? (st.haste_pct * 100).toFixed(1) + "%" : "–"],
-  ["Mastery", st.mastery_pct != null ? (st.mastery_pct * 100).toFixed(1) + "%" : "–"],
-  ["Versatility", st.versatility_pct != null ? (st.versatility_pct * 100).toFixed(1) + "%" : "–"],
+  ["Intellect", attrs.intellect ? Math.round(attrs.intellect).toLocaleString("en-US") : "–"],
+  ["Crit", ...rating(st.crit_rating, st.crit_pct)],
+  ["Haste", ...rating(st.haste_rating, st.haste_pct)],
+  ["Mastery", ...rating(st.mastery_rating, st.mastery_pct)],
+  ["Versatility", ...rating(st.versatility_rating, st.versatility_pct)],
 ] : [
   // Without buffed stats in the JSON, show what the gear itself provides.
   ["Item level", avgIlvl ? String(Math.round(avgIlvl * 10) / 10) : "–"],
@@ -797,23 +984,94 @@ const healerKV = hasBuffed ? [
 
 const bossAbilities = dmgStats.slice(0, 5).map(d => `
   <li><span><span>${schoolDot(d.school)}${esc(d.label)}</span><br><span class="who">${esc(d.source)}${d.sources > 1 ? " ×" + d.sources : ""}</span></span>
-  <span class="amt">${fmtPct(totalDmg ? d.eff / totalDmg : 0)}</span></li>`).join("");
+  <span class="amt">${totalDmg && d.eff / totalDmg < 0.005 ? "&lt;1%" : fmtPct(totalDmg ? d.eff / totalDmg : 0)}</span></li>`).join("");
+// The kind of damage of each of Patchwerk's abilities (engine/class_modules/bosses/sc_patchwerk.cpp), by ability name.
+const PATCHWERK_KINDS = {
+  raid_pulse: "Steady", raid_burst: "Burst", big_raid_burst: "Burst", spot_dot: "Spot", dispellable_dot: "Spot",
+  avoidable_hit: "Avoidable", melee: "Tank", tank_buster: "Tank", tank_buster_dot: "Tank",
+};
+const abilityKey = d => String(d.label || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
+// Every damage source, one line each for the gear check's header: name, kind of damage (Patchwerk), share of the damage.
+const encounterAbilities = dmgStats.map(d => {
+  const kind = PATCHWERK_KINDS[abilityKey(d)];
+  return `<li><span>${schoolDot(d.school)}${esc(d.label)}${kind ? ` <span class="kind">${kind}</span>` : ""}</span>
+    <span class="amt">${totalDmg && d.eff / totalDmg < 0.005 ? "&lt;1%" : fmtPct(totalDmg ? d.eff / totalDmg : 0)}</span></li>`;
+}).join("");
 
 // Damage tolerance (tolerance=1, engine/sim/tolerance.cpp): sim.tolerance.setups holds your current gear ("main"),
-// the gear sets (profilesets, "set") and your current gear rerun with other random seeds ("noise"). Shaped here into
-// tolerance = your current gear's results and compare = one entry per setup.
-let tolerance = null, compare = null;
+// the gear sets (profilesets, "set") and your current gear rerun with other random seeds ("noise"), each searched for
+// its limit and (version 4) measured at fixed damage levels (sim.tolerance.levels, 1 = one healer's share): how low the
+// raid goes in the bursts and how fast it comes back, deaths and what caused them, healing in bursts vs quiet time. The
+// whole thing runs once per damage pattern (sim.tolerance.patterns, the fight as set up first).
+let tolerance = null, patterns = [""];
+const tol = sim.tolerance?.version >= 3 ? sim.tolerance : null;
+const tolSetups = tol?.setups || [];
+if (tol?.patterns?.length) patterns = tol.patterns.map(p => p.name || "");
+const ofPattern = p => s => (s.pattern || "") === p;
 {
-  const t = sim.tolerance;
-  const main = t?.version === 3 ? (t.setups || []).find(s => s.role === "main") : null;
-  if (main && main.tests?.length) {
-    const levels = { healer_share: t.share, share_source: t.share_source, milestones: t.milestones || [] };
-    tolerance = { tests: main.tests, levels, criteria: t.criteria, setup: { name: main.name } };
-    if (t.setups.length > 1)
-      compare = t.setups.map(s => ({ tests: s.tests, criteria: t.criteria,
-        setup: { name: s.name, role: s.role === "main" ? "baseline" : s.role === "set" ? "item" : "noise", gear: s.gear, overrides: s.options } }));
-  }
+  const main = tolSetups.filter(ofPattern(patterns[0])).find(s => s.role === "main");
+  if (main && main.tests?.length)
+    tolerance = { tests: main.tests, levels: { healer_share: tol.share, share_source: tol.share_source, milestones: tol.milestones || [] },
+      criteria: tol.criteria };
 }
+const patternLabel = p => p || "This fight";
+// The gear check (tolerance_search=0): no limit search, every setup only at the fixed level, scored on the raid's
+// health. The report then shows the gear sheet and the gear check and nothing else.
+const compareOnly = tol?.search === false || tol?.search_sets === false;
+const multiPattern = patterns.length > 1;
+const limitOf = s => s?.tests?.find(t => t.test === "combined")?.score ?? null;
+// A limit change smaller than this counts as none: the search stops within 0.25 points, and full reruns of the same
+// gear with other random numbers moved it by up to ~0.3 points (2026-11-06).
+const LIMIT_NOISE = 0.005;
+// Your limit on each damage pattern (current gear), when it was searched.
+const limitsByPattern = patterns.map(p => ({ p, v: limitOf(tolSetups.filter(ofPattern(p)).find(s => s.role === "main")) })).filter(x => x.v != null);
+const LEVELS = tol?.version >= 4 ? (tol.levels || []).slice().sort((a, b) => a - b) : [];
+const TOP = LEVELS[LEVELS.length - 1];
+// Gear checked at each pattern's limit (tolerance_levels=limit): the level differs per pattern (gearCheckOf).
+const AT_LIMIT = !!tol?.levels_at_limit;
+// "at your limit" or "at 120% of one healer's share", for text that isn't about one pattern.
+const atWhere = (share = true) => AT_LIMIT ? "at your limit" : `at ${fmtLevel(TOP)}${share ? " of one healer's share" : ""}`;
+const recMargin = tol?.criteria?.recovery_margin ?? 0.05;
+const burstWindow = tol?.criteria?.burst_window ?? 10;
+const fmtLevel = l => fmtPct(l, 0);
+
+// One setup's measurements at one damage level, flattened for the tables.
+function measuresOf(setup, level) {
+  const p = (setup?.levels || []).find(x => Math.abs(x.pct - level) < 1e-6);
+  if (!p?.stats) return null;
+  const st = p.stats, b = st.bursts || {}, w = st.windows || {};
+  const n = b.normal || {}, g = b.big || {};
+  return {
+    fights: st.fights || 0, deaths: (st.deaths_per_fight || 0) * 100, causes: st.death_causes || {},
+    n_count: n.per_fight, n_before: n.raid_before, n_low: n.raid_low, n_player: n.player_low, n_rec: n.recovery_time, n_recovered: n.recovered,
+    g_count: g.per_fight, g_before: g.raid_before, g_low: g.raid_low, g_player: g.player_low, g_rec: g.recovery_time, g_recovered: g.recovered,
+    heal_burst: w.burst?.healing_per_sec, heal_quiet: w.quiet?.healing_per_sec,
+    dmg_burst: w.burst?.damage_taken_per_sec, dmg_quiet: w.quiet?.damage_taken_per_sec,
+    mana: p.mana_end, oom: p.oom_at, worst: p.deaths?.[0] || null, health: st.raid_health,
+  };
+}
+const pctPts = v => (v * 100).toFixed(1) + "%";
+const signedPts = v => (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(1) + " pts";
+const secs = v => v.toFixed(1) + " s";
+const signedSecs = v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1) + " s";
+// What the gear comparison measures. dir: +1 higher is better, −1 lower is better. floor: the smallest difference that
+// can count, whatever the noise runs say. info: shown, but doesn't decide which gear is better.
+const METRICS = [
+  { key: "n_low", head: "Raid at its lowest", sub: "in a burst", dir: 1, fmt: pctPts, dfmt: signedPts, floor: 0.002,
+    say: (d, a) => `the raid stays ${Math.abs(d * 100).toFixed(1)} pts ${d > 0 ? "higher" : "lower"} in ${a ? "the " : ""}bursts` },
+  { key: "g_low", head: "Raid at its lowest", sub: "in a big burst", dir: 1, fmt: pctPts, dfmt: signedPts, floor: 0.002,
+    say: d => `${Math.abs(d * 100).toFixed(1)} pts ${d > 0 ? "higher" : "lower"} in the big bursts` },
+  { key: "g_player", head: "Lowest player", sub: "in a big burst", dir: 1, fmt: pctPts, dfmt: signedPts, floor: 0.003,
+    say: d => `the lowest player stays ${Math.abs(d * 100).toFixed(1)} pts ${d > 0 ? "higher" : "lower"} in the big bursts` },
+  { key: "n_rec", head: "Back up", sub: "after a burst", dir: -1, fmt: secs, dfmt: signedSecs, floor: 0.2,
+    say: d => `back up ${Math.abs(d).toFixed(1)} s ${d < 0 ? "sooner" : "later"} after a burst` },
+  { key: "g_rec", head: "Back up", sub: "after a big burst", dir: -1, fmt: secs, dfmt: signedSecs, floor: 0.2,
+    say: d => `${Math.abs(d).toFixed(1)} s ${d < 0 ? "sooner" : "later"} after a big one` },
+  { key: "deaths", head: "Deaths", sub: "per 100 fights", dir: -1, fmt: v => v.toFixed(1), dfmt: v => (v >= 0 ? "+" : "−") + Math.abs(v).toFixed(1), floor: 0.3,
+    say: d => `${Math.abs(d).toFixed(1)} ${d < 0 ? "fewer" : "more"} deaths per 100 fights` },
+  { key: "mana", head: "Mana left", sub: "at the end", dir: 1, fmt: v => fmtPct(v), dfmt: signedPts, floor: 0.01, info: true,
+    say: d => `${Math.abs(d * 100).toFixed(0)} pts ${d > 0 ? "more" : "less"} mana at the end` },
+];
 
 // PASS / FAIL: did this sim meet the requirement, judged like the tolerance search: nobody dies in more than 5% of
 // fights. Low mana is not a fail; when the fight-averaged mana ran dry is shown as information. The .bat runs this
@@ -826,7 +1084,7 @@ const runMult = dmgOpt ? dmgOpt.all * Math.max(dmgOpt.steady, dmgOpt.burst, dmgO
 const manaTimeline = cd.resource_timelines?.mana?.data || [];
 const oomIdx = maxMana ? manaTimeline.findIndex((m, i) => i >= 5 && m < crit.oom_threshold * maxMana) : -1;
 let outcomeBadge = "";
-if (encFights) {
+if (encFights && !compareOnly) {
   const dying = players.filter(p => p.collected_data?.deaths && Math.min(1, p.collected_data.deaths.count / encFights) > crit.max_death_rate);
   const pass = !dying.length;
   const share = tolerance?.levels.healer_share;
@@ -845,19 +1103,38 @@ matchup.innerHTML = `
       <div class="role">Healer</div>
       <h1 class="name">${esc(healerName)}</h1>
       <div class="sub">${esc(prettyName(String(healer.race || "").replace(/_(horde|alliance)$/, "")))} ${esc(specLabel)}, level ${esc(healer.level)}</div>
-      <dl class="kv">${healerKV.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join("")}</dl>
+      <div class="kv-chips">${healerKV.map(([k, v, sub]) => statChip(k, v, sub)).join("")}</div>${statsNote()}
+      ${compareOnly ? `<dl class="facts">
+        ${raidHealth ? `<div><dt>Your health</dt><dd>${fmtNum(raidHealth)}</dd><dd class="n">everyone has it; tanks ${fmtNum(tankHealth)}</dd></div>` : ""}
+        <div><dt>Raid</dt><dd>${players.length} players</dd><dd class="n">only you heal</dd></div>
+        <div><dt>Fight</dt><dd>${fmtTime(sim.options?.max_time || fightLen)}</dd><dd class="n">${patterns.length} damage pattern${patterns.length === 1 ? "" : "s"}</dd></div>
+        ${AT_LIMIT ? `<div><dt>Gear checked at</dt><dd>Your limit</dd><dd class="n">on each damage pattern</dd></div>`
+          : TOP ? `<div><dt>Gear checked at</dt><dd>${fmtLevel(TOP)}</dd><dd class="n">of one healer's share</dd></div>` : ""}
+      </dl>` : ""}
     </div>
     <div class="vs">
+      ${compareOnly && limitsByPattern.length ? `<div class="small">Your limit${multiPattern ? `<br>${esc(patternLabel(limitsByPattern[0].p).toLowerCase())}` : ""}</div>
+      <div class="clock">${fmtPct(limitsByPattern[0].v, 1)}</div>
+      ${limitsByPattern.slice(1).map(x => `<div class="lim-pat">${esc(patternLabel(x.p).toLowerCase())}: <b>${fmtPct(x.v, 1)}</b></div>`).join("")}
+      <div class="small" style="margin-top:10px;max-width:210px;line-height:1.45">How much damage you can heal. <b>100%</b> = one healer's share of a Mythic raid's damage; ${limitsByPattern[0].v >= 1
+        ? `you can take <b>${fmtPct(limitsByPattern[0].v - 1, 1)} more</b> than that`
+        : `you fall <b>${fmtPct(1 - limitsByPattern[0].v, 1)} short</b> of it`} before raiders start dying (more than 1 fight in 20).</div>`
+      : compareOnly ? `<div class="small">Gear check</div>
+      <div class="clock">${fmtLevel(TOP)}</div>
+      <div class="small">of your share of the damage,<br>${fmtTime(fightLen)} fights</div>` : `
       <div class="small">Fight length</div>
       <div class="clock">${fmtTime(fightLen)}</div>
       <div class="small">${(encFights || iterations) ? (encFights || iterations).toLocaleString() + " fights simulated" : ""}</div>
-      ${outcomeBadge}
+      ${outcomeBadge}`}
     </div>
     <div class="panel side boss">
       <div class="role">Encounter</div>
       <h1 class="name">${difficulty ? `<span class="diff">${esc(difficulty)}</span>` : ""}${esc(bossName)}</h1>
+      ${compareOnly ? `<div class="sub">${patterns.map(p => esc(patternLabel(p))).join("<br>")}</div>
+      ${encounterAbilities ? `<ul class="abilities compact">${encounterAbilities}</ul>
+      <div class="faint" style="font-size:12px;margin-top:6px">Every kind of damage is in every fight. Shares of the damage: one fight${multiPattern ? `, ${esc(patternLabel(patterns[0]).toLowerCase())}` : ""}${multiPattern ? "; the other patterns change only the bursts" : ""}.</div>` : ""}` : `
       <div class="sub">${dmgStats.length} damaging abilities, ${fmtNum(totalDmg)} damage per fight${raidMembers.length ? " to the raid" : ""}</div>
-      ${bossAbilities ? `<ul class="abilities">${bossAbilities}</ul>` : ""}
+      ${bossAbilities ? `<ul class="abilities">${bossAbilities}</ul>` : ""}`}
     </div>
   </div>`;
 app.appendChild(matchup);
@@ -866,16 +1143,37 @@ app.appendChild(matchup);
 const survived = deathCount != null
   ? (deathCount > 0 ? `died in <b>${fmtPct(deathRate)}</b> of fights, on average at ${fmtTime(deathTime)}` : "survived every fight")
   : null;
-const leadParts = [`You healed <b>${fmtNum(hps)} per second</b>`];
-leadParts.push(`and <b>${fmtPct(overPct)}</b> of it was overhealing`);
-let lead = leadParts.join(" ") + ".";
-if (dtps) lead += ` You took <b>${fmtNum(dtps)} damage per second</b>.`;
-if (survived) lead += ` You ${survived}.`;
-if (activeTime != null) lead += ` You were casting for <b>${fmtPct(activeTime / fightLen)}</b> of the fight.`;
-
-const statCells = [
-  { label: "Effective healing per second", value: fmtNum(hps), cls: "heal", note: fmtNum(totalEff) + " per fight" },
-  { label: "Overhealing", value: fmtPct(overPct), cls: "", note: fmtNum(totalRaw - totalEff) + " wasted per fight" },
+// ----- summary: your current gear on the first damage pattern, at each damage level. Healing per second and
+// overhealing are in the healing table further down: they're capped by the damage there is to heal, so they don't say
+// how well you handle it.
+const mainFirst = tolSetups.filter(ofPattern(patterns[0])).find(s => s.role === "main");
+const atLevels = LEVELS.map(l => ({ l, m: measuresOf(mainFirst, l) })).filter(x => x.m);
+const limits = patterns.map(p => ({ p, v: limitOf(tolSetups.filter(ofPattern(p)).find(s => s.role === "main")) })).filter(x => x.v != null);
+const topM = atLevels.length ? atLevels[atLevels.length - 1].m : null;
+const deathsText = m => m.deaths >= 0.05 ? `${m.deaths.toFixed(1)} deaths per 100 fights` : "nobody dies";
+let lead;
+if (atLevels.length) {
+  lead = atLevels.map(({ l, m }) => `At <b>${fmtLevel(l)}</b> ${deathsText(m)}: a burst takes the raid from ${pctPts(m.n_before)} to <b>${pctPts(m.n_low)}</b>${m.g_low != null ? `, a big one to <b>${pctPts(m.g_low)}</b>,` : ""} and you have it back ${m.n_rec != null ? `in <b>${secs(m.n_rec)}</b>` : "before the next one"}.`).join(" ");
+} else {
+  lead = survived ? `You ${survived}.` : "";
+}
+const lvlNote = topM ? `at ${fmtLevel(TOP)} of your share` : "";
+const statCells = topM ? [
+  { label: "Your limit", value: limits.length ? fmtPct(limits[0].v, 1) : "–", cls: "",
+    note: [multiPattern && limits.length > 1 ? limits.map(x => `${esc(patternLabel(x.p).toLowerCase())}: ${fmtPct(x.v, 1)}`).join(" · ") : "the most damage before raiders start dying",
+      // Each kind of damage alone (tolerance_tests=...), when the run tested them.
+      (tolerance?.tests || []).filter(t => t.test !== "combined" && t.score != null).sort((a, b) => a.score - b.score)
+        .map(t => `${t.test} alone ${fmtPct(t.score, 1)}`).join(" · ")].filter(Boolean).join("<br>") },
+  { label: "Deaths per 100 fights", value: topM.deaths.toFixed(1), cls: topM.deaths >= 0.05 ? "dmg" : "heal", note: lvlNote },
+  { label: "Raid at its lowest in a big burst", value: topM.g_low != null ? pctPts(topM.g_low) : pctPts(topM.n_low), cls: "",
+    note: `lowest player ${pctPts(topM.g_player ?? topM.n_player)}, ${lvlNote}` },
+  { label: "Back up after a burst", value: topM.n_rec != null ? secs(topM.n_rec) : "–", cls: "",
+    note: `within ${fmtPct(recMargin)} of before, ${fmtPct(topM.n_recovered ?? 0)} of bursts, ${lvlNote}` },
+  { label: "Healing per second in bursts", value: topM.heal_burst != null ? fmtNum(topM.heal_burst) : "–", cls: "heal",
+    note: topM.heal_quiet != null ? `${fmtNum(topM.heal_quiet)} the rest of the time, ${lvlNote}` : lvlNote },
+  { label: "Mana left at the end", value: topM.mana != null ? fmtPct(topM.mana) : "–", cls: "mana",
+    note: topM.oom != null ? `ran dry at ${fmtTime(topM.oom)}, ${lvlNote}` : lvlNote },
+] : [
   { label: "Damage you took per second", value: dtps ? fmtNum(dtps) : "–", cls: "dmg", note: dtps ? fmtNum(dtps * fightLen) + " per fight" : "" },
   { label: "Lowest health", value: lowestHealth != null ? lowestHealth.toFixed(0) + "%" : "–", cls: "", note: "averaged across fights" },
   { label: "Deaths", value: deathRate != null ? fmtPct(deathRate) : "–", cls: deathCount ? "dmg" : "",
@@ -884,7 +1182,10 @@ const statCells = [
 ];
 const verdict = el("div", { class: "panel verdict" });
 verdict.innerHTML = `
-  <p class="lead">${lead}</p>
+  <div>
+    <p class="lead">${lead}</p>
+    ${topM ? `<p class="faint" style="margin-top:10px;font-size:13px">100% is one healer's share of the damage${multiPattern ? `; ${esc(patternLabel(patterns[0]).toLowerCase())}` : ""}. "Back" means within ${fmtPct(recMargin)} of the raid's health before the burst.</p>` : ""}
+  </div>
   <div class="stats">${statCells.map(s => `
     <div class="stat"><div class="label">${s.label}</div><div class="value ${s.cls}">${s.value}</div><div class="note">${s.note}</div></div>`).join("")}
   </div>
@@ -897,8 +1198,9 @@ verdict.innerHTML = `
     <div class="bar" role="img" aria-label="Casting ${fmtPct(activeTime / fightLen)}, idle ${fmtPct(idleTime / fightLen)}">
       ${activeTime > 0 ? `<span class="eff" style="width:${(activeTime / fightLen) * 100}%"></span>` : ""}${idleTime > 0 ? `<span class="idle" style="width:${(idleTime / fightLen) * 100}%"></span>` : ""}
     </div>
+    <div class="faint" style="font-size:12px;margin-top:6px">From the detailed fight below (${multiPattern ? esc(patternLabel(patterns[0]).toLowerCase()) + ", " : ""}your current gear).</div>
   </div>` : ""}`;
-matchup.appendChild(verdict);
+if (!compareOnly) matchup.appendChild(verdict);
 
 // ----- gear, your limit, gear comparison
 // Item names, icons, quality colours and in-game tooltips come from Wowhead's tooltip script (loaded at the end of the
@@ -916,7 +1218,9 @@ const STAT_NAMES = { crit_rating: "Crit", haste_rating: "Haste", mastery_rating:
 const itemId = str => (/\bid=(\d+)/.exec(str || "") || [])[1];
 const opt = (str, key) => (new RegExp("\\b" + key + "=([\\d/:]+)").exec(str || "") || [])[1] || "";
 // "Enchant Ring - Zul'jin's Mastery |A:...|a" -> "Zul'jin's Mastery"
-const cleanEnchant = s => String(s || "").replace(/\|A:[^|]*\|a/g, "").replace(/^Enchant [^-]+ - /, "").trim();
+// Also strips in-game colour codes: "|cnIQ4:Ancient Hash'ey Battle Art: Falco Strikes|r", "|cffa335eeName|r".
+const cleanEnchant = s => String(s || "").replace(/\|A:[^|]*\|a/g, "").replace(/\|c(?:n[^:|]*:|[0-9a-fA-F]{8})/g, "").replace(/\|r/g, "")
+  .replace(/^Enchant [^-]+ - /, "").trim();
 // One gear slot from a SimC item string, plus the JSON gear entry's stats, enchant and gems when there is one.
 function itemOf(str, ilevel, g = null, slot = "") {
   const s = String(str || "");
@@ -926,8 +1230,12 @@ function itemOf(str, ilevel, g = null, slot = "") {
   if (int > 0 && /^(main_hand|off_hand|trinket)/.test(slot)) stats.unshift(`Intellect ${int.toLocaleString()}`);
   return { id: itemId(s), ilevel, name: prettyName(s.split(",")[0]), bonus: opt(s, "bonus_id").replace(/\//g, ":"),
     ench: opt(s, "enchant_id"), gems: opt(s, "gem_id").replace(/\//g, ":"), stats,
-    enchant: g?.enchant ? cleanEnchant(g.enchant) : "", gemNames: g?.gems || [] };
+    enchant: g?.enchant ? cleanEnchant(g.enchant) : "", enchantSpell: g?.enchant_spell || 0, gemNames: g?.gems || [], gemIds: g?.gem_ids || [] };
 }
+// A Wowhead link that keeps the report's own name and only adds the icon and the in-game tooltip (spell or item).
+const whLink = (kind, id, name, size = "tiny") => id
+  ? `<a class="wh-item" href="https://www.wowhead.com/${kind}=${id}" data-wh-icon-size="${size}" data-wh-rename-link="false" data-wowhead="${kind}=${id}">${esc(name)}</a>`
+  : esc(name);
 // A Wowhead item link: Wowhead adds the icon, the quality colour and the in-game tooltip.
 const itemLink = (it, size = "medium") => it.id
   ? `<a class="wh-item" href="https://www.wowhead.com/item=${it.id}" data-wh-icon-size="${size}"
@@ -953,8 +1261,8 @@ function applyWhTips() {
   });
 }
 addEventListener("load", () => setTimeout(applyWhTips, 300));
-const tipToggle = `<button class="tip-toggle" type="button" aria-pressed="true" title="Show the in-game item tooltip when hovering an item">
-  <span class="tt-switch" aria-hidden="true"></span>In-game tooltips: <b class="tt-state">On</b></button>`;
+// The in-game tooltip switch lives in the floating dock (bottom right), next to the palette button.
+const tipToggle = "";
 function bindTipToggle(root) {
   root.querySelectorAll(".tip-toggle").forEach(b => b.addEventListener("click", () => {
     whTips = !whTips;
@@ -962,6 +1270,8 @@ function bindTipToggle(root) {
     applyWhTips();
   }));
 }
+bindTipToggle($("#dock"));
+applyWhTips();
 // The report's own tooltip on an element, except over an item link while in-game tooltips are on.
 function bindInfoTip(node, html) {
   const show = ev => {
@@ -975,38 +1285,324 @@ function bindInfoTip(node, html) {
 }
 const arrow = v => v === "better" ? `<span class="arr up" aria-label="better">▲</span>` : v === "worse" ? `<span class="arr down" aria-label="worse">▼</span>` : `<span class="arr same" aria-label="no difference">–</span>`;
 
-// The comparison: your current gear, the gear sets, and your current gear with other random numbers (the noise).
-const cmpAll = Array.isArray(compare) ? compare : [];
-const cmpShown = cmpAll.filter(s => s.setup.role !== "noise");
-const cmpBase = cmpShown.find(s => s.setup.role === "baseline") || null;
-const cmpOthers = cmpBase ? cmpShown.filter(s => s !== cmpBase) : [];
-const scoreOf = (s, k) => s.tests.find(t => t.test === k)?.score;
-const cmpNoise = (() => {
-  if (!cmpBase) return 0;
-  const b = scoreOf(cmpBase, "combined"), prec = cmpBase.criteria?.precision || 0.005;
-  return Math.max(prec / b, ...cmpAll.filter(s => s.setup.role === "noise").map(s => scoreOf(s, "combined"))
-    .filter(v => v != null).map(v => Math.abs(v / b - 1)));
-})();
 // What a gear set changes against your current gear: [{ slot, from, to }].
-function changesOf(s) {
+function changesOf(gearOfSet) {
   const out = [];
-  for (const [slot, g] of Object.entries(s.setup.gear || {})) {
+  for (const [slot, g] of Object.entries(gearOfSet || {})) {
     const cur = currentGear[slot];
     if (!cur || !SLOT_NAMES[slot]) continue;  // tabard, shirt
     if (itemId(g.item) !== cur.id || g.ilevel !== cur.ilevel) out.push({ slot, from: cur, to: itemOf(g.item, g.ilevel) });
   }
   return out;
 }
-const cmpRows = cmpOthers.map(s => {
-  const b = scoreOf(cmpBase, "combined"), v = scoreOf(s, "combined");
-  const d = b != null && v != null ? v / b - 1 : null;
-  return { s, d, v, b, changes: changesOf(s), verdict: d == null ? "" : d > cmpNoise ? "better" : d < -cmpNoise ? "worse" : "equal" };
-}).sort((a, b) => (a.d ?? -9) - (b.d ?? -9));
-const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.d)[0] || null;
+// The comparison on one damage pattern: each gear set against your current gear at each damage level, measure by
+// measure. Your current gear rerun with other random numbers (the noise runs) shows how much a measure moves by chance:
+// differences within that count as equal. A gear set is better when more measures improve than get worse at the
+// highest level; the reasons name the biggest changes.
+function comparisonOf(pattern) {
+  const setups = tolSetups.filter(ofPattern(pattern));
+  const main = setups.find(s => s.role === "main");
+  if (!main) return null;
+  const noise = setups.filter(s => s.role === "noise");
+  const sets = setups.filter(s => s.role === "set");
+  const levels = LEVELS.map(level => {
+    const base = measuresOf(main, level);
+    const nz = {};
+    for (const m of METRICS) {
+      const devs = noise.map(s => measuresOf(s, level)).filter(x => x && x[m.key] != null && base?.[m.key] != null)
+        .map(x => Math.abs(x[m.key] - base[m.key]));
+      nz[m.key] = Math.max(m.floor, ...devs);
+    }
+    return { level, base, nz };
+  });
+  const bl = limitOf(main), prec = tol.criteria?.precision || 0.0025;
+  const limNoise = bl ? Math.max(prec / bl, ...noise.map(limitOf).filter(v => v != null).map(v => Math.abs(v / bl - 1))) : 0;
+  const rows = sets.map(s => {
+    const byLevel = levels.map(({ level, base, nz }) => {
+      const v = measuresOf(s, level);
+      const cells = METRICS.map(m => {
+        const a = v?.[m.key], b = base?.[m.key];
+        if (a == null || b == null) return { m, v: a, d: null, verdict: "", z: 0 };
+        const d = a - b, good = d * m.dir;
+        return { m, v: a, d, z: good / nz[m.key], verdict: good > nz[m.key] ? "better" : good < -nz[m.key] ? "worse" : "equal" };
+      });
+      return { level, v, cells };
+    });
+    const lim = limitOf(s), limD = bl && lim != null ? lim / bl - 1 : null;
+    const top = byLevel[byLevel.length - 1]?.cells || [];
+    const counted = top.filter(c => !c.m.info);
+    const up = counted.filter(c => c.verdict === "better"), down = counted.filter(c => c.verdict === "worse");
+    const score = up.length - down.length;
+    const strength = sum(counted.map(c => Math.max(-4, Math.min(4, c.z))));
+    const verdict = up.length && !down.length ? "better" : down.length && !up.length ? "worse" : up.length && down.length ? "mixed" : "equal";
+    // The reasons: the biggest improvements, then what it costs (worse measures, mana).
+    const says = cs => cs.sort((x, y) => Math.abs(y.z) - Math.abs(x.z)).slice(0, 2).map(c => c.m.say(c.d));
+    const manaCell = top.find(c => c.m.key === "mana");
+    const costs = says(down.slice()).concat(manaCell?.verdict === "worse" ? [manaCell.m.say(manaCell.d)] : []);
+    const gains = says(up.slice()).join(", ");
+    const reason = gains && costs.length ? `${gains}; but ${costs.join(", ")}` : gains || costs.join(", ");
+    return { s, name: s.name, changes: changesOf(s.gear), byLevel, lim, limD,
+      limVerdict: limD == null ? "" : limD > limNoise ? "better" : limD < -limNoise ? "worse" : "equal",
+      score, strength, verdict, reason };
+  });
+  // Best first; gear sets in the same order on every pattern is done by the caller.
+  // The best: better on some measures and worse on none. A trade-off (better on more than it's worse on) is the
+  // closest otherwise.
+  const rank = (a, b) => b.score - a.score || b.strength - a.strength;
+  const best = rows.filter(r => r.verdict === "better").sort(rank)[0] || null;
+  const closest = best ? null : rows.filter(r => r.verdict === "mixed" && r.score > 0).sort(rank)[0] || null;
+  return { pattern, main, levels, rows, best, closest, bl, limNoise };
+}
+const cmps = LEVELS.length && !compareOnly ? patterns.map(comparisonOf).filter(c => c && c.rows.length) : [];
+if (cmps.length) {
+  const order = new Map(cmps[0].rows.slice().sort((a, b) => b.score - a.score || b.strength - a.strength).map((r, i) => [r.name, i]));
+  for (const c of cmps) c.rows.sort((a, b) => (order.get(a.name) ?? 99) - (order.get(b.name) ?? 99));
+}
+// The gear check: each gear set's raid health against your current gear's on the same fights; the noise runs (your
+// current gear with other random numbers) show what moves by chance.
+// Raid health differences are small: two decimals.
+const signedPts2 = v => (v >= 0 ? "+" : "−") + Math.abs(v * 100).toFixed(2) + " pts";
+// The gear check's score in points: the raid's average health over the fight, out of 100.
+const points = v => (v * 100).toFixed(2) + " pts";
+function gearCheckOf(pattern) {
+  const setups = tolSetups.filter(ofPattern(pattern));
+  const main = setups.find(s => s.role === "main");
+  // The level this pattern was checked at: fixed (tolerance_levels=1.2) or current gear's limit there (=limit).
+  const level = AT_LIMIT ? main?.levels?.[main.levels.length - 1]?.pct : TOP;
+  const health = s => measuresOf(s, level)?.health;
+  const b = health(main);
+  if (b == null) return null;
+  const noise = Math.max(0.001, ...setups.filter(s => s.role === "noise").map(health).filter(v => v != null).map(v => Math.abs(v - b)));
+  const fights = measuresOf(main, level)?.fights || 0;
+  const mainLim = limitOf(main);
+  const rows = setups.filter(s => s.role === "set").map(s => {
+    const v = health(s), d = v == null ? null : v - b;
+    // More points is an upgrade only if the limit doesn't drop: the engine searches the limit of every set with more
+    // points, since a healthier raid on average doesn't always mean a higher limit.
+    const lim = limitOf(s), limD = lim != null && mainLim != null ? lim - mainLim : null;
+    let verdict = d == null ? "" : d > noise ? "better" : d < -noise ? "worse" : "equal";
+    if (verdict === "better" && limD != null && limD < -LIMIT_NOISE) verdict = "tradeoff";
+    return { name: s.name, changes: changesOf(s.gear), v, d, lim, limD, verdict, reason: d == null ? "" : `${points(v)} (${signedPts2(d)})` };
+  });
+  const best = rows.filter(r => r.verdict === "better").sort((x, y) => y.d - x.d)[0] || null;
+  return { pattern, level, b, noise, fights, rows, best };
+}
+const checks = compareOnly && LEVELS.length ? patterns.map(gearCheckOf).filter(Boolean) : [];
+if (checks.length) {
+  const order = new Map(checks[0].rows.slice().sort((x, y) => (y.d ?? -9) - (x.d ?? -9)).map((r, i) => [r.name, i]));
+  for (const c of checks) c.rows.sort((x, y) => (order.get(x.name) ?? 99) - (order.get(y.name) ?? 99));
+}
+const best = compareOnly ? checks[0]?.best || null : cmps[0]?.best || null;
+const cmpRows = cmps[0]?.rows || [];
+// "Hex Lord's Dooming Idol 334 instead of Soulcoiler Ritual Vessel 334", with item links.
+const swapText = r => r.changes.length
+  ? r.changes.map(x => `${itemLink(x.to, "tiny")} ${x.to.ilevel || ""} instead of ${itemLink(x.from, "tiny")} ${x.from.ilevel || ""}`).join(" + ")
+  : `<b>${esc(r.name)}</b>`;
+
+// The gear sheet's text: which gear set it shows, and the best on the other damage patterns.
+const onFirst = multiPattern ? ` on ${esc(patternLabel(patterns[0]).toLowerCase())}` : "";
+function checkIntro() {
+  if (!checks.length) return "The gear simulated in this report.";
+  return best ? `Your gear with the best upgrade${onFirst} put in, highlighted with the points it adds.`
+    : `Your current gear: none of the gear sets is an upgrade${onFirst}.`;
+}
+function oldIntro() {
+  return `${best ? `The best of the gear sets compared below${multiPattern ? ` on ${esc(patternLabel(patterns[0]).toLowerCase())}` : ""}: at ${fmtLevel(TOP)} of your share, ${esc(best.reason)}. Highlighted: what changes.`
+        : cmpRows.length ? `Your current gear. None of the gear sets compared below does better on every measure${multiPattern ? ` on ${esc(patternLabel(patterns[0]).toLowerCase())}` : ""}${cmps[0].closest ? `; the closest, ${swapText(cmps[0].closest)}, is a trade-off: ${esc(cmps[0].closest.reason)}` : ""}.` : "The gear simulated in this report."}
+        ${cmps.slice(1).map(c => ` ${esc(patternLabel(c.pattern))}: ${c.best ? `${swapText(c.best)} is best (${esc(c.best.reason)})` : c.closest ? "no gear set is better on every measure" : "your current gear is best"}.`).join("")}`;
+}
+
+// ----- explanations: a "How it works" toggle under each section's intro, written for anyone reading the report
+const explain = (body, label = "How it works") => `<details class="explain"><summary>${label}</summary><div class="explain-body">${body}</div></details>`;
+const patternOpts = p => Object.fromEntries((tol?.patterns || []).find(x => (x.name || "") === p)?.options?.map(o => o.split("=")) || []);
+const fmtSecs = s => s % 60 === 0 ? (s === 60 ? "1 min" : `${s / 60} min`) : `${s} sec`;
+const ordinal = n => n + (n === 2 ? "nd" : n === 3 ? "rd" : n === 1 ? "st" : "th");
+// One damage pattern in words (Patchwerk's burst options; other fights only have the name).
+function patternDesc(p) {
+  if (!isPatchwerk) return esc(patternLabel(p));
+  const o = patternOpts(p), every = +(o.burst_interval || 30), big = +(o.big_burst_every || 4);
+  const scales = o.burst_scales_with_interval !== "0";
+  return `<b>${esc(patternLabel(p))}</b>: a burst on the whole raid every ${fmtSecs(every)}, every ${ordinal(big)} one twice as big (so a big one every ${fmtSecs(every * big)})${
+    every === 30 ? "" : scales ? "; each burst is bigger so the damage per second stays the same" : "; each burst is as big as with bursts every 30 sec, so there is less damage in total"}.`;
+}
+const shareText = () => `<b>100%</b> is <b>one healer's share</b> of a Mythic raid's damage. A typical Mythic raid has 4 healers, and each of them has to heal about ${fmtPct(tol?.share || 0, 0)} of all the damage the raid takes (the rest is absorbed, avoided or healed by the players themselves); this report uses ${fmtPct(tol?.share || 0, 1)}. ${
+  isPatchwerk ? `In this fight every player has your max health (${fmtNum(raidHealth)}; the tanks ${fmtNum(tankHealth)}) and every hit is a share of that health, so the fight grows with your gear and with each new season.` : ""}`;
+const raidText = () => {
+  const n = r => players.filter(p => p !== healer && p.role === r).length;
+  const others = n("heal");
+  return `The raid has ${players.length} players: you, ${n("tank")} tanks${others ? `, ${others} other healers` : ""} and ${n("dps")} damage dealers. <b>Only you heal</b>${
+    others ? ": the other healers are stand-ins that take damage and never heal" : ""}, so the result is about you alone.`;
+};
+function scoreExplain() {
+  const c0 = checks[0];
+  return explain(`
+    <h4>What 100% means</h4><p>${shareText()}</p>
+    <h4>Your limit</h4><p>The simulator raises <b>all the damage together</b> until someone in the raid dies in more than 1 fight in 20 (5%).
+      The highest level where that doesn't happen is your limit. It first tries levels 25% apart with 100 short fights each to find
+      the area, then confirms with 1,000 fights per test until the answer is within about a quarter of a percent. Your current gear always
+      gets a limit. A gear set only gets one if it scores more points (see below): searching one for every set would take too long.</p>
+    <h4>Points</h4><p>${AT_LIMIT
+      ? `Every gear set plays the same ${(c0?.fights || 0).toLocaleString()} fights <b>at your limit</b> (${checks.map(c => `${fmtPct(c.level, 1)}${multiPattern ? ` ${esc(patternLabel(c.pattern).toLowerCase())}` : ""}`).join(", ")}):
+        the most damage your current gear can heal. That's where healing matters most: with less damage you overheal and the raid stays
+        near full whatever you wear, so items barely differ; at the edge, every bit of healing an item adds or loses shows.`
+      : `Every gear set plays the same ${(c0?.fights || 0).toLocaleString()} fights at <b>${fmtLevel(TOP)}</b> of your share, a bit above
+      the share so that differences show.`}</p>
+    <p><b>Points are how healthy the raid stays, on average, over the whole fight.</b> Take a tiny raid of 4, with health checked at 4
+      moments:</p>
+    <table class="ex-table">
+      <thead><tr><th>Player</th><th>1:00</th><th>2:00</th><th>3:00</th><th>4:00</th><th>Average</th></tr></thead>
+      <tbody>
+        <tr><td>A</td><td>100%</td><td>80%</td><td>90%</td><td>100%</td><td>92.5</td></tr>
+        <tr><td>B</td><td>100%</td><td>60%</td><td>70%</td><td>90%</td><td>80.0</td></tr>
+        <tr><td>C</td><td>100%</td><td>50%</td><td class="dead">dead</td><td class="dead">dead</td><td>37.5</td></tr>
+        <tr><td>D</td><td>100%</td><td>90%</td><td>100%</td><td>100%</td><td>97.5</td></tr>
+        <tr class="sum"><td colspan="5">The raid</td><td>76.88 points</td></tr>
+      </tbody>
+    </table>
+    <p>Dead counts as 0, so C's death pulls the score down for every moment left in the fight. Had C lived (60%, then 80%), the raid would
+      score 85.63: that death cost almost 9 points. In a 20-player raid one player weighs a fifth as much, and a death costs more the
+      earlier it happens. If the whole raid wipes, the rest of the fight counts as 0 for everyone. 100 points would mean nobody ever lost
+      any health.</p>
+    <p>The simulation does exactly this at full scale: all ${players.length} players, 4 times a second, from the first second of the fight to
+      the last (${fmtTime(sim.options?.max_time || fightLen)}), then the average over all ${(c0?.fights || 0).toLocaleString()} fights.${c0 ? ` Your
+      <b>${(c0.b * 100).toFixed(2)} points</b>${multiPattern ? ` (${esc(patternLabel(c0.pattern).toLowerCase())})` : ""} mean the average raid member
+      sits at ${(c0.b * 100).toFixed(2)}% health${AT_LIMIT ? " at your limit" : ""}.` : ""}${c0?.best && raidHealth ? ` The best upgrade's
+      <b>${signedPts2(c0.best.d)}</b> means everyone sits that much higher at every moment: about ${fmtNum(c0.best.d * raidHealth, 1)} more health per
+      player, all fight long, whether it comes from more healing or from fewer and later deaths.` : ""} A raid that sits higher has more room
+      for mistakes: a surprise hit is less likely to kill someone.</p>
+    <h4>Upgrade, sidegrade, downgrade</h4><p>Every gear set plays exactly the same fights as your current gear (the same random numbers:
+      the same crits, procs and targets), so the difference comes from the gear. To see how much points move by pure chance, your current
+      gear also plays two other sets of fights with different random numbers; the biggest difference to your current gear is the margin of
+      error (${checks.map(c => `±${(c.noise * 100).toFixed(2)}`).join(" / ")} pts). More than that above your current gear is an
+      <b>upgrade</b>, more than that below a <b>downgrade</b>, within it a <b>sidegrade</b>: no real difference.</p>
+    <h4>Is the upgrade worth it?</h4><p>Points and your limit measure two different things. <b>Points</b> say how healthy the raid stays on
+      average ${atWhere(false)}; your <b>limit</b> says how much damage you can take before raiders start dying. They usually move
+      together, but not always: an item can heal better most of the time and worse in the worst moments (for example by costing mana). So
+      every gear set with more points gets its own limit, searched the same way as your current gear's, and only counts as an upgrade if
+      that limit doesn't drop:</p>
+      <ul><li><b>Worth it</b>: more points and a higher limit. The item helps everywhere.</li>
+        <li><b>A small upgrade</b>: more points, and the limit moves less than half a point (within what the search can tell apart).</li>
+        <li><b>A trade-off</b>, not an upgrade: more points, but a lower limit. The raid is healthier on average, but at the edge, where
+          raiders start dying, you do a bit worse.</li></ul>
+    ${multiPattern ? `<h4>Damage patterns</h4><ul>${patterns.map(p => `<li>${patternDesc(p)}</li>`).join("")}</ul>
+      <p>Everything else is the same in every pattern. Gear that helps you catch up after a burst matters more when bursts are big and rare;
+      gear that heals steadily matters more when the damage keeps coming. Pick the pattern closest to the fights you play.</p>` : ""}
+    <h4>The raid</h4><p>${raidText()}</p>
+    <h4>What it can't tell you</h4><p>The simulated healer plays a fixed priority list (the rotation in your profile): no mistakes, no
+      reacting like a player. Results are for that rotation and this fight: use them to compare gear, not players. Most gear lands within
+      the margin of error, and "no real difference" is a real answer.</p>`);
+}
+
+// ----- your upgrades: per damage pattern, your limit, your current gear's points, the best gear set's and every upgrade
+if (compareOnly && checks.length) {
+  const card = c => {
+    const lim = limitsByPattern.find(x => x.p === c.pattern)?.v;
+    const ups = c.rows.filter(r => r.verdict === "better").sort((x, y) => y.d - x.d);
+    const trades = c.rows.filter(r => r.verdict === "tradeoff").sort((x, y) => y.d - x.d);
+    const side = c.rows.filter(r => r.verdict === "equal").length, down = c.rows.filter(r => r.verdict === "worse").length;
+    // The best upgrade never lowers the limit (gearCheckOf); the engine searched its limit the same way as current gear's.
+    const bestLim = c.best?.lim ?? null, limD = c.best?.limD ?? null;
+    const limVerdict = limD == null ? "" : limD > LIMIT_NOISE ? "better" : "equal";
+    const pts = d => signed(d, 1).replace("%", " points");
+    const worth = !c.best ? (trades.length ? `<b>No upgrade.</b> ${trades.length === 1 ? "One gear set keeps" : "Some gear sets keep"} the raid healthier on average but lower${trades.length === 1 ? "s" : ""} your limit: see the trade-offs below.` : "")
+      : limD == null ? ""
+      : limVerdict === "better" ? `<b>Worth it.</b> The raid stays healthier and your limit goes up ${pts(limD)}: you can heal more damage before anyone dies.`
+      : `<b>A small upgrade.</b> The raid stays healthier on average, and your limit stays about the same (${pts(limD)}).`;
+    const delta = (d, cls) => `<span class="${cls}">${d}</span>`;
+    const limNote = r => r.lim == null ? "" : ` · limit ${fmtPct(r.lim, 1)} (${pts(r.limD)})`;
+    return `<div class="panel up-card">
+      <h3>${esc(patternLabel(c.pattern))}</h3>
+      <div class="up-nums">
+        <div class="up-num"><div class="l">Your limit</div><div class="v">${lim != null ? fmtPct(lim, 1) : "–"}</div><div class="n">current gear</div></div>
+        <div class="up-num${limVerdict === "better" ? " best" : ""}"><div class="l">Limit with the best upgrade</div><div class="v">${bestLim != null ? fmtPct(bestLim, 1) : "–"}</div>
+          <div class="n">${limD != null ? delta(signed(limD, 1).replace("%", " points"), limVerdict) : c.best ? "not searched" : "no upgrade"}</div></div>
+        <div class="up-num"><div class="l">Points</div><div class="v">${(c.b * 100).toFixed(2)}</div><div class="n">current gear, at ${AT_LIMIT ? `your limit (${fmtPct(c.level, 1)})` : fmtLevel(TOP)}</div></div>
+        <div class="up-num${c.best ? " best" : ""}"><div class="l">Points with the best upgrade</div><div class="v">${((c.best ? c.best.v : c.b) * 100).toFixed(2)}</div>
+          <div class="n">${c.best ? delta(signedPts2(c.best.d), "better") : "no upgrade"}</div></div>
+      </div>
+      ${worth ? `<div class="up-worth">${worth}</div>` : ""}
+      ${ups.length ? `<ul class="up-list">${ups.map(r => `<li><span>${swapText(r)}<small>${(c.b * 100).toFixed(2)} → ${(r.v * 100).toFixed(2)} points${limNote(r)}</small></span>
+        <span class="gain">${signedPts2(r.d)}</span></li>`).join("")}</ul>`
+        : trades.length ? "" : `<div class="up-none">No upgrade among your gear sets: none beats your current gear by more than the margin of error (±${(c.noise * 100).toFixed(2)} pts).</div>`}
+      ${trades.length ? `<div class="up-sub tradeoff">Trade-offs: more points, lower limit</div>
+        <ul class="up-list">${trades.map(r => `<li><span>${swapText(r)}<small>${(c.b * 100).toFixed(2)} → ${(r.v * 100).toFixed(2)} points${limNote(r)}</small></span>
+        <span class="gain tradeoff">${signedPts2(r.d)}</span></li>`).join("")}</ul>` : ""}
+      <div class="up-foot">${ups.length} upgrade${ups.length === 1 ? "" : "s"}, ${trades.length ? `${trades.length} trade-off${trades.length === 1 ? "" : "s"}, ` : ""}${side} sidegrade${side === 1 ? "" : "s"}, ${down} downgrade${down === 1 ? "" : "s"} · margin of error ±${(c.noise * 100).toFixed(2)} pts</div>
+    </div>`;
+  };
+  const sec = el("section", { id: "upgrades" });
+  sec.style.marginTop = "28px";
+  sec.innerHTML = `
+    <div class="section-head"><h2>Your upgrades</h2>
+      <p>For each damage pattern: your limit, your current gear's points and the best you can reach with the gear sets you gave. Points are
+        the raid's average health over the fight, out of 100, ${atWhere()}: higher is better.</p>
+      ${scoreExplain()}</div>
+    <div class="up-grid">${checks.map(card).join("")}</div>`;
+  app.appendChild(sec);
+}
+
+// Gems, enchants, consumables and raid buffs under the gear sheet, so the stats at the top can be traced back.
+// A gem's stat from its name ("Flawless Quick Amethyst" = Haste).
+const GEM_STATS = [[/quick/i, "Haste"], [/masterful/i, "Mastery"], [/deadly/i, "Crit"], [/versatile/i, "Versatility"]];
+const gemStats = n => GEM_STATS.filter(([re]) => re.test(n)).map(([, s]) => s);
+// SimC's consumable names: "blood_knights_2" -> "Blood Knights" (the rank goes), "main_hand:thalassian_phoenix_oil_2".
+const titleName = s => prettyName(s).replace(/ (Of|The|And|A) /g, m => m.toLowerCase());
+const consumableName = s => titleName(String(s || "").replace(/^[a-z_]+:/, "").replace(/_\d+$/, ""));
+function extrasPanel(gear) {
+  // Gems by name (count, item id for the icon), enchants by slot (the enchant's spell for the icon).
+  const gems = new Map();
+  for (const slot of [...LEFT_SLOTS, ...RIGHT_SLOTS]) (gear[slot]?.gemNames || []).forEach((g, i) => {
+    const cur = gems.get(g) || { n: 0, id: gear[slot].gemIds?.[i] || 0 };
+    cur.n++; gems.set(g, cur);
+  });
+  const enchants = [...LEFT_SLOTS, ...RIGHT_SLOTS].filter(s => gear[s]?.enchant).map(s => ({ slot: slotLabel(s), name: gear[s].enchant, spell: gear[s].enchantSpell }));
+  // Buffs carry their spell id and in-game name: consumables and raid buffs get their icon from them.
+  const allBuffs = [...(healer.buffs_constant || []), ...(healer.buffs || [])].filter(b => b && typeof b === "object");
+  const squash = s => String(s || "").replace(/^[a-z_]+:/, "").replace(/_\d+$/, "").replace(/^flask_of_the_|^flask_of_/, "").replace(/[_\s']/g, "").toLowerCase();
+  const buffFor = key => key && key !== "disabled" ? allBuffs.find(b => { const n = squash(b.name); const k = squash(key); return n && k && (n.includes(k) || k.includes(n)); }) : null;
+  const consumable = (label, key) => {
+    if (!key || key === "disabled") return null;
+    const b = buffFor(key);
+    return { label, name: b?.spell_name || consumableName(key), spell: b?.spell || 0, buff: b?.name };
+  };
+  const cons = [consumable("Flask", healer.flask), consumable("Food", healer.food), consumable("Augment rune", healer.augmentation),
+    consumable("Weapon oil", healer.temporary_enchant), consumable("Potion", healer.potion)].filter(Boolean);
+  // Raid buffs: what's always on, minus the consumables listed above.
+  const used = new Set(cons.map(c => c.buff).filter(Boolean));
+  const raidBuffs = (healer.buffs_constant || []).filter(b => b && typeof b === "object" && !used.has(b.name));
+  if (!gems.size && !enchants.length && !cons.length) return "";
+  // Three cards with the same row layout (name left, detail right), raid buffs as chips underneath.
+  const card = (title, count, rows) => `<div class="ex-card"><div class="ex-head"><span class="cs-label">${title}</span>${count ? `<span class="ex-count">${count}</span>` : ""}</div>
+    ${rows.length ? `<div class="ex-rows">${rows.map(([name, detail]) => `<div class="ex-row"><span class="ex-name">${name}</span><span class="ex-detail">${detail}</span></div>`).join("")}</div>`
+      : `<p class="faint">None</p>`}</div>`;
+  const nGems = [...gems.values()].reduce((a, x) => a + x.n, 0);
+  return `<div class="cs-extras">
+    <div class="ex-cards">
+      ${card("Gems", nGems ? `${nGems} socketed` : "", [...gems].map(([g, x]) => [`<span class="gi-gem">${whLink("item", x.id, g)}</span>`,
+        `${gemStats(g).length ? esc(gemStats(g).join(" + ")) : "special effect"}${x.n > 1 ? ` <b>×${x.n}</b>` : ""}`]))}
+      ${card("Enchants", enchants.length ? `${enchants.length} slots` : "", enchants.map(e => [`<span class="gi-ench">${e.spell ? whLink("spell", e.spell, e.name) : `✦ ${esc(e.name)}`}</span>`, esc(e.slot)]))}
+      ${card("Consumables", "", cons.map(c => [whLink("spell", c.spell, c.name), esc(c.label)]))}
+    </div>
+    ${raidBuffs.length ? `<div class="ex-buffs"><span class="cs-label">Raid buffs</span>${raidBuffs.map(b => `<span class="ex-chip">${whLink("spell", b.spell, b.spell_name || titleName(b.name))}</span>`).join("")}</div>` : ""}
+  </div>`;
+}
+// Under the stats: what's in them besides your gear (the raid buffs and consumables the simulation gives you).
+function statsNote() {
+  const bits = [];
+  const n = (healer.buffs_constant || []).filter(b => b && typeof b === "object").length;
+  if (n) bits.push("raid buffs");
+  if ([healer.flask, healer.food, healer.augmentation].some(x => x && x !== "disabled")) bits.push("flask, food and augment rune");
+  return hasBuffed && bits.length ? `<p class="stats-note">Includes ${bits.join(" and ")} (listed under your gear), so they can read higher than your character sheet out of a raid.</p>` : "";
+}
 
 // ----- your gear: a character sheet of the best set found (your current gear unless a gear set did better)
 {
   const bestChanges = best ? best.changes : [];
+  // How many points the best gear set adds, on each damage pattern (the gear check).
+  const gainText = !compareOnly || !best ? "" : checks.map(c => {
+    const r = c.rows.find(x => x.name === best.name);
+    return r?.d == null ? "" : `${signedPts2(r.d)}${multiPattern ? ` <span class="faint">${esc(patternLabel(c.pattern).toLowerCase())}</span>` : ""}`;
+  }).filter(Boolean).join(" · ");
   const gear = { ...currentGear };
   for (const c of bestChanges) gear[c.slot] = { ...c.to };
   const tile = slot => {
@@ -1020,6 +1616,7 @@ const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.
       ${it.enchant ? `<div class="gi-ench">✦ ${esc(it.enchant)}</div>` : ""}
       ${it.gemNames.map(g => `<div class="gi-gem">◆ ${esc(g)}</div>`).join("")}
       ${ch ? `<div class="gi-meta">Replaces ${esc(ch.from.name)} ${ch.from.ilevel || ""}</div>` : ""}
+      ${ch && gainText ? `<div class="gi-pts">${gainText}</div>` : ""}
     </div>`;
   };
   const tileTip = slot => () => {
@@ -1030,18 +1627,26 @@ const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.
       ${it.enchant ? `<div class="t-row"><span>Enchant</span><span>${esc(it.enchant)}</span></div>` : ""}
       ${it.gemNames.map(g => `<div class="t-row"><span>Gem</span><span>${esc(g)}</span></div>`).join("")}
       ${ch ? `<div class="t-row"><span>Instead of</span><span>${esc(ch.from.name)} ${ch.from.ilevel || ""}</span></div>
-        <div class="t-row"><span>Your limit</span><span class="better">${signed(best.d, 2)}</span></div>` : ""}`;
+        <div class="faint" style="margin-top:6px;max-width:320px">${AT_LIMIT ? "At your limit" : `At ${fmtLevel(TOP)} of your share`}: ${esc(best.reason)}.</div>` : ""}`;
   };
   const omnium = healer.omnium || [];
-  const statChips = healerKV.map(([k, v]) => `<div class="cs-stat"><span>${esc(k)}</span><b>${esc(v)}</b></div>`).join("");
+  const statChips = healerKV.map(([k, v, sub]) => statChip(k, v, sub)).join("");
   const gearSec = el("section", { id: "gear" });
   gearSec.innerHTML = `
     <div class="section-head"><h2>${best ? "Best gear set" : "Your gear"}</h2>
-      <p>${best ? `The best of the gear sets compared below: your limit goes up <b>${signed(best.d)}</b>. Highlighted: what changes.`
-        : cmpRows.length ? "Your current gear. None of the gear sets compared below raises your limit." : "The gear simulated in this report."}</p></div>
+      <p>${compareOnly ? checkIntro() : oldIntro()}</p>
+      ${explain(`<p>Your character as simulated: talents, gear, enchants, gems and Omnium runes from your profile. The stats at the top
+        are your character sheet as simulated: gear, gems and enchants, plus the flask, food, rune and raid buffs the simulation gives you
+        (${esc([healer.flask, healer.food, healer.augmentation].filter(Boolean).map(prettyName).join(", ")) || "none"}), so they can read higher
+        than your sheet out of combat. Each rating is followed by the percentage it gives.</p>
+        ${best ? `<p>The highlighted item${best.changes.length > 1 ? "s are" : " is"} the best upgrade among your gear sets${onFirst}. The badge shows how many
+        <b>points</b> it adds on each damage pattern: points are the raid's average health over the fight, out of 100, ${atWhere()}
+        (see "Your upgrades" above).</p>` : `<p>None of your gear sets beat your current gear by more than the margin of error, so this is your current gear.</p>`}
+        <p>Hover an item for its in-game tooltip. The switch at the bottom right turns those off (the report's own tooltips stay), and the
+        palette button next to it changes the colours.</p>`)}</div>
     <div class="panel char-sheet">
       <div class="cs-head">
-        <div class="cs-stats">${statChips}</div>
+        <div><div class="cs-stats">${statChips}</div>${statsNote()}</div>
         ${tipToggle}
       </div>
       <div class="cs-cols">
@@ -1050,6 +1655,7 @@ const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.
       </div>
       ${omnium.length ? `<div class="cs-omnium"><span class="cs-label">Omnium runes</span>${omnium.map(r =>
         `<a class="wh-item rune" href="https://www.wowhead.com/spell=${r.spell}" data-wh-icon-size="small" data-wowhead="spell=${r.spell}">${esc(r.name)}</a>`).join("")}</div>` : ""}
+      ${extrasPanel(gear)}
     </div>`;
   app.appendChild(gearSec);
   gearSec.querySelectorAll(".gi[data-slot]").forEach(n => bindInfoTip(n, tileTip(n.dataset.slot)));
@@ -1057,120 +1663,140 @@ const best = cmpRows.filter(r => r.verdict === "better").sort((a, b) => b.d - a.
   $("#nav").insertBefore(el("a", { href: "#gear" }, "Gear"), $('#nav a[href="#timeline"]') || null);
 }
 
-// ----- your limit (current gear)
-if (tolerance) {
-  const share = tolerance.levels.healer_share;
-  // What each kind of damage is in this fight.
-  const WHAT = isPatchwerk ? {
-    steady: "Damage on the whole raid all fight long, every 2 sec.",
-    burst: "Big hits on the whole raid every 30 sec, twice as big every 2 min.",
-    spot: "Damage over time on 3 players at a time, and a debuff for you to dispel that grows until you do.",
-    tank: "Melee on the active tank and a tank buster every 30 sec (the tanks swap).",
-    avoidable: "A hit on one player every 20 sec, from mistakes.",
-  } : {
-    steady: "Damage on the whole raid all fight long: Toxic Vapor, Burning Presence.",
-    burst: "Big hits on the whole raid: the Expulsions, Malignant Catalyst, Caustic Surge, Caustic Explosion.",
-    spot: "Hits on a few raiders at a time: Plague Froth, Catalytic Bile, Congealing Bolt, Exploding Infection.",
-    tank: "Damage on the tanks: Dripping Fangs and melee.",
-    avoidable: "Damage from mistakes, as often as on your kill: Plague Wave.",
-  };
-  const TOL = {
-    combined: { label: "All damage", color: "var(--ink-2)", what: "Every kind of damage raised together. This is your limit." },
-    steady: { label: "Constant damage", color: "var(--mana)", what: WHAT.steady },
-    burst: { label: "Burst damage", color: "var(--dmg)", what: WHAT.burst },
-    spot: { label: "Damage on a few players", color: "var(--c3)", what: WHAT.spot },
-    tank: { label: "Tank damage", color: "var(--c4)", what: WHAT.tank },
-    avoidable: { label: "Avoidable damage", color: "var(--ink-3)", what: WHAT.avoidable },
-  };
-  const combined = tolerance.tests.find(t => t.test === "combined");
-  const tests = Object.keys(TOL).map(k => tolerance.tests.find(t => t.test === k)).filter(t => t && t.score != null);
-  const ms = (tolerance.levels.milestones || []).slice().sort((a, b) => a.score - b.score);
-  const msNote = m => /3-healer/i.test(m.label) ? "what each healer covered in a 3-heal Mythic kill" : "";
-  const rows = tests.slice().sort((a, b) => a.score - b.score);  // lowest to highest
-  const hi = Math.max(1.1, ...rows.map(t => t.score), ...ms.map(m => m.score)) * 1.06;
-  const x = v => (Math.min(v, hi) / hi * 100).toFixed(2) + "%";
-  const tickStep = [0.1, 0.2, 0.25, 0.5, 1].find(s => hi / s <= 8) || 1;
-  const ticks = [];
-  for (let v = 0; v <= hi + 1e-9; v += tickStep) ticks.push(`<span style="left:${x(v)}">${fmtPct(v, 0)}</span>`);
-  // What happened one step above the limit.
-  const breakNote = t => {
-    const f = (t.probes || []).find(p => !p.pass && Math.abs(p.pct - t.first_fail) < 1e-9);
-    const worst = f?.deaths?.[0];
-    return t.first_fail == null ? "" : `At ${fmtScore(t.first_fail)}${worst ? `, ${esc(prettyName(worst.name))} died in ${fmtPct(worst.rate)} of fights` : ", raiders died too often"}.`;
-  };
-  const rowTip = t => `<div class="t-head">${TOL[t.test].label}</div><div class="faint" style="margin-bottom:6px;max-width:340px">${esc(TOL[t.test].what)}</div>
-    <div class="t-row"><span>Your limit</span><span>${fmtScore(t.score)}</span></div>
-    ${t.test !== "combined" ? `<div class="t-row"><span>Everything else at</span><span>${fmtScore(t.held)}${Math.abs(t.held - 1) < 1e-6 ? " (one healer's share)" : ""}</span></div>` : ""}
-    ${t.first_fail != null ? `<div class="faint" style="margin-top:6px;max-width:340px">${breakNote(t)}</div>` : ""}`;
-  const tolSec = el("section", { id: "tolerance" });
-  tolSec.innerHTML = `
-    <div class="section-head"><h2>Your limit</h2></div>
-    <div class="panel can-heal">
-      <div><div class="cs-label">Your limit</div><div class="ch-big">${combined?.score != null ? fmtScore(combined.score) : "–"}</div></div>
-      <div class="ch-text">
-        <p>The most damage you can heal before raiders start dying (more than 1 fight in 20).</p>
-        <p><b>100%</b> is ${isPatchwerk
-          ? `one healer's share of a Mythic raid's damage, as on a Mythic Vashnik kill (${fmtPct(share, 1)} of all the damage the raid took): every player loses about 2% of their health per second. Everyone has your health${raidHealth ? ` (${fmtNum(raidHealth)}; tanks ${fmtNum(tankHealth)})` : ""} and every hit is a share of it, so the fight grows with your gear.`
-          : `one healer's share of the damage on Mythic ${esc(bossName)}: a quarter of what the 4 healers healed on your kill (${fmtPct(share, 1)} of all the damage your raid took).`} ${combined?.score == null ? ""
-          : combined.score >= 1 ? `You can heal <b>${fmtPct(combined.score - 1, 1)} more</b> than that.` : `You fall <b>${fmtPct(1 - combined.score, 1)} short</b> of it.`}</p>
-      </div>
-    </div>
-    <div class="panel hr-chart">
-      <div class="hr-row" style="padding-bottom:0"><span class="cs-label">Your limit by kind of damage</span><span class="faint" style="font-size:12px">One kind raised at a time, everything else at one healer's share</span><span></span></div>
-      ${rows.map(t => `<div class="hr-row" tabindex="0" data-test="${t.test}">
-        <span class="hr-name">${TOL[t.test].label}</span>
-        <span class="hr-track">${ms.map(m => `<i class="hr-ms" style="left:${x(m.score)}"></i>`).join("")}
-          <span class="hr-bar pos" style="--bc:${t.score < 1 ? "var(--dmg)" : TOL[t.test].color};left:0;width:${x(t.score)}"></span>
-          <span class="hr-zero" style="left:${x(1)}"></span></span>
-        <span class="hr-num">${fmtScore(t.score)}</span></div>`).join("")}
-      <div class="hr-axis"><span></span><span class="ticks">${ticks.join("")}</span><span></span></div>
-      <div class="hr-legend"><span><i class="hr-key zero"></i>100%: one healer's share</span>${ms.map(m =>
-        `<span title="${esc(msNote(m))}"><i class="hr-key"></i><b>${fmtScore(m.score)}</b> ${esc(m.label)}${msNote(m) ? " *" : ""}</span>`).join("")}</div>
-      ${ms.some(m => msNote(m)) ? `<p class="faint" style="padding:0 22px 6px;font-size:12px">* A 3-healer setup: ${esc(msNote(ms.find(m => msNote(m))))} (the rest of the raid heals itself more there).</p>` : ""}
-    </div>`;
-  app.appendChild(tolSec);
-  tolSec.querySelectorAll(".hr-row[data-test]").forEach(row => bindInfoTip(row, rowTip(tests.find(q => q.test === row.dataset.test))));
-  $("#nav").insertBefore(el("a", { href: "#tolerance" }, "Your limit"), $('#nav a[href="#timeline"]') || null);
+// ----- the gear check (tolerance_search=0): upgrade, downgrade or no real difference, per damage pattern. Nothing else
+// follows it.
+if (compareOnly) {
+  const VERDICT = { better: "Upgrade", worse: "Downgrade", equal: "Sidegrade", tradeoff: "Trade-off" };
+  const noiseTxt = checks.map(c => signedPts2(c.noise).replace("+", "±")).filter((v, i, a) => a.indexOf(v) === i).join(" / ");
+  const sec = el("section", { id: "check" });
+  sec.innerHTML = checks.length ? `
+    <div class="section-head"><h2>Gear check</h2>
+      <p>Each gear set is your current gear with these items swapped in. It plays the same ${checks[0].fights.toLocaleString()} fights as
+        your current gear ${AT_LIMIT ? "at your limit on that damage pattern" : `at ${fmtLevel(TOP)} of one healer's share of the damage`}. Points = the raid's average health over the fight, out of
+        100 (a dead player counts as 0). Within ${noiseTxt} of your current gear is chance: a sidegrade.</p>
+      ${explain(`<p><b>How to read the table.</b> One row per gear set, one column per damage pattern. Each cell: the verdict, the gear set's
+        points, and the difference to your current gear (first row).</p>
+        <p><b>Upgrade</b>: more points than your current gear by more than the margin of error, and a limit that doesn't drop (every gear set
+        with more points gets its own limit search). <b>Trade-off</b>: more points, but a lower limit: the raid is healthier on average, but at
+        the edge, where raiders start dying, you do a bit worse. <b>Downgrade</b>: fewer points by more than the margin of error.
+        <b>Sidegrade</b>: within it, so no real difference; the simulation can't tell them apart.</p>
+        <p><b>Why the same fights matter.</b> All gear sets play the same ${checks[0].fights.toLocaleString()} fights with the same random
+        numbers as your current gear, so luck cancels out and small differences can be trusted. The margin of error comes from your current gear
+        playing two other sets of fights: how far its own points move with other random numbers.</p>
+        ${AT_LIMIT ? `<p><b>Why at your limit.</b> Your limit is the most damage your current gear can heal (${checks.map(c => `${fmtPct(c.level, 1)}${multiPattern ? ` ${esc(patternLabel(c.pattern).toLowerCase())}` : ""}`).join(", ")}).
+        With less damage you overheal and the raid stays near full whatever you wear, so items barely differ. At the edge every bit of healing
+        counts, so that's where an item's real healing shows. Every healer and every damage pattern is checked under the same pressure:
+        the edge of what you can heal.</p>`
+        : `<p><b>Why ${fmtLevel(TOP)}.</b> At one healer's share (100%) a good healer keeps almost everyone near full health, so gear barely shows.
+        A bit more damage than that puts the raid under pressure, where the healing you gain or lose from an item changes how healthy the
+        raid stays.</p>`}
+        ${multiPattern ? `<p><b>Damage patterns.</b></p><ul>${patterns.map(p => `<li>${patternDesc(p)}</li>`).join("")}</ul>` : ""}`)}</div>
+    <div class="panel meas"><table class="check-table">
+      <thead><tr><th>Gear</th>${checks.map(c => `<th>${esc(patternLabel(c.pattern))}</th>`).join("")}</tr></thead>
+      <tbody><tr class="base"><th scope="row">Your current gear</th>${checks.map(c => `<td><b>${points(c.b)}</b></td>`).join("")}</tr>
+      ${checks[0].rows.map(r0 => `<tr><th scope="row">${swapText(r0)}</th>${checks.map(c => {
+        const r = c.rows.find(x => x.name === r0.name);
+        return !r || r.d == null ? "<td>–</td>"
+          : `<td><span class="chip ${r.verdict}">${VERDICT[r.verdict]}</span> <b>${points(r.v)}</b> <small class="faint">${signedPts2(r.d)}</small>${
+            r.lim != null ? `<br><small class="faint">limit ${fmtPct(r.lim, 1)} (${signed(r.limD, 1).replace("%", " points")})</small>` : ""}</td>`;
+      }).join("")}</tr>`).join("")}</tbody></table></div>`
+    : `<div class="panel empty">This report has no gear sets to check. Add them to the gear sets file.</div>`;
+  app.appendChild(sec);
+  bindTipToggle(sec);
+  $("#nav").innerHTML = `${checks.length ? `<a href="#upgrades">Upgrades</a>` : ""}<a href="#gear">Gear</a><a href="#check">Gear check</a>`;
+  return;
 }
 
-// ----- gear comparison: each gear set against your current gear, lowest to highest
-if (cmpRows.length) {
-  const vals = cmpRows.map(r => r.d).filter(v => v != null);
-  // Zero in the middle, so better and worse read the same way.
-  const ext = Math.max(0.01, cmpNoise, ...vals.map(Math.abs)) * 1.2;
-  const cx = v => ((v + ext) / (2 * ext) * 100).toFixed(2) + "%";
-  const cstep = [0.0025, 0.005, 0.01, 0.02, 0.05, 0.1].find(s => ext / s <= 3) || 0.2;
-  const cticks = [];
-  for (let v = -Math.floor(ext / cstep) * cstep; v <= ext + 1e-9; v += cstep) cticks.push(`<span style="left:${cx(v)}">${Math.abs(v) < 1e-9 ? "0" : signed(v, cstep < 0.01 ? 1 : 0)}</span>`);
-  const colorOf = v => v === "better" ? "var(--heal)" : v === "worse" ? "var(--dmg)" : "var(--ink-3)";
-  const VERDICT = { better: "better", worse: "worse", equal: "no real difference" };
-  const label = r => r.changes.length
-    ? r.changes.map(c => `<span class="cmp-item"><span>${itemLink(c.to, "medium")} <span class="faint">${c.to.ilevel || ""}</span>
-        <small>instead of ${c.from ? itemLink(c.from, "tiny") : "nothing"} ${c.from?.ilevel || ""} · ${slotLabel(c.slot)}</small></span></span>`).join("")
-    : `<span class="cmp-item"><span><b>${esc(r.s.setup.name)}</b></span></span>`;
-  const cmpTip = r => `<div class="t-head">${esc(r.changes.length ? r.changes.map(c => `${c.to.name} ${c.to.ilevel || ""} instead of ${c.from.name} ${c.from.ilevel || ""}`).join(", ") : r.s.setup.name)}</div>
-    <div class="t-row"><span>Your limit with it</span><span>${fmtScore(r.v)}</span></div>
-    <div class="t-row"><span>Your limit now</span><span>${fmtScore(r.b)}</span></div>
-    <div class="t-row"><span>Difference</span><span class="${r.verdict}">${r.d == null ? "–" : signed(r.d, 2)} · ${VERDICT[r.verdict] || ""}</span></div>
-    <div class="faint" style="margin-top:6px;max-width:340px">Differences within ±${fmtPct(cmpNoise, 2)} are the simulation's margin of error.</div>`;
-  const cmpSec = el("section", { id: "compare" });
-  cmpSec.innerHTML = `
+// ----- the bursts: your current gear at each damage level, on each damage pattern
+if (atLevels.length) {
+  const CAUSES = { burst: "a burst", steady: "constant damage", spot: "damage on a few players", tank: "tank damage", avoidable: "avoidable damage" };
+  const causeText = k => { const [t, during] = k.split(" during "); return (CAUSES[t] || t) + (during ? " during a burst" : ""); };
+  // The raid's average health before a burst (end of the bar) and at its lowest (start), on a 0-100% track.
+  const drop = (before, low) => before == null || low == null ? "" : `<span class="drop" aria-hidden="true"><i style="left:${(low * 100).toFixed(1)}%;width:${((before - low) * 100).toFixed(1)}%"></i></span>`;
+  const cell = (m, key) => {
+    switch (key) {
+      case "n": return m.n_low == null ? "–" : `<span class="nw">${drop(m.n_before, m.n_low)}${pctPts(m.n_before)} → <b>${pctPts(m.n_low)}</b></span>`;
+      case "g": return m.g_low == null ? "–" : `<span class="nw">${drop(m.g_before, m.g_low)}${pctPts(m.g_before)} → <b>${pctPts(m.g_low)}</b></span>`;
+      case "p": return m.g_player == null && m.n_player == null ? "–" : `<b>${pctPts(m.g_player ?? m.n_player)}</b>`;
+      case "nr": return m.n_rec == null ? "–" : `<b>${secs(m.n_rec)}</b> <span class="faint">${fmtPct(m.n_recovered)} of bursts</span>`;
+      case "gr": return m.g_rec == null ? "–" : `<b>${secs(m.g_rec)}</b> <span class="faint">${fmtPct(m.g_recovered)} of big bursts</span>`;
+      case "h": return m.heal_burst == null ? "–" : `<b>${fmtNum(m.heal_burst)}</b> <span class="faint">vs ${fmtNum(m.heal_quiet)} the rest of the time</span>`;
+      case "dt": return m.dmg_burst == null ? "–" : `<b>${fmtNum(m.dmg_burst)}</b> <span class="faint">vs ${fmtNum(m.dmg_quiet)}</span>`;
+      case "d": {
+        const causes = Object.entries(m.causes).sort((a, b) => b[1] - a[1]);
+        return m.deaths < 0.05 ? `<b>0</b> <span class="faint">nobody dies</span>`
+          : `<b>${m.deaths.toFixed(1)}</b> <span class="faint">${causes.slice(0, 3).map(([k, v]) => `${fmtPct(v * 100 / m.deaths)} ${esc(causeText(k))}`).join(", ")}</span>`;
+      }
+      case "mana": return m.mana == null ? "–" : `<b>${fmtPct(m.mana)}</b>${m.oom != null ? ` <span class="faint">dry at ${fmtTime(m.oom)}</span>` : ""}`;
+    }
+    return "–";
+  };
+  const ROWS = [
+    ["n", "A burst", `The raid's average health just before a burst → at its lowest in the ${burstWindow} seconds after it.`],
+    ["g", "A big burst", "The same for the big bursts (twice as big)."],
+    ["p", "Lowest player", "The lowest single player in a big burst, on average."],
+    ["nr", "Back up after a burst", `Seconds until the raid is back within ${fmtPct(recMargin)} of its health before the burst, and how often that happens before the next one.`],
+    ["gr", "Back up after a big burst", "The same for the big bursts."],
+    ["h", "Healing per second in bursts", `What you heal in the ${burstWindow} seconds after each burst vs the rest of the fight.`],
+    ["dt", "Damage taken per second in bursts", "What the raid takes in those seconds vs the rest of the fight."],
+    ["d", "Deaths per 100 fights", "Every player's deaths, and what landed the killing blow."],
+    ["mana", "Mana left at the end", "Running out of mana is not a fail, but it shows what the healing costs."],
+  ];
+  const sec = el("section", { id: "bursts" });
+  sec.innerHTML = `
+    <div class="section-head"><h2>How you handle the bursts</h2>
+      <p>Your current gear at fixed amounts of damage: ${LEVELS.map(fmtLevel).join(" and ")} of one healer's share. How low the raid goes when a burst lands, how fast you bring it back, and who dies.</p></div>
+    ${patterns.map(p => {
+      const main = tolSetups.filter(ofPattern(p)).find(s => s.role === "main");
+      const ms = LEVELS.map(l => measuresOf(main, l));
+      if (!ms.some(Boolean)) return "";
+      return `<div class="panel meas">
+        ${multiPattern ? `<div class="meas-title cs-label">${esc(patternLabel(p))}</div>` : ""}
+        <table><thead><tr><th></th>${LEVELS.map(l => `<th>${fmtLevel(l)} of your share</th>`).join("")}</tr></thead>
+        <tbody>${ROWS.map(([k, label, what]) => `<tr><th scope="row" title="${esc(what)}">${label}</th>${ms.map(m => `<td>${m ? cell(m, k) : "–"}</td>`).join("")}</tr>`).join("")}</tbody></table>
+      </div>`;
+    }).join("")}`;
+  app.appendChild(sec);
+  $("#nav").insertBefore(el("a", { href: "#bursts" }, "Bursts"), $('#nav a[href="#timeline"]') || null);
+}
+
+// ----- gear comparison: each gear set against your current gear, measure by measure, at each damage level
+if (cmps.length) {
+  const VERDICT = { better: "Better", worse: "Worse", mixed: "Mixed", equal: "No real difference" };
+  const head = `<th>Gear</th>${METRICS.map(m => `<th>${m.head}<small>${m.sub}</small></th>`).join("")}<th>Limit<small>all damage</small></th>`;
+  const table = (c, li) => {
+    const lv = c.levels[li];
+    const base = lv.base || {};
+    const baseRow = `<tr class="base"><th scope="row">Your current gear</th>${METRICS.map(m => `<td>${base[m.key] != null ? m.fmt(base[m.key]) : "–"}</td>`).join("")}<td>${c.bl != null ? fmtPct(c.bl, 1) : "–"}</td></tr>`;
+    const rows = c.rows.map((r, ri) => {
+      const lvr = r.byLevel[li];
+      return `<tr data-cmp="${ri}"><th scope="row"><span class="cmp-swap">${swapText(r)}</span>${li === c.levels.length - 1 ? `<small class="${r.verdict === "mixed" ? "" : r.verdict}">${VERDICT[r.verdict]}${r.reason ? `: ${esc(r.reason)}` : ""}</small>` : ""}</th>
+        ${lvr.cells.map(x => `<td class="${x.verdict}${x.m.info ? " info" : ""}" title="${x.v != null ? esc(x.m.fmt(x.v)) : ""}${x.d != null ? ` (±${esc(x.m.key.endsWith("rec") ? lv.nz[x.m.key].toFixed(1) + " s" : x.m.key === "deaths" ? lv.nz[x.m.key].toFixed(1) : (lv.nz[x.m.key] * 100).toFixed(1) + " pts")} is chance)` : ""}">${x.d == null ? "–" : `${arrow(x.verdict)} ${x.m.dfmt(x.d)}`}</td>`).join("")}
+        <td class="${r.limVerdict}" title="${r.lim != null ? fmtPct(r.lim, 1) : ""}">${r.limD == null ? "–" : `${arrow(r.limVerdict)} ${signed(r.limD)}`}</td></tr>`;
+    }).join("");
+    return `<table class="cmp-table" data-level="${li}"${li === c.levels.length - 1 ? "" : " hidden"}><thead><tr>${head}</tr></thead><tbody>${baseRow}${rows}</tbody></table>`;
+  };
+  const sec = el("section", { id: "compare" });
+  sec.innerHTML = `
     <div class="section-head"><h2>Gear comparison</h2>
-      <p>Each gear set is your current gear with these items swapped in: how much it raises (▲) or lowers (▼) your limit.
-        Within ±${fmtPct(cmpNoise, 1)} (grey band) is the simulation's margin of error: no real difference.</p></div>
-    <div class="panel hr-chart cmp-chart">
-      <div class="cmp-tools">${tipToggle}</div>
-      ${cmpRows.map((r, i) => `<div class="hr-row" tabindex="0" data-cmp="${i}">
-        <span class="hr-name">${label(r)}</span>
-        <span class="hr-track"><span class="hr-noise" style="left:${cx(-cmpNoise)};width:calc(${cx(cmpNoise)} - ${cx(-cmpNoise)})"></span>
-          ${r.d == null ? "" : `<span class="hr-bar ${r.d >= 0 ? "pos" : "neg"}" style="--bc:${colorOf(r.verdict)};left:${cx(Math.min(0, r.d))};width:calc(${cx(Math.max(0, r.d))} - ${cx(Math.min(0, r.d))})"></span>`}
-          <span class="hr-zero" style="left:${cx(0)}"></span></span>
-        <span class="hr-num ${r.verdict}">${r.d == null ? "–" : `${arrow(r.verdict)} ${signed(r.d)}<small>${VERDICT[r.verdict]}</small>`}</span></div>`).join("")}
-      <div class="hr-axis"><span></span><span class="ticks">${cticks.join("")}</span><span></span></div>
-    </div>`;
-  app.appendChild(cmpSec);
-  cmpSec.querySelectorAll(".hr-row[data-cmp]").forEach(row => bindInfoTip(row, cmpTip(cmpRows[+row.dataset.cmp])));
-  bindTipToggle(cmpSec);
+      <p>Each gear set is your current gear with these items swapped in, on the same fights. ▲ better, ▼ worse; – is within what
+        your current gear does with other random numbers: no real difference. A set is better when more of the measures improve than get
+        worse at ${fmtLevel(TOP)}; mana and your limit are shown but don't decide it.</p></div>
+    <div class="cmp-tools">
+      <div class="lvl-toggle" role="group" aria-label="Damage level">${LEVELS.map((l, i) => `<button type="button" data-li="${i}" aria-pressed="${i === LEVELS.length - 1}">${fmtLevel(l)} of your share</button>`).join("")}</div>
+      ${tipToggle}
+    </div>
+    ${cmps.map(c => `<div class="panel meas cmp-panel">
+      ${multiPattern ? `<div class="meas-title"><span class="cs-label">${esc(patternLabel(c.pattern))}</span> <span class="faint" style="font-size:13px">· ${c.best ? `best: ${swapText(c.best)}` : c.closest ? "no set is better on every measure" : "your current gear is best"}</span></div>` : ""}
+      <div class="tbl-wrap">${c.levels.map((_, li) => table(c, li)).join("")}</div>
+    </div>`).join("")}`;
+  app.appendChild(sec);
+  sec.querySelectorAll(".lvl-toggle button").forEach(b => b.addEventListener("click", () => {
+    const li = b.dataset.li;
+    sec.querySelectorAll(".lvl-toggle button").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    sec.querySelectorAll("table.cmp-table").forEach(t => { t.hidden = t.dataset.level !== li; });
+  }));
+  bindTipToggle(sec);
   $("#nav").insertBefore(el("a", { href: "#compare" }, "Gear comparison"), $('#nav a[href="#timeline"]') || null);
 }
 
@@ -1180,7 +1806,7 @@ if (cmpRows.length) {
   const atShare = tolerance && dmgOptD ? (dmgOptD.all * Math.max(dmgOptD.steady, dmgOptD.burst, dmgOptD.spot)) / tolerance.levels.healer_share : null;
   const div = el("section", { class: "part-divider", id: "details-intro" });
   div.innerHTML = `<h2>Fight details: your current gear</h2>
-    <p>Everything below is one simulation of your current gear${atShare ? ` at ${fmtPct(atShare, 0)} of one healer's share of the damage` : ""},
+    <p>Everything below is one simulation of your current gear${atShare ? ` at ${fmtPct(atShare, 0)} of one healer's share of the damage` : ""}${multiPattern ? ` (${esc(patternLabel(patterns[0]).toLowerCase())})` : ""},
       ${(encFights || iterations).toLocaleString()} fights.</p>`;
   app.appendChild(div);
 }
@@ -1838,18 +2464,31 @@ function breakdown(container, rows, kind, total) {
   if (!rows.length) container.innerHTML += `<div class="empty">Nothing to show.</div>`;
 }
 
-// ----- healing + damage sections
+// ----- healing numbers: per spell, for reference
+function healTable(container, rows, total) {
+  const totRaw = sum(rows.map(r => r.raw));
+  const line = (label, eff, raw, casts, share, cls = "") => `<tr class="${cls}"><th scope="row">${label}</th>
+    <td>${fmtNum(eff / fightLen)}</td><td>${share != null ? fmtPct(share, 1) : ""}</td>
+    <td>${raw ? fmtPct(1 - eff / raw) : "–"}</td><td>${casts == null ? "" : casts >= 0.5 ? Math.round(casts) : "–"}</td></tr>`;
+  container.innerHTML = rows.length ? `<table class="heal-table">
+    <thead><tr><th>Spell</th><th>Healing per second</th><th>Share</th><th>Overhealing</th><th>Casts</th></tr></thead>
+    <tbody>${line("All your healing", total, totRaw, null, 1, "base")}
+      ${rows.map(r => line(esc(r.label), r.eff, r.raw, r.casts, total ? r.eff / total : 0)).join("")}</tbody></table>`
+    : `<div class="empty">Nothing to show.</div>`;
+}
+
 const healSec = el("section", { id: "healing" });
 healSec.innerHTML = `
   <div class="section-head">
-    <h2>Where your healing went</h2>
-    <p>Each spell's effective healing (solid) and overhealing (pale). Click a spell to split direct heals from heal-over-time ticks.</p>
+    <h2>Healing numbers</h2>
+    <p>Healing per second and overhealing per spell, for reference. They don't rank setups: you can only heal the damage
+      there is, so healing per second follows the incoming damage.</p>
   </div>
-  <div class="panel breakdown" id="healBd"></div>`;
+  <div class="panel meas" id="healTbl"></div>`;
 app.appendChild(healSec);
 if ($("#activity")) app.insertBefore($("#activity"), healSec);
 
-breakdown($("#healBd"), healStats, "heal", totalEff);
+healTable($("#healTbl"), healStats, totalEff);
 
 const dmgSec = el("section", { id: "damage" });
 dmgSec.innerHTML = `

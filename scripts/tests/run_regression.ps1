@@ -203,9 +203,10 @@ Write-Host 'Damage tolerance search...'
 $g = 'tolerance'
 $tol = Invoke-Simc 'tolerance' @('scripts\restoration_druid.simc', 'scripts\fights\vashnik.simc', 'scripts\tests\tolerance_sets.simc', 'threads=4',
   'iterations=20', 'tolerance=1', 'tolerance_share=0.2032', 'tolerance_iterations=60', 'tolerance_type_iterations=60',
-  'tolerance_precision=0.02', 'tolerance_type_precision=0.05', 'tolerance_tests=steady', 'tolerance_noise_runs=1')
+  'tolerance_precision=0.02', 'tolerance_type_precision=0.05', 'tolerance_tests=steady', 'tolerance_noise_runs=1',
+  'tolerance_level_iterations=60')
 $ts = $tol.sim.tolerance
-Check $g 'version' $ts.version 3
+Check $g 'version' $ts.version 5
 Check $g 'setups (main, gear set, noise)' (@($ts.setups | ForEach-Object { $_.role }) -join ',') 'main,set,noise'
 $tmain = $ts.setups | Where-Object { $_.role -eq 'main' }
 $tset = $ts.setups | Where-Object { $_.role -eq 'set' }
@@ -215,10 +216,56 @@ Check $g 'tests (combined + steady)' (@($tmain.tests | ForEach-Object { $_.test 
 # A single type is raised from the all-damage limit, with the rest held there: it can never end below that limit.
 Check $g 'single types never below the limit' (@($tmain.tests | Where-Object { $_.test -ne 'combined' -and $_.score -lt $score }).Count) 0
 Check $g 'probes ascending' ((($tmain.tests[0].probes | ForEach-Object { $_.pct }) -join ',') -eq (($tmain.tests[0].probes | ForEach-Object { $_.pct } | Sort-Object) -join ',')) $true
-Check $g 'main keeps its trinket1' ($tmain.gear.trinket1.item -match '\bid=270162\b') $true
+Check $g 'main keeps its trinket1' ($tmain.gear.trinket1.item -match '\bid=270169\b') $true
 Check $g 'gear set swaps trinket1' ($tset.gear.trinket1.item -match '\bid=280835\b') $true
 Check $g 'gear set item level 334' $tset.gear.trinket1.ilevel 334
 Check $g 'no normal profileset run' ($null -eq $tol.sim.profilesets) $true
+# Fixed damage levels (tolerance_levels, default 100% and 120%): every setup is measured at each, with the burst
+# measurements (engine\sim\tolerance_stats.cpp). Every death is attributed to a kind of damage.
+Check $g 'levels' (@($ts.levels) -join ',') '1.0,1.2'
+Check $g 'every setup measured at each level' (@($ts.setups | ForEach-Object { @($_.levels | ForEach-Object { $_.pct }) -join '/' }) -join ',') '1.0/1.2,1.0/1.2,1.0/1.2'
+$lv = $tmain.levels[1].stats
+Check $g 'level fights' $lv.fights 60 0.1
+Check $g 'bursts measured' ([int]($null -ne $lv.bursts.big -or $null -ne $lv.bursts.normal)) 1
+$bs = @($lv.bursts.normal, $lv.bursts.big) | Where-Object { $_ }
+Check $g 'raid low below raid before' (@($bs | Where-Object { $_.raid_low -ge $_.raid_before }).Count) 0
+Check $g 'recovered share 0-1' (@($bs | Where-Object { $_.recovered -lt 0 -or $_.recovered -gt 1 }).Count) 0
+$causes = 0.0; foreach ($c in $lv.death_causes.PSObject.Properties) { $causes += $c.Value }
+Check $g 'death causes add up to the deaths' $causes $lv.deaths_per_fight 1e-9
+Check $g 'raid health kept 0-100%' ([int]($lv.raid_health -gt 0 -and $lv.raid_health -le 1)) 1
+Check $g 'burst windows heal and hurt more' ([int]($lv.windows.burst.damage_taken_per_sec -gt $lv.windows.quiet.damage_taken_per_sec -and $lv.windows.burst.healing_per_sec -gt 0)) 1
+# The gear check (tolerance_search=0, what the .bat files run): no limit search, every setup only at the fixed level.
+$chk = Invoke-Simc 'gear_check' @('scripts\restoration_druid.simc', 'scripts\fights\patchwerk.simc', 'scripts\tests\tolerance_sets.simc',
+  'threads=4', 'iterations=20', 'tolerance=1', 'tolerance_search=0', 'tolerance_levels=1.2', 'tolerance_share=0.2032',
+  'tolerance_iterations=60', 'tolerance_noise_runs=1')
+$cs = $chk.sim.tolerance
+Check $g 'gear check: no search' ([int]($cs.search -eq $false)) 1
+Check $g 'gear check: setups per pattern' (@($cs.setups | ForEach-Object { $_.role }) -join ',') 'main,set,noise,main,set,noise'
+Check $g 'gear check: no limit tests' (@($cs.setups | Where-Object { @($_.tests).Count -gt 0 }).Count) 0
+Check $g 'gear check: one level with raid health' (@($cs.setups | Where-Object { @($_.levels).Count -eq 1 -and $_.levels[0].stats.raid_health -gt 0 }).Count) 6
+# Your limit with the fast search (tolerance_search_sets=0, what the .bat files run): current gear only, a rough pass
+# then aimed full tests. Close to the full search's 130.1% for the druid (bursts every 30 sec) in far fewer tests.
+$fast = Invoke-Simc 'fast_limit' @('scripts\restoration_druid.simc', 'scripts\fights\patchwerk.simc', 'scripts\tests\tolerance_sets.simc',
+  'iterations=1', 'tolerance=1', 'tolerance_search_sets=0', 'tolerance_tests=none', 'tolerance_share=0.2032', 'tolerance_levels=none',
+  'tolerance_noise_runs=0')
+$fs = $fast.sim.tolerance
+$fmain = @($fs.setups | Where-Object { $_.role -eq 'main' })[0]
+$flim = ($fmain.tests | Where-Object { $_.test -eq 'combined' }).score
+Check $g 'fast limit near the full search (125-135%)' ([int]($flim -gt 1.25 -and $flim -lt 1.35)) 1
+Check $g 'fast limit: at most 8 full tests' ([int](@($fmain.tests[0].probes).Count -le 8)) 1
+Check $g 'fast limit: gear sets not searched' (@($fs.setups | Where-Object { $_.role -eq 'set' -and @($_.tests).Count -gt 0 }).Count) 0
+# Damage patterns (fights\patchwerk.simc: bursts every 30 sec, and the same bursts every 1 min): the search runs once
+# per pattern and the pattern's options reach the boss. Half the burst damage is clearly easier (130% vs 154% at full
+# precision), so an ignored pattern would show as equal limits.
+$tolp = Invoke-Simc 'tolerance_patterns' @('scripts\restoration_druid.simc', 'scripts\fights\patchwerk.simc', 'threads=4',
+  'iterations=20', 'tolerance=1', 'tolerance_share=0.2032', 'tolerance_iterations=100', 'tolerance_precision=0.02',
+  'tolerance_tests=none', 'tolerance_noise_runs=0', 'tolerance_levels=none')
+$tps = $tolp.sim.tolerance
+Check $g 'patterns' (@($tps.patterns | ForEach-Object { $_.name }) -join ',') 'Bursts every 30 sec,Bursts every 1 min'
+Check $g 'one main setup per pattern' (@($tps.setups | ForEach-Object { "$($_.role):$($_.pattern)" }) -join ',') 'main:Bursts every 30 sec,main:Bursts every 1 min'
+$p30 = $tps.setups[0].tests[0].score
+$p60 = $tps.setups[1].tests[0].score
+Check $g 'the same bursts every 1 min raise the limit (pattern reaches the boss)' ($p60 -gt $p30 + 0.04) $true
 
 # ---------------------------------------------------------------- 2 + 3. Golden values (baseline.json)
 Write-Host 'Healer profile and stock SimC...'

@@ -23,3 +23,11 @@ raid_tank_physical_reduction=0.57
 
 encounter=Patchwerk
 enemy_health=1000000000
+
+# Damage patterns for the limit search: gear is compared on each (the detailed sim and its fight details use the first).
+# "Bursts every 1 min": the same bursts as every 30 sec (big ones still every 2 min), half as often, so less burst
+# damage in total.
+tolerance_pattern_name="Bursts every 30 sec"
+tolerance_pattern."Bursts every 1 min"+=burst_interval=60
+tolerance_pattern."Bursts every 1 min"+=big_burst_every=2
+tolerance_pattern."Bursts every 1 min"+=burst_scales_with_interval=0

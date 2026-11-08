@@ -82,6 +82,22 @@ void apply_set( sim_control_t& c, const std::vector<std::string>& lines, unsigne
   }
 }
 
+// A damage pattern's lines are boss options: they go right after encounter=, which starts the boss's section.
+void apply_pattern( sim_control_t& c, const std::vector<std::string>& lines )
+{
+  if ( lines.empty() )
+    return;
+  option_db_t pattern_opts;
+  pattern_opts.parse_args( lines );
+
+  auto& opts = c.options;
+  auto it    = std::find_if( opts.rbegin(), opts.rend(),
+                             []( const option_tuple_t& o ) { return util::str_compare_ci( o.name, "encounter" ); } );
+  if ( it == opts.rend() )
+    throw std::invalid_argument( "tolerance_pattern needs encounter=<name> in the profile." );
+  opts.insert( it.base(), pattern_opts.begin(), pattern_opts.end() );
+}
+
 const char* test_label( const std::string& test )
 {
   return test == "combined" ? "all damage" : test.c_str();
@@ -96,6 +112,9 @@ tolerance_t::tolerance_t( sim_t* s ) : sim( s )
 void tolerance_t::create_options()
 {
   sim->add_option( opt_bool( "tolerance", enabled ) );
+  sim->add_option( opt_bool( "tolerance_search", search_enabled ) );
+  sim->add_option( opt_bool( "tolerance_search_sets", search_sets ) );
+  sim->add_option( opt_uint( "tolerance_rough_iterations", rough_iterations ) );
   sim->add_option( opt_float( "tolerance_share", share, 0.001, 10 ) );
   sim->add_option( opt_string( "tolerance_share_source", share_source ) );
   sim->add_option( opt_string( "tolerance_milestones", milestones_str ) );
@@ -107,6 +126,13 @@ void tolerance_t::create_options()
   sim->add_option( opt_float( "tolerance_max_death_rate", max_death_rate, 0, 1 ) );
   sim->add_option( opt_float( "tolerance_oom_threshold", oom_threshold, 0, 1 ) );
   sim->add_option( opt_int( "tolerance_noise_runs", noise_runs, 0, 10 ) );
+  sim->add_option( opt_string( "tolerance_pattern_name", pattern_name ) );
+  sim->add_option( opt_map_list( "tolerance_pattern.", pattern_map ) );
+  sim->add_option( opt_string( "tolerance_levels", levels_str ) );
+  sim->add_option( opt_uint( "tolerance_level_iterations", level_iterations ) );
+  sim->add_option( opt_bool( "tolerance_stats", stats.enabled ) );
+  sim->add_option( opt_float( "tolerance_recovery_margin", stats.recovery_margin, 0, 1 ) );
+  sim->add_option( opt_float( "tolerance_burst_window", stats.burst_window, 1, 120 ) );
   sim->add_option( opt_string( "healer_html", healer_html ) );
   sim->add_option( opt_string( "healer_html_template", healer_html_template ) );
 }
@@ -118,19 +144,44 @@ void tolerance_t::initialize()
   if ( sim->encounter_str.empty() )
     throw sc_invalid_sim_argument( "tolerance=1 needs an encounter (encounter=<name>)." );
 
+  for ( auto&& l : util::string_split<util::string_view>( levels_str, "/:," ) )
+  {
+    if ( l == "none" )
+      continue;
+    // "limit": every setup is checked at current gear's limit, searched first on each damage pattern.
+    if ( l == "limit" )
+    {
+      levels_at_limit = true;
+      continue;
+    }
+    double v = util::to_double( l );
+    if ( v <= 0 )
+      throw sc_invalid_sim_argument( fmt::format( "tolerance_levels: invalid level '{}'.", l ) );
+    levels.push_back( v );
+  }
+
   // Profilesets become gear sets: sorted by name so runs are reproducible.
   for ( auto& [ name, lines ] : sim->profileset_map )
     sets.emplace_back( name, lines );
   range::sort( sets, []( const auto& a, const auto& b ) { return a.first < b.first; } );
   sim->profileset_map.clear();
+
+  // The fight as set up first, then the extra patterns by name.
+  patterns.emplace_back( pattern_name, std::vector<std::string>() );
+  size_t extra = patterns.size();
+  for ( const auto& [ name, lines ] : pattern_map )
+    patterns.emplace_back( name, lines );
+  std::sort( patterns.begin() + extra, patterns.end(),
+             []( const auto& a, const auto& b ) { return a.first < b.first; } );
 }
 
 probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, double pct, double held,
-                            unsigned iters, int seed, setup_result_t* setup )
+                            unsigned iters, int seed, setup_result_t* setup, bool with_stats )
 {
   auto control = std::make_unique<sim_control_t>( base );
   std::vector<std::string> args = { fmt::format( "iterations={}", iters ), "deterministic=1", "target_error=0",
-                                    "tolerance=0", "encounter_damage_all=1" };
+                                    "tolerance=0", "encounter_damage_all=1",
+                                    fmt::format( "tolerance_stats={}", with_stats ? 1 : 0 ) };
   for ( const char* type : { "steady", "burst", "spot", "tank", "avoidable" } )
   {
     double level = ( test == "combined" || test == type ) ? pct : held;
@@ -187,6 +238,11 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
   p.hps          = healer->collected_data.hps.mean();
   p.wipe_rate    = child->encounter_wipes / fights;
   p.fight_length = child->simulation_length.mean();
+  if ( with_stats )
+  {
+    p.has_stats = true;
+    p.stats     = child->tolerance->stats;
+  }
 
   if ( setup && setup->gear.empty() )
   {
@@ -198,10 +254,141 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
     }
   }
 
-  fmt::print( "  {:<24} {:<10} {:6.1f}%  {}  worst death rate {:.0f}%\n", setup ? setup->name : "", test_label( test ),
-              pct * 100, p.pass ? "pass" : "FAIL", p.deaths.empty() ? 0.0 : p.deaths.front().second * 100 );
+  fmt::print( "  {:<24} {:<10} {:6.1f}%  {}  worst death rate {:.0f}%{}\n", setup ? setup->name : "",
+              with_stats ? "level" : test_label( test ), pct * 100, p.pass ? "pass" : "FAIL",
+              p.deaths.empty() ? 0.0 : p.deaths.front().second * 100,
+              with_stats && p.stats.fights > 0
+                  ? fmt::format( "  raid health {:.2f}%  deaths per 100 fights {:.1f}",
+                                 p.stats.health_seconds > 0 ? 100 * p.stats.health_time / p.stats.health_seconds : 0.0,
+                                 100 * p.stats.deaths / p.stats.fights )
+                  : "" );
   std::fflush( stdout );
   return p;
+}
+
+test_result_t tolerance_t::fast_search( const sim_control_t& base, setup_result_t* setup )
+{
+  test_result_t r;
+  r.test = "combined";
+  // A bracket end: the level, the worst player's death rate there, and whether a full test (iterations fights)
+  // measured it; pct < 0 = none yet.
+  struct end_t
+  {
+    double pct = -1, rate = 0;
+    bool full  = false;
+  } lo, hi;
+  auto worst = []( const probe_t& p ) { return p.deaths.empty() ? 0.0 : p.deaths.front().second; };
+
+  // 1. The rough pass: steps of x1.25 from 100% with few fights, until a pass and a fail bracket the limit.
+  if ( rough_iterations > 0 && rough_iterations < iterations )
+  {
+    double x = 1.0;
+    for ( int n = 0; n < 40 && !sim->is_canceled(); n++ )
+    {
+      probe_t p = probe( base, "combined", x, 0, rough_iterations, 0, setup );
+      end_t e;
+      e.pct  = x;
+      e.rate = worst( p );
+      ( p.pass ? lo : hi ) = e;
+      if ( lo.pct >= 0 && hi.pct >= 0 )
+        break;
+      if ( lo.pct < 0 && x < 0.02 )
+        break;
+      if ( hi.pct < 0 && x > 16 )
+        break;
+      x = p.pass ? x * 1.25 : x / 1.25;
+    }
+  }
+
+  // 2. Full tests. Inside a bracket, aim where the death rate crosses the fail line: the rate grows roughly
+  // exponentially with damage, so interpolate its log (kept off the ends). An aimed test landing close to the line is
+  // followed by one the precision's width beyond it, which closes the bracket if the aim was good. Two aimed tests on
+  // the same side in a row, or 4 full tests in, and it halves instead (aiming can stall on a curved rate). Without an
+  // end yet, step by 5%. Every end the rough pass set is checked with a full test before it counts.
+  double next = -1;
+  int side = 0, streak = 0, full_tests = 0;
+  for ( int n = 0; n < 40 && !sim->is_canceled(); n++ )
+  {
+    double x;
+    bool aimed = false;
+    if ( lo.pct < 0 && hi.pct < 0 )
+      x = 1.0;
+    else if ( lo.pct < 0 )
+      x = hi.pct / 1.05;
+    else if ( hi.pct < 0 )
+      x = lo.pct * 1.05;
+    else if ( hi.pct - lo.pct <= precision )
+    {
+      if ( !lo.full )
+        x = lo.pct;
+      else if ( !hi.full )
+        x = hi.pct;
+      else
+        break;
+    }
+    else if ( next > lo.pct && next < hi.pct )
+      x = next;
+    else
+    {
+      double f = 0.5;
+      if ( streak >= 2 || full_tests >= 4 )
+        streak = 0;
+      else
+      {
+        double a = std::log( std::max( lo.rate, 1e-3 ) ), b = std::log( std::max( hi.rate, 1e-3 ) );
+        double t = std::log( std::max( max_death_rate, 1e-3 ) );
+        if ( b > a )
+          f = std::clamp( ( t - a ) / ( b - a ), 0.1, 0.9 );
+      }
+      x     = lo.pct + f * ( hi.pct - lo.pct );
+      aimed = true;
+    }
+    next = -1;
+    if ( x < 0.02 || x > 16 )
+      break;
+
+    r.probes.push_back( probe( base, "combined", x, 0, iterations, 0, setup ) );
+    full_tests++;
+    const probe_t& p = r.probes.back();
+    double rate      = worst( p );
+    if ( p.pass )
+    {
+      if ( hi.pct >= 0 && x >= hi.pct )
+        hi = end_t();
+      lo.pct = x, lo.rate = rate, lo.full = true;
+    }
+    else
+    {
+      if ( lo.pct >= 0 && x <= lo.pct )
+        lo = end_t();
+      hi.pct = x, hi.rate = rate, hi.full = true;
+    }
+    if ( aimed )
+    {
+      int s  = p.pass ? 1 : -1;
+      streak = s == side ? streak + 1 : 1;
+      side   = s;
+      if ( std::abs( rate - max_death_rate ) < 0.012 && full_tests < 4 )
+        next = x + s * 0.9 * precision;
+    }
+  }
+
+  range::sort( r.probes, []( const probe_t& a, const probe_t& b ) { return a.pct < b.pct; } );
+  r.score      = lo.full ? lo.pct : -1;
+  r.first_fail = hi.full ? hi.pct : -1;
+  return r;
+}
+
+// The setup at each fixed damage level, all damage together, with the measurements.
+void tolerance_t::run_levels( const sim_control_t& base, int seed, setup_result_t& setup )
+{
+  unsigned iters = level_iterations ? level_iterations : iterations;
+  for ( double level : levels )
+  {
+    if ( sim->is_canceled() )
+      return;
+    setup.levels.push_back( probe( base, "combined", level, 0, iters, seed, &setup, true ) );
+  }
 }
 
 // Steps up (or down) by the factor step until the breaking point is bracketed, then halves the bracket until it is
@@ -244,58 +431,138 @@ void tolerance_t::analyze()
   if ( !enabled || sim->parent || sim->is_canceled() )
     return;
 
-  const sim_control_t& base = *sim->control;
-  fmt::print( "\nDamage tolerance ({} fights per step{})...\n", iterations,
-              sets.empty() ? "" : fmt::format( ", {} gear sets", sets.size() ) );
+  if ( search_enabled && search_sets )
+    fmt::print( "\nDamage tolerance ({} fights per step{}{})...\n", iterations,
+                sets.empty() ? "" : fmt::format( ", {} gear sets", sets.size() ),
+                patterns.size() > 1 ? fmt::format( ", {} damage patterns", patterns.size() ) : "" );
+  else
+    fmt::print( "\n{}Gear check ({} gear sets{})...\n", search_enabled ? "Your limit and the " : "", sets.size(),
+                patterns.size() > 1 ? fmt::format( ", {} damage patterns", patterns.size() ) : "" );
 
-  // The profile: all damage raised together (the score), then each damage type with the others at one healer's share.
-  setup_result_t main;
-  main.name = "Current gear";
-  main.role = "main";
-  main.tests.push_back( search( base, "combined", 0, 1.0, 1.25, iterations, precision, 0, &main ) );
-  double score = main.tests.front().score;
-  if ( score > 0 )
+  for ( size_t i = 0; i < patterns.size() && !sim->is_canceled(); i++ )
   {
-    for ( auto&& type : util::string_split<util::string_view>( tests_str, "/:," ) )
+    const auto& [ pattern, lines ] = patterns[ i ];
+    if ( patterns.size() > 1 )
+      fmt::print( "Damage pattern: {}\n", pattern.empty() ? "as set up" : pattern );
+    sim_control_t base( *sim->control );
+    apply_pattern( base, lines );
+
+    // The profile: all damage raised together (the score), then (on the first pattern) each damage type with the
+    // others at one healer's share. Without the search (the gear check) only the fixed levels.
+    setup_result_t main;
+    main.name    = "Current gear";
+    main.role    = "main";
+    main.pattern = pattern;
+    double score = 0;
+    if ( search_enabled )
     {
-      if ( type == "none" || sim->is_canceled() )
-        continue;
-      // The others are held at one healer's share (100%), clearly survivable: held at the limit itself, any extra
-      // damage tips the edge over by chance and every type reads "no room". Starts at the limit (it passes with
-      // everything there, so with the rest lower too).
-      main.tests.push_back( search( base, std::string( type ), 1.0, score, 1.1, type_iterations, type_precision, 0,
-                                    &main, true ) );
+      main.tests.push_back( search_sets ? search( base, "combined", 0, 1.0, 1.25, iterations, precision, 0, &main )
+                                        : fast_search( base, &main ) );
+      score = main.tests.front().score;
+      if ( score > 0 && i == 0 )
+      {
+        for ( auto&& type : util::string_split<util::string_view>( tests_str, "/:," ) )
+        {
+          if ( type == "none" || sim->is_canceled() )
+            continue;
+          // The others are held at one healer's share (100%), clearly survivable: held at the limit itself, any
+          // extra damage tips the edge over by chance and every type reads "no room". Starts at the limit (it passes
+          // with everything there, so with the rest lower too).
+          main.tests.push_back( search( base, std::string( type ), 1.0, score, 1.1, type_iterations, type_precision,
+                                        0, &main, true ) );
+        }
+      }
+    }
+    // Gear checked at the limit: the level is this pattern's limit of current gear (the edge, where healing matters
+    // most), so every healer and pattern is checked under the same pressure relative to what they can heal.
+    if ( levels_at_limit )
+    {
+      if ( !search_enabled )
+        throw sc_invalid_sim_argument( "tolerance_levels=limit needs the limit search (tolerance_search=1)." );
+      levels = { score > 0 ? score : 1.0 };
+    }
+    run_levels( base, 0, main );
+    size_t first = results.size();  // this pattern's setups start here: current gear, the sets, the noise runs
+    results.push_back( std::move( main ) );
+    if ( sets.empty() || ( search_enabled && search_sets && score <= 0 ) )
+      continue;
+
+    // Gear sets: the same search on the same random numbers, starting at the profile's score with small steps.
+    for ( const auto& [ name, set_lines ] : sets )
+    {
+      if ( sim->is_canceled() )
+        return;
+      setup_result_t s;
+      s.name    = name;
+      s.role    = "set";
+      s.pattern = pattern;
+      s.options = set_lines;
+      sim_control_t control( base );
+      apply_set( control, set_lines, sim->profileset_main_actor_index );
+      if ( search_enabled && search_sets )
+        s.tests.push_back( search( control, "combined", 0, score, 1.02, iterations, precision, 0, &s ) );
+      run_levels( control, 0, s );
+      results.push_back( std::move( s ) );
+    }
+
+    // The noise: the profile with other random numbers. The report counts differences smaller than this as equal.
+    for ( int n = 1; n <= noise_runs && !sim->is_canceled(); n++ )
+    {
+      setup_result_t s;
+      s.name    = "Current gear";
+      s.role    = "noise";
+      s.pattern = pattern;
+      s.seed    = default_seed + 1000 * n;
+      if ( search_enabled && search_sets )
+        s.tests.push_back( search( base, "combined", 0, score, 1.02, iterations, precision, s.seed, nullptr ) );
+      run_levels( base, s.seed, s );
+      results.push_back( std::move( s ) );
+    }
+
+    // Only current gear's limit was searched: also search the limit of every gear set with more points, the same way.
+    // More raid health on average doesn't always mean a higher limit (an item can heal better most of the time and
+    // worse in the worst moments, e.g. by costing mana), so the report calls a set an upgrade only when its limit
+    // doesn't drop.
+    if ( search_enabled && !search_sets && score > 0 )
+    {
+      for ( size_t i : point_upgrades( first ) )
+      {
+        if ( sim->is_canceled() )
+          return;
+        fmt::print( "More points, its limit: {}\n", results[ i ].name );
+        sim_control_t control( base );
+        apply_set( control, results[ i ].options, sim->profileset_main_actor_index );
+        auto t = fast_search( control, &results[ i ] );
+        results[ i ].tests.push_back( std::move( t ) );
+      }
     }
   }
-  results.push_back( std::move( main ) );
-  if ( score <= 0 || sets.empty() )
-    return;
+}
 
-  // Gear sets: the same search on the same random numbers, starting at the profile's score with small steps.
-  for ( const auto& [ name, lines ] : sets )
-  {
-    if ( sim->is_canceled() )
-      return;
-    setup_result_t s;
-    s.name    = name;
-    s.role    = "set";
-    s.options = lines;
-    sim_control_t control( base );
-    apply_set( control, lines, sim->profileset_main_actor_index );
-    s.tests.push_back( search( control, "combined", 0, score, 1.02, iterations, precision, 0, &s ) );
-    results.push_back( std::move( s ) );
-  }
+// Raid health kept (the gear check's score) at the highest fixed level, -1 without one.
+static double raid_health_of( const setup_result_t& s )
+{
+  if ( s.levels.empty() || !s.levels.back().has_stats || s.levels.back().stats.health_seconds <= 0 )
+    return -1;
+  return s.levels.back().stats.health_time / s.levels.back().stats.health_seconds;
+}
 
-  // The noise: the profile with other random numbers. The report counts differences smaller than this as equal.
-  for ( int n = 1; n <= noise_runs && !sim->is_canceled(); n++ )
-  {
-    setup_result_t s;
-    s.name = "Current gear";
-    s.role = "noise";
-    s.seed = default_seed + 1000 * n;
-    s.tests.push_back( search( base, "combined", 0, score, 1.02, iterations, precision, s.seed, nullptr ) );
-    results.push_back( std::move( s ) );
-  }
+// The gear sets among one pattern's setups (from results[first]: current gear, the sets, the noise runs) that beat
+// current gear's raid health by more than the noise runs' spread (at least 0.1 points), the report's rule.
+std::vector<size_t> tolerance_t::point_upgrades( size_t first ) const
+{
+  std::vector<size_t> out;
+  double base = raid_health_of( results[ first ] );
+  if ( base < 0 )
+    return out;
+  double noise = 0.001;
+  for ( size_t i = first + 1; i < results.size(); i++ )
+    if ( results[ i ].role == "noise" && raid_health_of( results[ i ] ) >= 0 )
+      noise = std::max( noise, std::abs( raid_health_of( results[ i ] ) - base ) );
+  for ( size_t i = first + 1; i < results.size(); i++ )
+    if ( results[ i ].role == "set" && raid_health_of( results[ i ] ) >= 0 && raid_health_of( results[ i ] ) - base > noise )
+      out.push_back( i );
+  return out;
 }
 
 void tolerance_t::print_healer_html( const std::string& json ) const

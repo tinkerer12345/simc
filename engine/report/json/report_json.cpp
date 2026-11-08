@@ -427,22 +427,32 @@ void gear_to_json( JsonOutput root, const player_t& p )
             name = spell->name_cstr();
         }
         slotnode[ "enchant" ] = name;
+        // The spell that applies the enchant: the healer report links it for the icon.
+        if ( enchant.id_spell )
+          slotnode[ "enchant_spell" ] = enchant.id_spell;
       }
     }
     std::vector<std::string> gems;
+    std::vector<unsigned> gem_ids;
     for ( int gem : item.parsed.gem_id )
     {
       if ( gem <= 0 )
         continue;
       const auto& gem_data = p.dbc->item( gem );
       if ( gem_data.id && gem_data.name )
+      {
         gems.emplace_back( gem_data.name );
+        gem_ids.push_back( gem_data.id );
+      }
     }
     if ( !gems.empty() )
     {
       auto arr = slotnode[ "gems" ].make_array();
       for ( const auto& g : gems )
         arr.add() = g;
+      auto ids = slotnode[ "gem_ids" ].make_array();
+      for ( unsigned id : gem_ids )
+        ids.add() = id;
     }
   }
 }
@@ -1168,10 +1178,78 @@ void profileset_fetch_output_data( const profileset::profile_output_data_t& outp
   }
 }
 
-// Damage tolerance results (sim/tolerance.hpp): the profile's search, the gear sets and the noise runs.
+// Measurements of a fixed-level run (sim/tolerance_stats.hpp), as per-fight / per-burst averages.
+void tolerance_stats_json( const tolerance::fight_stats_t& st, js::JsonOutput root )
+{
+  double fights            = std::max( 1.0, st.fights );
+  root[ "fights" ]         = st.fights;
+  root[ "deaths_per_fight" ] = st.deaths / fights;
+  if ( st.health_seconds > 0 )
+    root[ "raid_health" ] = st.health_time / st.health_seconds;
+  auto causes              = root[ "death_causes" ];
+  for ( const auto& [ cause, n ] : st.death_causes )
+    causes[ cause ] = n / fights;
+
+  auto bursts = root[ "bursts" ];
+  for ( const auto& [ name, b ] : { std::make_pair( "normal", &st.normal ), std::make_pair( "big", &st.big ) } )
+  {
+    if ( b->count <= 0 )
+      continue;
+    auto bn                = bursts[ name ];
+    bn[ "per_fight" ]      = b->count / fights;
+    bn[ "raid_before" ]    = b->raid_before / b->count;
+    bn[ "raid_low" ]       = b->raid_low / b->count;
+    bn[ "player_low" ]     = b->player_low / b->count;
+    bn[ "recovered" ]      = b->recovered / b->count;
+    if ( b->recovered > 0 )
+      bn[ "recovery_time" ] = b->recovery_time / b->recovered;
+    bn[ "deaths_per_burst" ] = b->deaths / b->count;
+  }
+
+  auto windows = root[ "windows" ];
+  for ( const auto& [ name, w ] :
+        { std::make_pair( "burst", &st.in_burst ), std::make_pair( "quiet", &st.quiet ) } )
+  {
+    auto wn                 = windows[ name ];
+    wn[ "seconds_per_fight" ] = w->seconds / fights;
+    if ( w->seconds > 0 )
+    {
+      wn[ "damage_taken_per_sec" ] = w->damage_taken / w->seconds;
+      wn[ "healing_per_sec" ]      = w->healing / w->seconds;
+    }
+  }
+}
+
+// One run of the tolerance search or of a fixed level.
+void probe_json( const tolerance::probe_t& p, js::JsonOutput pn )
+{
+  pn[ "pct" ]           = p.pct;
+  pn[ "pass" ]          = p.pass;
+  pn[ "players_dying" ] = p.players_dying;
+  pn[ "mana_end" ]      = p.mana_end;
+  if ( p.oom_at >= 0 )
+    pn[ "oom_at" ] = p.oom_at;
+  pn[ "hps" ]          = p.hps;
+  pn[ "wipe_rate" ]    = p.wipe_rate;
+  pn[ "fight_length" ] = p.fight_length;
+  auto deaths          = pn[ "deaths" ].make_array();
+  for ( const auto& [ name, rate ] : p.deaths )
+  {
+    auto dn      = deaths.add();
+    dn[ "name" ] = name;
+    dn[ "rate" ] = rate;
+  }
+  if ( p.has_stats )
+    tolerance_stats_json( p.stats, pn[ "stats" ] );
+}
+
+// Damage tolerance results (sim/tolerance.hpp): the profile's search, the gear sets and the noise runs, each also at
+// the fixed damage levels with the measurements.
 void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
 {
-  root[ "version" ]      = 3;
+  root[ "version" ]      = 5;
+  root[ "search" ]       = t.search_enabled;
+  root[ "search_sets" ]  = t.search_enabled && t.search_sets;
   root[ "share" ]        = t.share;
   root[ "share_source" ] = t.share_source;
   auto criteria                = root[ "criteria" ];
@@ -1179,6 +1257,13 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
   criteria[ "oom_threshold" ]  = t.oom_threshold;
   criteria[ "precision" ]      = t.precision;
   criteria[ "iterations" ]     = t.iterations;
+  criteria[ "recovery_margin" ] = t.stats.recovery_margin;
+  criteria[ "burst_window" ]   = t.stats.burst_window;
+  auto levels = root[ "levels" ].make_array();
+  for ( double l : t.levels )
+    levels.add() = l;
+  // Checked at each pattern's limit: the level is in each setup's levels[].pct.
+  root[ "levels_at_limit" ] = t.levels_at_limit;
   auto milestones = root[ "milestones" ].make_array();
   for ( auto&& m : util::string_split<util::string_view>( t.milestones_str, "/" ) )
   {
@@ -1190,12 +1275,24 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
     node[ "score" ] = util::to_double( m.substr( colon + 1 ) );
   }
 
+  // Damage patterns (the fight as set up first): every setup below was searched on one of them.
+  auto patterns = root[ "patterns" ].make_array();
+  for ( const auto& [ name, lines ] : t.patterns )
+  {
+    auto pn      = patterns.add();
+    pn[ "name" ] = name;
+    auto opts    = pn[ "options" ].make_array();
+    for ( const auto& o : lines )
+      opts.add() = o;
+  }
+
   auto setups = root[ "setups" ].make_array();
   for ( const auto& s : t.results )
   {
-    auto sn      = setups.add();
-    sn[ "name" ] = s.name;
-    sn[ "role" ] = s.role;
+    auto sn         = setups.add();
+    sn[ "name" ]    = s.name;
+    sn[ "role" ]    = s.role;
+    sn[ "pattern" ] = s.pattern;
     sn[ "seed" ] = s.seed;
     auto opts    = sn[ "options" ].make_array();
     for ( const auto& o : s.options )
@@ -1218,26 +1315,11 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
       tn[ "held" ] = r.held;
       auto probes  = tn[ "probes" ].make_array();
       for ( const auto& p : r.probes )
-      {
-        auto pn                = probes.add();
-        pn[ "pct" ]            = p.pct;
-        pn[ "pass" ]           = p.pass;
-        pn[ "players_dying" ]  = p.players_dying;
-        pn[ "mana_end" ]       = p.mana_end;
-        if ( p.oom_at >= 0 )
-          pn[ "oom_at" ] = p.oom_at;
-        pn[ "hps" ]            = p.hps;
-        pn[ "wipe_rate" ]      = p.wipe_rate;
-        pn[ "fight_length" ]   = p.fight_length;
-        auto deaths            = pn[ "deaths" ].make_array();
-        for ( const auto& [ name, rate ] : p.deaths )
-        {
-          auto dn      = deaths.add();
-          dn[ "name" ] = name;
-          dn[ "rate" ] = rate;
-        }
-      }
+        probe_json( p, probes.add() );
     }
+    auto lv = sn[ "levels" ].make_array();
+    for ( const auto& p : s.levels )
+      probe_json( p, lv.add() );
   }
 }
 

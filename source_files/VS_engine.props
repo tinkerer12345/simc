@@ -176,6 +176,7 @@ To change the list of source files run synchronize.py
 		<ClInclude Include="..\engine\sim\raid_event.hpp" />
 		<ClInclude Include="..\engine\sim\reforge_plot.hpp" />
 		<ClInclude Include="..\engine\sim\tolerance.hpp" />
+		<ClInclude Include="..\engine\sim\tolerance_stats.hpp" />
 		<ClInclude Include="..\engine\sim\scale_factor_control.hpp" />
 		<ClInclude Include="..\engine\sim\sim.hpp" />
 		<ClInclude Include="..\engine\sim\sim_control.hpp" />
@@ -376,6 +377,7 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\sim\raid_event.cpp" />
 		<ClCompile Include="..\engine\sim\reforge_plot.cpp" />
 		<ClCompile Include="..\engine\sim\tolerance.cpp" />
+		<ClCompile Include="..\engine\sim\tolerance_stats.cpp" />
 		<ClCompile Include="..\engine\sim\scale_factor_control.cpp" />
 		<ClCompile Include="..\engine\sim\sim.cpp" />
 		<ClCompile Include="..\engine\sim\sim_ostream.cpp" />
@@ -390,4 +392,4 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\util\util.cpp" />
 		<ClCompile Include="..\engine\util\xml.cpp" />
 	</ItemGroup>
-</Project>
+</Project>

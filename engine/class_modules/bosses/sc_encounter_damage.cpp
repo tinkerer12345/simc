@@ -5,6 +5,8 @@
 
 #include "class_modules/bosses/sc_encounter_damage.hpp"
 
+#include "sim/tolerance.hpp"
+
 namespace bosses
 {
 const char* damage_type_string( damage_type_e type )
@@ -113,5 +115,17 @@ size_t raid_damage_t::available_targets( std::vector<player_t*>& target_list ) c
 double raid_damage_t::composite_da_multiplier( const action_state_t* s ) const
 {
   return spell_t::composite_da_multiplier( s ) * damage_type_multiplier( *sim, damage_type );
+}
+
+void raid_damage_t::impact( action_state_t* s )
+{
+  // The death itself is an event after the hit: a hit that takes the player from above 0 health to 0 is the killing
+  // blow.
+  player_t* t    = s->target;
+  bool was_alive = !t->is_sleeping() && t->resources.current[ RESOURCE_HEALTH ] > 0;
+  spell_t::impact( s );
+  if ( was_alive && t->resources.current[ RESOURCE_HEALTH ] <= 0 && !t->resources.is_infinite( RESOURCE_HEALTH ) &&
+       sim->tolerance )
+    sim->tolerance->stats.record_death( sim, t, damage_type_string( damage_type ) );
 }
 }  // namespace bosses

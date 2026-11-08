@@ -59,6 +59,9 @@ struct raid_damage_t : public spell_t
 
   // The damage type's multiplier applies before mitigation, like a damage buff on the boss.
   double composite_da_multiplier( const action_state_t* s ) const override;
+
+  // A hit that takes a player to 0 health is recorded with its damage type (tolerance's measurements).
+  void impact( action_state_t* s ) override;
 };
 }  // namespace bosses
 

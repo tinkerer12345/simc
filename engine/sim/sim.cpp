@@ -2010,6 +2010,9 @@ void sim_t::combat_begin()
     make_event<heartbeat_event_t>( *this, *this, timespan_t::from_millis( rng().range( 1, 5249 ) ) );
 
   raid_event_t::combat_begin( this );
+
+  // Healer measurements (tolerance's fixed-level runs only)
+  tolerance->stats.combat_begin( this );
 }
 
 // sim_t::combat_end ========================================================
@@ -2049,6 +2052,8 @@ void sim_t::combat_end()
     buff_t* b = buff_list[ i ];
     b -> expire();
   }
+
+  tolerance->stats.combat_end( this, iterations == 1 || current_iteration >= 1 );
 
   if ( iterations == 1 || current_iteration >= 1 )
     datacollection_end();
@@ -3326,6 +3331,7 @@ void sim_t::merge( sim_t& other_sim )
   encounter_wipes_all_dead += other_sim.encounter_wipes_all_dead;
   encounter_wipes_tanks_dead += other_sim.encounter_wipes_tanks_dead;
   encounter_wipes_raid_low += other_sim.encounter_wipes_raid_low;
+  tolerance->stats.merge( other_sim.tolerance->stats );
   work_per_thread[ other_sim.thread_index ] = other_sim.work_done;
 
   simulation_length.merge( other_sim.simulation_length );

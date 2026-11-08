@@ -171,6 +171,7 @@ SRC += \
     sim$(PATHSEP)raid_event.cpp \
     sim$(PATHSEP)reforge_plot.cpp \
     sim$(PATHSEP)tolerance.cpp \
+    sim$(PATHSEP)tolerance_stats.cpp \
     sim$(PATHSEP)scale_factor_control.cpp \
     sim$(PATHSEP)sim.cpp \
     sim$(PATHSEP)sim_ostream.cpp \
@@ -183,4 +184,4 @@ SRC += \
     util$(PATHSEP)rng.cpp \
     util$(PATHSEP)timespan.cpp \
     util$(PATHSEP)util.cpp \
-    util$(PATHSEP)xml.cpp \
+    util$(PATHSEP)xml.cpp \
