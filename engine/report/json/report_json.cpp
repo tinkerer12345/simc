@@ -1293,6 +1293,8 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
     sn[ "name" ]    = s.name;
     sn[ "role" ]    = s.role;
     sn[ "pattern" ] = s.pattern;
+    if ( s.combination )
+      sn[ "combination" ] = true;
     sn[ "seed" ] = s.seed;
     auto opts    = sn[ "options" ].make_array();
     for ( const auto& o : s.options )

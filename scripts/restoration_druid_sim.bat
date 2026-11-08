@@ -1,6 +1,6 @@
 cd /d "%~dp0"
 rem The fight (a file in fights\): patchwerk = the generic test fight, everyone at your health and every hit a share of it,
-rem so it needs no update for a new season (the default); vashnik = Mythic Vashnik as killed. E.g. restoration_druid_sim.bat vashnik
+rem so it needs no update for a new season (the default); coiled_altar = Patchwerk shaped like Mythic Coiled Altar (4 phases); vashnik = Mythic Vashnik as killed. E.g. restoration_druid_sim.bat vashnik
 set FIGHT=%~1
 if "%FIGHT%"=="" set FIGHT=patchwerk
 rem One healer's share of the damage (100% in the report) = a fair quarter of the healers' work on the Mythic kill log:

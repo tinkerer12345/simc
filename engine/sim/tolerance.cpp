@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <fstream>
+#include <map>
 #include <sstream>
 
 namespace tolerance
@@ -535,6 +536,24 @@ void tolerance_t::analyze()
         auto t = fast_search( control, &results[ i ] );
         results[ i ].tests.push_back( std::move( t ) );
       }
+
+      // The upgrades together: items that each beat current gear may or may not add up (both can lean on the same
+      // mana, or cover the same moments), so the combination is simmed like any other set, limit included.
+      if ( auto combo = combination( first, score ); combo && !sim->is_canceled() )
+      {
+        setup_result_t s;
+        s.name        = combo->first;
+        s.role        = "set";
+        s.pattern     = pattern;
+        s.options     = combo->second;
+        s.combination = true;
+        fmt::print( "Upgrades together: {}\n", s.name );
+        sim_control_t control( base );
+        apply_set( control, s.options, sim->profileset_main_actor_index );
+        run_levels( control, 0, s );
+        s.tests.push_back( fast_search( control, &s ) );
+        results.push_back( std::move( s ) );
+      }
     }
   }
 }
@@ -563,6 +582,64 @@ std::vector<size_t> tolerance_t::point_upgrades( size_t first ) const
     if ( results[ i ].role == "set" && raid_health_of( results[ i ] ) >= 0 && raid_health_of( results[ i ] ) - base > noise )
       out.push_back( i );
   return out;
+}
+
+// The upgrades of one pattern worn together, when at least two can be: single-item gear sets with more points whose
+// limit didn't drop (by more than half a point, the report's rule), the best one per slot, never the same item twice.
+// Returns the combination's name and its profile lines.
+std::optional<std::pair<std::string, std::vector<std::string>>> tolerance_t::combination( size_t first,
+                                                                                         double score ) const
+{
+  constexpr double limit_noise = 0.005;
+  double base = raid_health_of( results[ first ] );
+  struct pick_t
+  {
+    size_t index;
+    double gain;
+    std::string item;
+  };
+  std::map<std::string, pick_t> by_slot;
+  for ( size_t i : point_upgrades( first ) )
+  {
+    const auto& s = results[ i ];
+    if ( s.combination || s.options.size() != 1 || s.tests.empty() || s.tests.front().score < 0 ||
+         s.tests.front().score < score - limit_noise )
+      continue;
+    const std::string& line = s.options.front();
+    auto eq                 = line.find( '=' );
+    if ( eq == std::string::npos )
+      continue;
+    std::string slot = line.substr( 0, eq );
+    auto id          = line.find( ",id=" );
+    std::string item = id == std::string::npos ? line : line.substr( id + 4, line.find_first_not_of( "0123456789", id + 4 ) - id - 4 );
+    double gain      = raid_health_of( s ) - base;
+    auto it          = by_slot.find( slot );
+    if ( it == by_slot.end() || gain > it->second.gain )
+      by_slot[ slot ] = { i, gain, item };
+  }
+
+  // The same item in two slots (a ring for either finger): keep the better one.
+  std::vector<pick_t> picks;
+  for ( const auto& [ slot, p ] : by_slot )
+  {
+    auto same = range::find_if( picks, [ &p ]( const pick_t& q ) { return q.item == p.item; } );
+    if ( same == picks.end() )
+      picks.push_back( p );
+    else if ( p.gain > same->gain )
+      *same = p;
+  }
+  if ( picks.size() < 2 )
+    return std::nullopt;
+
+  range::sort( picks, []( const pick_t& a, const pick_t& b ) { return a.gain > b.gain; } );
+  std::string name;
+  std::vector<std::string> lines;
+  for ( const auto& p : picks )
+  {
+    name += ( name.empty() ? "" : " + " ) + results[ p.index ].name;
+    lines.push_back( results[ p.index ].options.front() );
+  }
+  return std::make_pair( "Together: " + name, lines );
 }
 
 void tolerance_t::print_healer_html( const std::string& json ) const

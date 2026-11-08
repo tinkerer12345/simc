@@ -613,6 +613,15 @@ details.explain[open] > summary::before { transform: rotate(90deg); }
 .up-card h3 { font-size: 12px; letter-spacing: .07em; text-transform: uppercase; color: var(--ink-3); }
 .up-nums { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .up-list .gain.tradeoff { color: var(--c4); }
+.swap { display: flex; flex-direction: column; gap: 4px; }
+.swap-line { display: block; line-height: 1.35; }
+.swap-from { display: block; font-size: 12px; color: var(--ink-3); font-weight: 500; }
+.swap-from a.wh-item { font-weight: 600; }
+.ilvl { display: inline-block; font-size: 11px; font-weight: 700; color: var(--ink); background: var(--panel-2); border: 1px solid var(--line);
+  border-radius: 999px; padding: 0 7px; margin-left: 2px; vertical-align: 1px; }
+.ilvl.dim { color: var(--ink-3); font-weight: 600; }
+.combo-tag { align-self: flex-start; font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, var(--line)); border-radius: 999px; padding: 1px 8px; }
 .up-sub { font-size: 12px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; }
 .up-worth { font-size: 14px; color: var(--ink-2); padding: 10px 12px; border-radius: 10px; border-left: 3px solid var(--accent); background: var(--panel-2); }
 .up-worth b { color: var(--ink); }
@@ -924,8 +933,9 @@ const bossName = boss ? boss.name : "Encounter";
 // Only boss encounters (encounter=<name>) write a difficulty; plain enemy= sims have none.
 const difficulty = sim.options?.encounter_difficulty ? prettyName(sim.options.encounter_difficulty) : "";
 const bossTitle = bossName + (difficulty ? " (" + difficulty + ")" : "");
-// The generic test fight (encounter=Patchwerk): every hit is a share of the raid's health, which is the healer's own.
-const isPatchwerk = /^patchwerk$/i.test(sim.options?.encounter || bossName);
+// Patchwerk and its phased variants (Coiled Altar, simulated) scale every hit to the raid's health, which is the healer's own.
+const isPatchwerk = /^(patchwerk|coiledaltar|coiled altar)$/i.test(sim.options?.encounter || bossName);
+const isCoiledAltar = /^(coiledaltar|coiled altar)$/i.test(sim.options?.encounter || bossName);
 const raidHealth = sim.statistics?.raid_member_health || 0;
 const tankHealth = sim.statistics?.raid_tank_health || 0;
 document.title = healerName + " vs " + bossTitle;
@@ -1130,7 +1140,8 @@ matchup.innerHTML = `
     <div class="panel side boss">
       <div class="role">Encounter</div>
       <h1 class="name">${difficulty ? `<span class="diff">${esc(difficulty)}</span>` : ""}${esc(bossName)}</h1>
-      ${compareOnly ? `<div class="sub">${patterns.map(p => esc(patternLabel(p))).join("<br>")}</div>
+      ${compareOnly ? `<div class="sub">${isCoiledAltar ? "Mythic, simulated in 4 phases:<br>P1 orb waves · P2 aura and ghosts<br>soak intermission · P3 both together"
+        : patterns.map(p => esc(patternLabel(p))).join("<br>")}</div>
       ${encounterAbilities ? `<ul class="abilities compact">${encounterAbilities}</ul>
       <div class="faint" style="font-size:12px;margin-top:6px">Every kind of damage is in every fight. Shares of the damage: one fight${multiPattern ? `, ${esc(patternLabel(patterns[0]).toLowerCase())}` : ""}${multiPattern ? "; the other patterns change only the bursts" : ""}.</div>` : ""}` : `
       <div class="sub">${dmgStats.length} damaging abilities, ${fmtNum(totalDmg)} damage per fight${raidMembers.length ? " to the raid" : ""}</div>
@@ -1291,7 +1302,9 @@ function changesOf(gearOfSet) {
   for (const [slot, g] of Object.entries(gearOfSet || {})) {
     const cur = currentGear[slot];
     if (!cur || !SLOT_NAMES[slot]) continue;  // tabard, shirt
-    if (itemId(g.item) !== cur.id || g.ilevel !== cur.ilevel) out.push({ slot, from: cur, to: itemOf(g.item, g.ilevel) });
+    // Another version of the same item (same id and item level, other bonus ids, e.g. other stats) is a change too.
+    const to = itemOf(g.item, g.ilevel);
+    if (itemId(g.item) !== cur.id || g.ilevel !== cur.ilevel || to.bonus !== cur.bonus) out.push({ slot, from: cur, to });
   }
   return out;
 }
@@ -1382,7 +1395,7 @@ function gearCheckOf(pattern) {
     const lim = limitOf(s), limD = lim != null && mainLim != null ? lim - mainLim : null;
     let verdict = d == null ? "" : d > noise ? "better" : d < -noise ? "worse" : "equal";
     if (verdict === "better" && limD != null && limD < -LIMIT_NOISE) verdict = "tradeoff";
-    return { name: s.name, changes: changesOf(s.gear), v, d, lim, limD, verdict, reason: d == null ? "" : `${points(v)} (${signedPts2(d)})` };
+    return { name: s.name, combination: !!s.combination, changes: changesOf(s.gear), v, d, lim, limD, verdict, reason: d == null ? "" : `${points(v)} (${signedPts2(d)})` };
   });
   const best = rows.filter(r => r.verdict === "better").sort((x, y) => y.d - x.d)[0] || null;
   return { pattern, level, b, noise, fights, rows, best };
@@ -1392,11 +1405,18 @@ if (checks.length) {
   const order = new Map(checks[0].rows.slice().sort((x, y) => (y.d ?? -9) - (x.d ?? -9)).map((r, i) => [r.name, i]));
   for (const c of checks) c.rows.sort((x, y) => (order.get(x.name) ?? 99) - (order.get(y.name) ?? 99));
 }
+// The gear check table's rows: every gear set on any pattern (a combination is built per pattern, so it may exist on one
+// pattern only), the first pattern's order, then the rest.
+const checkRows = [];
+for (const c of checks) for (const r of c.rows) if (!checkRows.some(x => x.name === r.name)) checkRows.push(r);
 const best = compareOnly ? checks[0]?.best || null : cmps[0]?.best || null;
 const cmpRows = cmps[0]?.rows || [];
-// "Hex Lord's Dooming Idol 334 instead of Soulcoiler Ritual Vessel 334", with item links.
+// What a gear set swaps, one item per line: the new item and its item level, what it replaces, the slot. Combinations
+// (the upgrades worn together, built by the engine) get a tag on top.
 const swapText = r => r.changes.length
-  ? r.changes.map(x => `${itemLink(x.to, "tiny")} ${x.to.ilevel || ""} instead of ${itemLink(x.from, "tiny")} ${x.from.ilevel || ""}`).join(" + ")
+  ? `<span class="swap">${r.combination || r.changes.length > 1 ? `<span class="combo-tag">${r.combination ? "Upgrades together" : "Several items"} · ${r.changes.length} items</span>` : ""}${
+    r.changes.map(x => `<span class="swap-line">${itemLink(x.to, "tiny")} <span class="ilvl">${x.to.ilevel || ""}</span>
+      <span class="swap-from">replaces ${itemLink(x.from, "tiny")} <span class="ilvl dim">${x.from.ilevel || ""}</span> · ${esc(slotLabel(x.slot))}</span></span>`).join("")}</span>`
   : `<b>${esc(r.name)}</b>`;
 
 // The gear sheet's text: which gear set it shows, and the best on the other damage patterns.
@@ -1694,9 +1714,9 @@ if (compareOnly) {
     <div class="panel meas"><table class="check-table">
       <thead><tr><th>Gear</th>${checks.map(c => `<th>${esc(patternLabel(c.pattern))}</th>`).join("")}</tr></thead>
       <tbody><tr class="base"><th scope="row">Your current gear</th>${checks.map(c => `<td><b>${points(c.b)}</b></td>`).join("")}</tr>
-      ${checks[0].rows.map(r0 => `<tr><th scope="row">${swapText(r0)}</th>${checks.map(c => {
+      ${checkRows.map(r0 => `<tr><th scope="row">${swapText(r0)}</th>${checks.map(c => {
         const r = c.rows.find(x => x.name === r0.name);
-        return !r || r.d == null ? "<td>–</td>"
+        return !r && r0.combination ? `<td class="faint" style="font-size:12px">Not built here: fewer than 2 upgrades on this pattern</td>` : !r || r.d == null ? "<td>–</td>"
           : `<td><span class="chip ${r.verdict}">${VERDICT[r.verdict]}</span> <b>${points(r.v)}</b> <small class="faint">${signedPts2(r.d)}</small>${
             r.lim != null ? `<br><small class="faint">limit ${fmtPct(r.lim, 1)} (${signed(r.limD, 1).replace("%", " points")})</small>` : ""}</td>`;
       }).join("")}</tr>`).join("")}</tbody></table></div>`

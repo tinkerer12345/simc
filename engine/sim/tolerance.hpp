@@ -52,6 +52,7 @@ struct setup_result_t
   std::string name;
   std::string role;  // "main" (the profile), "set" (a profileset), "noise" (the profile with another seed)
   std::string pattern;  // the damage pattern it was searched on (tolerance_t::patterns)
+  bool combination = false;  // a set built from the pattern's upgrades worn together (not from the gear sets file)
   int seed = 0;
   std::vector<std::string> options;  // a set's profile lines
   std::vector<std::pair<std::string, std::pair<std::string, unsigned>>> gear;  // slot -> (SimC item string, item level)
@@ -119,6 +120,8 @@ private:
   // One pattern's gear sets with more raid health than current gear beyond the noise (indices into results); first =
   // that pattern's current gear.
   std::vector<size_t> point_upgrades( size_t first ) const;
+  // One pattern's upgrades worn together (one per slot, limit not dropped), if at least two: name and profile lines.
+  std::optional<std::pair<std::string, std::vector<std::string>>> combination( size_t first, double score ) const;
   test_result_t search( const sim_control_t& base, const std::string& test, double held, double start, double step,
                         unsigned iters, double prec, int seed, setup_result_t* setup, bool start_passes = false );
   probe_t probe( const sim_control_t& base, const std::string& test, double pct, double held, unsigned iters,

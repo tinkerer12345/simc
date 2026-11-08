@@ -15,6 +15,8 @@ player_t* create_encounter( sim_t* sim, util::string_view name )
     return create_vashnik( sim );
   if ( util::str_compare_ci( name, "Patchwerk" ) )
     return create_patchwerk( sim );
+  if ( util::str_compare_ci( name, "CoiledAltar" ) )
+    return create_coiled_altar( sim );
 
   throw std::invalid_argument( fmt::format( "Unknown encounter '{}'.", name ) );
 }

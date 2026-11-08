@@ -10,6 +10,8 @@
 namespace bosses
 {
 player_t* create_patchwerk( sim_t* sim );
+// Patchwerk with phases shaped like Mythic Coiled Altar (encounter=CoiledAltar).
+player_t* create_coiled_altar( sim_t* sim );
 }
 
 #endif

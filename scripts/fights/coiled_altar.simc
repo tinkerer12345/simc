@@ -1,0 +1,24 @@
+# Coiled Altar (Mythic), simulated for healers: Patchwerk's raid and calibration (everyone has the healer's health,
+# every hit a share of it, one healer's share = 100%) with phases shaped like a Mythic kill (8:21): P1 orb waves every
+# ~33 sec, P2 a permanent aura with two slow ghost ramps, a 38 sec soak intermission, P3 both together. The phase table
+# is in engine/class_modules/bosses/sc_patchwerk.cpp (coiled_altar_phases); phases=... after encounter= overrides it.
+# Use after a healer profile: simc.exe <healer>.simc fights\coiled_altar.simc ...
+max_time=503
+vary_combat_length=0
+
+# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
+# With the healer under test: 20 players, and it is the only one healing.
+raid_tanks=2
+raid_healers=3
+raid_ranged=7
+raid_melee=7
+raid_health_from_healer=1
+raid_tank_health_factor=1.44
+raid_member_damage_reduction=0.10
+raid_member_avoidance=0
+# Tank mitigation as calibrated on the Vashnik kill: 35% on everything, another 57% on physical damage.
+raid_tank_damage_reduction=0.35
+raid_tank_physical_reduction=0.57
+
+encounter=CoiledAltar
+enemy_health=1000000000

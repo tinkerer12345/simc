@@ -15,3 +15,6 @@ profileset."Lunar Raiment 334 (bag version)"+=chest=,id=271531,enchant_id=7987,b
 
 # Sigil of the Impending Eclipse upgraded to 341 (yours is 318), in place of the Idol: is the upgrade worth it?
 profileset."Sigil of the Impending Eclipse 341 for Hex Lord's Dooming Idol"+=trinket1=,id=280835,bonus_id=6652/13334/12849,ilevel=341
+
+# Your Idol upgraded to 341 (2 more Venomstones): compare with the Sigil at 341 above
+profileset."Hex Lord's Dooming Idol 341 (upgraded)"+=trinket1=,id=270169,bonus_id=6652/13334/12854,ilevel=341
