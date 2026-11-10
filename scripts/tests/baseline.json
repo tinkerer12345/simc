@@ -3,19 +3,19 @@
                            "players":  20,
                            "fights":  199,
                            "wipes":  199,
-                           "simulation_length":  48.85713065326643,
-                           "healer_hps":  874895.3364153509,
-                           "healer_damage_taken":  2585388.936508133,
-                           "healer_fight_length":  48.85713065326643,
-                           "raid_damage_taken":  59567131.222050257,
+                           "simulation_length":  49.14361306532673,
+                           "healer_hps":  883463.1461901811,
+                           "healer_damage_taken":  2556221.3815700656,
+                           "healer_fight_length":  49.14361306532673,
+                           "raid_damage_taken":  60260376.6507437,
                            "raid_frames_units":  20,
                            "raid_frames_deaths":  18,
                            "death_recaps":  1
                        },
     "patchwerk_healer_profile":  {
                                      "raid_member_health":  901360.0,
-                                     "healer_hps":  361978.3775355483,
-                                     "raid_damage_taken":  111019165.62331747
+                                     "healer_hps":  360837.7591537467,
+                                     "raid_damage_taken":  110890085.38194551
                                  },
     "evoker_healer_profile":  {
                                   "wipes":  0,
@@ -29,17 +29,17 @@
                                "dtps":  null
                            },
     "MID1_Death_Knight_Blood":  {
-                                    "dps":  69002.76983584589,
-                                    "hps":  39728.09724304161,
+                                    "dps":  69002.76983584593,
+                                    "hps":  39728.0972430416,
                                     "dtps":  19130312.2556774
                                 },
     "MID1_Druid_Balance":  {
-                               "dps":  130733.89991002358,
+                               "dps":  130733.89991002364,
                                "hps":  null,
                                "dtps":  null
                            },
     "MID1_Druid_Feral":  {
-                             "dps":  148863.680999535,
+                             "dps":  148863.68099953485,
                              "hps":  null,
                              "dtps":  null
                          },
@@ -49,12 +49,12 @@
                                 "dtps":  20557459.2378402
                             },
     "MID2_Druid_Feral":  {
-                             "dps":  262974.60664285896,
+                             "dps":  262974.60664285908,
                              "hps":  null,
                              "dtps":  null
                          },
     "MID1_Evoker_Devastation_FS":  {
-                                       "dps":  131364.86679938064,
+                                       "dps":  131364.86679938058,
                                        "hps":  null,
                                        "dtps":  null
                                    }

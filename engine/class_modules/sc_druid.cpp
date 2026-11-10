@@ -2615,7 +2615,9 @@ struct druid_heal_t : public druid_spell_base_t<heal_t>
   }
 
   // Mastery: Harmony, "reduced by each additional effect": the first HoT counts fully, then 70%, 60%, 50%... (Icy
-  // Veins 12.1.5). Symbiotic Blooms and Frenzied Regeneration count as HoTs too.
+  // Veins 12.1.5). Symbiotic Blooms and Frenzied Regeneration count as HoTs too: each bloom (a stack in game) counts
+  // on its own (user's dummy log 2026-11-10: Regrowth hits with 2-3 bloom stacks fit within ~1-8% this way, 15-23%
+  // low when all blooms counted as one).
   virtual double harmony_multiplier( player_t* t ) const
   {
     // heals can be retargeted to an enemy when an actor dies; enemies have no hots
@@ -2624,8 +2626,7 @@ struct druid_heal_t : public druid_spell_base_t<heal_t>
 
     int n = get_td( t )->hots_ticking();
 
-    if ( p()->symbiotic_blooms_on( t ) )
-      n++;
+    n += p()->symbiotic_blooms_on( t );
     if ( t == player && p()->hots.frenzied_regeneration && p()->hots.frenzied_regeneration->is_ticking() )
       n++;
     else if ( t == player && p()->buff.wellhoned_frenzied_regeneration->check() )
@@ -6736,29 +6737,32 @@ struct regrowth_t final : public trigger_thriving_growth_t<use_dot_list_t<druid_
 
   void execute() override
   {
-    // what this cast consumes, read before the base execute consumes it
-    bool sotf = !background && p()->buff.soul_of_the_forest_tree->check();
+    // what this cast consumes, read before the base execute consumes it. Convoke's Regrowths act like casts here: in
+    // the user's raid log (2026-11-08) they consume Soul of the Forest and spread with Power of the Archdruid.
+    bool cast_like = !background || has_flag( flag_e::CONVOKE );
+    bool sotf = cast_like && p()->buff.soul_of_the_forest_tree->check();
     bool ns = !background && p()->buff.natures_swiftness->check();
 
     is_direct = true;
     base_t::execute();
     is_direct = false;
 
-    if ( !background )
+    // Power of the Archdruid: the Soul of the Forest Regrowth also lands on 2 more allies
+    if ( sotf )
     {
-      // Power of the Archdruid: the Soul of the Forest Regrowth also lands on 2 more allies
-      if ( sotf )
+      if ( auto extra = p()->active.regrowth_archdruid )
       {
-        if ( auto extra = p()->active.regrowth_archdruid )
-        {
-          auto n = as<size_t>( p()->talent.power_of_the_archdruid->effectN( 1 ).base_value() );
-          for ( auto t : extra_hot_targets( p(), target, n, &druid_td_t::hots_t::regrowth ) )
-            extra->execute_on_target( t );
-        }
-        p()->buff.soul_of_the_forest_tree->expire();
+        auto n = as<size_t>( p()->talent.power_of_the_archdruid->effectN( 1 ).base_value() );
+        for ( auto t : extra_hot_targets( p(), target, n, &druid_td_t::hots_t::regrowth ) )
+          extra->execute_on_target( t );
       }
+      p()->buff.soul_of_the_forest_tree->expire();
+    }
 
-      // Rampant Growth: the Regrowth HoT (only the HoT) also goes on your Lifebloom target
+    // Rampant Growth: the Regrowth HoT (only the HoT) also goes on your Lifebloom target. The log puts one on the
+    // Lifebloom target for every Regrowth heal: casts, Convoke's and Power of the Archdruid's extra Regrowths.
+    if ( cast_like || this == p()->active.regrowth_archdruid )
+    {
       if ( auto rampant = p()->active.regrowth_rampant )
       {
         if ( auto lb = lifebloom_target( p() ); lb && lb != target )
@@ -6770,7 +6774,10 @@ struct regrowth_t final : public trigger_thriving_growth_t<use_dot_list_t<druid_
           action_state_t::release( s );
         }
       }
+    }
 
+    if ( !background )
+    {
       // Overgrowth: the Nature's Swiftness Regrowth also applies Lifebloom, Rejuvenation and Wild Growth to the
       // target (on yourself that refreshes your Lifebloom)
       if ( ns && p()->talent.overgrowth.ok() )
@@ -6910,7 +6917,8 @@ struct rejuvenation_t final : public rejuvenation_base_t
 
   void execute() override
   {
-    bool sotf = !background && p()->buff.soul_of_the_forest_tree->check();
+    // Convoke's Rejuvenations consume Soul of the Forest and spread with Power of the Archdruid too (user's raid log)
+    bool sotf = ( !background || has_flag( flag_e::CONVOKE ) ) && p()->buff.soul_of_the_forest_tree->check();
 
     if ( !background )
     {
