@@ -545,6 +545,9 @@ struct druid_t final : public parse_player_effects_t
   player_t* symbiotic_relationship_target = nullptr;  // bonded ally, chosen in combat_begin()
   timespan_t lifetreading_efflo_end = 0_ms;           // end of the Efflorescence that follows Lifebloom
   int reforestation_count = 0;                        // Swiftmend casts towards the next Tree of Life
+  int everbloom_max_stack = 0;                       // Lifebloom stacks from Everbloom's pulse (0: no Everbloom)
+  cooldown_t* aessinas_renewal_icd = nullptr;        // Restoration: Aessina's Renewal, once per 30 s
+  cooldown_t* wellhoned_instincts_icd = nullptr;     // Restoration: Well-Honed Instincts
 
   struct dot_list_t
   {
@@ -594,6 +597,10 @@ struct druid_t final : public parse_player_effects_t
     // Restoration
     double time_spend_healing = 0.0;
     std::string symbiotic_relationship;  // bonded ally's name; empty = first tank, "none" = no bond
+    // Chance that an ally is inside your Efflorescence on a tick (1 = the whole raid always stacked on it).
+    double efflorescence_coverage = 1.0;
+    // Chance that each of Bursting Growth's nearby allies is within its 10 yards (1 = always).
+    double bursting_growth_coverage = 1.0;
   } options;
 
   struct active_actions_t
@@ -650,6 +657,9 @@ struct druid_t final : public parse_player_effects_t
     action_t* natures_bounty = nullptr;
     action_t* thriving_vegetation = nullptr;
     action_t* symbiotic_relationship = nullptr;
+    action_t* aessinas_renewal = nullptr;              // Restoration only (self-heal on a big hit)
+    action_t* wellhoned_frenzied_regeneration = nullptr;  // Restoration only (Well-Honed Instincts)
+    action_t* flower_walk = nullptr;                   // Restoration only (Barkskin pulses)
     action_t* lifetreading_efflorescence = nullptr;
     action_t* rejuvenation_archdruid = nullptr;  // power of the archdruid extra targets
     action_t* regrowth_archdruid = nullptr;
@@ -704,6 +714,7 @@ struct druid_t final : public parse_player_effects_t
   {
     // General
     buff_t* barkskin;
+    buff_t* wellhoned_frenzied_regeneration;  // Restoration only (Well-Honed Instincts)
     buff_t* bear_form;
     buff_t* cat_form;
     buff_t* prowl;
@@ -2617,6 +2628,8 @@ struct druid_heal_t : public druid_spell_base_t<heal_t>
       n++;
     if ( t == player && p()->hots.frenzied_regeneration && p()->hots.frenzied_regeneration->is_ticking() )
       n++;
+    else if ( t == player && p()->buff.wellhoned_frenzied_regeneration->check() )
+      n++;
 
     double stacks = 0.0;
     for ( int i = 0; i < n; i++ )
@@ -2648,18 +2661,18 @@ struct druid_heal_t : public druid_spell_base_t<heal_t>
   {
     auto partner = p()->symbiotic_relationship_target;
     auto heal = p()->active.symbiotic_relationship;
-    if ( !partner || !heal || this == heal || s->result_amount <= 0 )
+    if ( !partner || !heal || this == heal || s->result_total <= 0 )
       return;
 
     const auto& data = p()->find_spell( 474754 );
     if ( s->target == player && !partner->is_sleeping() )
     {
-      heal->base_dd_min = heal->base_dd_max = s->result_amount * data->effectN( 1 ).percent();
+      heal->base_dd_min = heal->base_dd_max = s->result_total * data->effectN( 1 ).percent();
       heal->execute_on_target( partner );
     }
     else if ( s->target == partner )
     {
-      heal->base_dd_min = heal->base_dd_max = s->result_amount * data->effectN( 2 ).percent();
+      heal->base_dd_min = heal->base_dd_max = s->result_total * data->effectN( 2 ).percent();
       heal->execute_on_target( player );
     }
   }
@@ -2715,7 +2728,10 @@ struct druid_fixed_heal_t : public druid_heal_t
 
   double composite_da_multiplier( const action_state_t* ) const override { return 1.0; }
   double composite_persistent_multiplier( const action_state_t* ) const override { return 1.0; }
-  double composite_versatility( const action_state_t* ) const override { return 0.0; }
+  // Neutral multipliers (1, not 0): a fixed heal whose spell snapshots versatility or the player multiplier (Symbiotic
+  // Relationship does) healed for 0 when this returned 0.
+  double composite_versatility( const action_state_t* ) const override { return 1.0; }
+  double composite_player_multiplier( const action_state_t* ) const override { return 1.0; }
   double composite_target_multiplier( player_t* t ) const override { return heal_t::composite_target_multiplier( t ); }
 
   void heal_for( player_t* t, double amount )
@@ -6233,6 +6249,11 @@ struct efflorescence_t final : public druid_heal_t
       // get the full list
       auto& tl = druid_heal_t::target_list();
 
+      // druid.efflorescence_coverage: only the allies standing in it this tick; the player it was placed under (with
+      // Lifetreading, the Lifebloom target) is always in it
+      if ( double c = p()->options.efflorescence_coverage; c < 1.0 )
+        range::erase_remove( tl, [ this, c ]( player_t* t ) { return t != target && !rng().roll( c ); } );
+
       rng().shuffle( tl.begin(), tl.end() );
 
       range::sort( tl, []( const player_t* l, const player_t* r ) {
@@ -6246,6 +6267,10 @@ struct efflorescence_t final : public druid_heal_t
     {
       // force re-evaluation of targets every tick
       target_cache.is_valid = false;
+
+      // nobody standing in it (druid.efflorescence_coverage): the tick heals no one
+      if ( target_list().empty() )
+        return;
 
       druid_heal_t::execute();
     }
@@ -6321,9 +6346,9 @@ struct ironbark_t final : public druid_heal_t
 };
 
 // Lifebloom ================================================================
-// Everbloom: part of every Lifebloom bloom heals up to 5 injured allies (lowest health first).
-// Its first rank (Lifebloom stacks up to 3 times) is not modelled: in the Mythic kill log, Lifebloom ticks, blooms and
-// Everbloom heals all match a single-stack Lifebloom.
+// Everbloom: 48% (24% x rank 2) of every Lifebloom bloom heals up to 5 allies, lowest health first. The user's dummy log
+// (2026-11-09): the bloom's own target is one of them, and full-health allies are healed too (all overheal).
+// Its stacking part (Lifebloom stacks every few seconds) is druid_t::combat_begin's Everbloom pulse.
 struct everbloom_t final : public druid_fixed_heal_t
 {
   everbloom_t( druid_t* p ) : druid_fixed_heal_t( "everbloom", p, p->find_spell( 1244341 ) )
@@ -6335,7 +6360,6 @@ struct everbloom_t final : public druid_fixed_heal_t
   {
     auto& tl = druid_fixed_heal_t::target_list();
 
-    range::erase_remove( tl, [ this ]( player_t* t ) { return t == target || t->health_percentage() >= 100; } );
     rng().shuffle( tl.begin(), tl.end() );
     range::sort( tl, []( const player_t* l, const player_t* r ) {
       return l->health_percentage() < r->health_percentage();
@@ -6372,7 +6396,6 @@ struct lifebloom_t final : public druid_heal_t
       if ( everbloom_pct && p()->active.everbloom )
       {
         auto eb = debug_cast<druid_fixed_heal_t*>( p()->active.everbloom );
-        eb->target = s->target;  // excluded from the cleave
         eb->heal_for( s->target, s->result_total * everbloom_pct );
       }
     }
@@ -6387,6 +6410,19 @@ struct lifebloom_t final : public druid_heal_t
       bloom = p->get_secondary_action<lifebloom_bloom_t>( "lifebloom_bloom" );
       replace_stats( this, bloom );
       p->active.lifebloom_bloom = bloom;
+    }
+  }
+
+  void init() override
+  {
+    druid_heal_t::init();
+
+    // Everbloom raises the max stacks to 3, but a recast keeps the stacks without adding one (the user's dummy log,
+    // 2026-11-09): stacks come only from Everbloom's pulse (druid_t::combat_begin).
+    if ( p()->specialization() == DRUID_RESTORATION && p()->talent.everbloom_1.ok() && dot_max_stack > 1 )
+    {
+      p()->everbloom_max_stack = dot_max_stack;
+      dot_max_stack = 1;
     }
   }
 
@@ -6984,14 +7020,17 @@ struct swiftmend_t final : public druid_heal_t
     return false;
   }
 
-  timespan_t cooldown_duration() const override
+  // Renewing Surge shortens the recharge. Swiftmend has charges: SimC starts a charged cooldown from
+  // cooldown_base_duration() x recharge_multiplier() and never asks cooldown_duration(), so the reduction goes here
+  // (surge_hp is the target's health when the cast began, before the heal landed).
+  double recharge_multiplier( const cooldown_t& cd ) const override
   {
-    auto cd = druid_heal_t::cooldown_duration();
+    double m = druid_heal_t::recharge_multiplier( cd );
 
-    if ( surge_base )
-      cd *= 1.0 - ( surge_base + ( surge_max - surge_base ) * ( 1.0 - surge_hp ) );
+    if ( surge_base && &cd == cooldown )
+      m *= 1.0 - ( surge_base + ( surge_max - surge_base ) * ( 1.0 - surge_hp ) );
 
-    return cd;
+    return m;
   }
 
   double bonus_da( const action_state_t* s ) const override
@@ -7030,16 +7069,25 @@ struct swiftmend_t final : public druid_heal_t
     if ( p()->specialization() != DRUID_RESTORATION )
       return;
 
-    // Everbloom: Blooming Frenzy, Lifebloom blooms 3 times in rapid succession
+    // Everbloom: Blooming Frenzy, Lifebloom blooms 3 times in rapid succession: 0.25 s apart in the user's log
+    // (2026-11-08), so Implant's Symbiotic Bloom (below) lands before the 2nd and 3rd bloom (+26% on a self-Swiftmend)
     if ( p()->talent.everbloom_3.ok() && p()->active.lifebloom_bloom )
     {
       if ( auto lb = lifebloom_target( p() ) )
-        for ( int i = 0; i < as<int>( p()->talent.everbloom_3->effectN( 1 ).base_value() ); i++ )
-          p()->active.lifebloom_bloom->execute_on_target( lb );
+      {
+        auto bloom = p()->active.lifebloom_bloom;
+        bloom->execute_on_target( lb );
+        for ( int i = 1; i < as<int>( p()->talent.everbloom_3->effectN( 1 ).base_value() ); i++ )
+          make_event( *sim, 250_ms * i, [ bloom, lb ] {
+            if ( !lb->is_sleeping() )
+              bloom->execute_on_target( lb );
+          } );
+      }
     }
 
-    // Reforestation: every 4th Swiftmend grants Tree of Life for a short while
-    if ( p()->talent.reforestation.ok() &&
+    // Reforestation: every 4th Swiftmend grants Tree of Life for a short while. Convoke's Swiftmends don't count
+    // (user's log: 8 Trees of Life from 32 cast Swiftmends; counting Convoke's gave the sim 1.7 Trees/min vs 1.2).
+    if ( p()->talent.reforestation.ok() && !has_flag( flag_e::CONVOKE ) &&
          ++p()->reforestation_count >= as<int>( p()->talent.reforestation->effectN( 1 ).base_value() ) )
     {
       p()->reforestation_count = 0;
@@ -7194,13 +7242,14 @@ struct wild_growth_t final : public trigger_thriving_growth_t<use_dot_list_t<dru
 };
 
 // Bursting Growth (healing) ================================================
-// Heals the bloom's target and up to 3 nearby injured allies, lowest health first.
+// Heals up to 3 players in total: the bloom's target and the most injured nearby allies (the user's log, 2026-11-09:
+// 394 bursts in 7:08, groups of 3 hits, never 4).
 struct bursting_growth_heal_t final : public druid_heal_t
 {
   bursting_growth_heal_t( druid_t* p, std::string_view n ) : druid_heal_t( n, p, p->find_spell( 440121 ) )
   {
     background = proc = true;
-    aoe = 1 + as<int>( data().effectN( 2 ).base_value() );
+    aoe = as<int>( data().effectN( 2 ).base_value() );
   }
 
   std::vector<player_t*>& target_list() const override
@@ -7213,6 +7262,16 @@ struct bursting_growth_heal_t final : public druid_heal_t
         return l == target;
       return l->health_percentage() < r->health_percentage();
     } );
+
+    // druid.bursting_growth_coverage: each of the nearby allies is in range with that chance (no one replaces them)
+    if ( double c = p()->options.bursting_growth_coverage; c < 1.0 && tl.size() > 1 )
+    {
+      size_t keep = tl.front() == target ? 1 : 0;
+      for ( size_t i = keep; i < tl.size() && i < as<size_t>( aoe ); i++ )
+        if ( rng().roll( c ) )
+          tl[ keep++ ] = tl[ i ];
+      tl.resize( keep );
+    }
 
     return tl;
   }
@@ -7716,6 +7775,52 @@ struct barkskin_t final : public druid_spell_t
 
     p()->buff.barkskin->trigger();
     p()->buff.matted_fur->trigger();
+
+    // Flower Walk (Restoration): every second of Barkskin, flowers heal nearby injured allies
+    if ( auto fw = p()->active.flower_walk )
+    {
+      auto period = timespan_t::from_seconds( 1 );
+      int pulses = as<int>( p()->buff.barkskin->buff_duration() / period );
+      for ( int i = 1; i <= pulses; i++ )
+        make_event( *sim, period * i, [ this, fw ] {
+          if ( p()->buff.barkskin->check() && !p()->is_sleeping() )
+            fw->execute();
+        } );
+    }
+  }
+};
+
+// Flower Walk (healing) ====================================================
+// Up to 3 nearby injured allies, lowest health first.
+struct flower_walk_heal_t final : public druid_heal_t
+{
+  flower_walk_heal_t( druid_t* p, std::string_view n ) : druid_heal_t( n, p, p->find_spell( 439902 ) )
+  {
+    background = proc = true;
+    aoe = as<int>( data().effectN( 2 ).base_value() );
+  }
+
+  std::vector<player_t*>& target_list() const override
+  {
+    auto& tl = druid_heal_t::target_list();
+
+    range::erase_remove( tl, []( player_t* t ) { return t->health_percentage() >= 100.0; } );
+    rng().shuffle( tl.begin(), tl.end() );
+    range::sort( tl, []( const player_t* l, const player_t* r ) {
+      return l->health_percentage() < r->health_percentage();
+    } );
+
+    return tl;
+  }
+
+  void execute() override
+  {
+    target_cache.is_valid = false;
+    if ( target_list().empty() )
+      return;
+
+    target = target_list().front();
+    druid_heal_t::execute();
   }
 };
 
@@ -11337,7 +11442,7 @@ void druid_t::init_spells()
   talent.bond_with_nature               = HT( "Bond with Nature" );
   talent.bursting_growth                = HT( "Bursting Growth" );
   talent.entangling_vortex              = HT( "Entangling Vortex" );  // NYI
-  talent.flower_walk                    = HT( "Flower Walk" );  // TODO: heal NYI
+  talent.flower_walk                    = HT( "Flower Walk" );  // heal: Restoration only (barkskin_t)
   talent.green_thumb                    = HT( "Green Thumb" );
   talent.harmonious_constitution        = HT( "Harmonious Constitution" );
   talent.hunt_beneath_the_open_skies    = HT( "Hunt Beneath the Open Skies" );
@@ -11723,6 +11828,13 @@ void druid_t::create_buffs()
   buff.prowl = make_buff<druid_buff_t>( this, "prowl", find_class_spell( "Prowl" ) );
 
   // Class
+  // Well-Honed Instincts' Frenzied Regeneration (Restoration): its heal is a fixed heal, the buff carries Verdant Heart's
+  // healing received and counts as a HoT for Harmony
+  buff.wellhoned_frenzied_regeneration =
+    make_fallback( specialization() == DRUID_RESTORATION && talent.wellhoned_instincts.ok(), this,
+                   "frenzied_regeneration_wellhoned", find_spell( 22842 ) )
+      ->set_tick_behavior( buff_tick_behavior::NONE );
+
   buff.forestwalk =
     make_fallback( talent.forestwalk.ok(), this, "forestwalk", find_trigger( talent.forestwalk ).trigger() )
       ->set_default_value( find_trigger( talent.forestwalk ).percent() );
@@ -12754,6 +12866,26 @@ void druid_t::create_actions()
       active.symbiotic_relationship =
         get_secondary_action<druid_fixed_heal_t>( "symbiotic_relationship", this, find_spell( 474760 ) );
 
+    // Self-heals from class talents, as fixed heals: Aessina's Renewal (a hit over 12% of max health heals 10%, once per
+    // 30 s) and Well-Honed Instincts (below 40% health: Frenzied Regeneration, 8% of max health per second for 3 s)
+    if ( talent.aessinas_renewal.ok() )
+    {
+      active.aessinas_renewal =
+        get_secondary_action<druid_fixed_heal_t>( "aessinas_renewal", this, find_spell( 474683 ) );
+      aessinas_renewal_icd = get_cooldown( "aessinas_renewal_icd" );
+    }
+
+    if ( talent.wellhoned_instincts.ok() )
+    {
+      active.wellhoned_frenzied_regeneration =
+        get_secondary_action<druid_fixed_heal_t>( "frenzied_regeneration_wellhoned", this, find_spell( 22842 ) );
+      active.wellhoned_frenzied_regeneration->name_str_reporting = "frenzied_regeneration";
+      wellhoned_instincts_icd = get_cooldown( "wellhoned_instincts_icd" );
+    }
+
+    if ( talent.flower_walk.ok() )
+      active.flower_walk = get_secondary_action<flower_walk_heal_t>( "flower_walk" );
+
     if ( talent.lifetreading.ok() && talent.efflorescence.ok() )
       // its own stats: the tick action already reports into them (replace_stats in efflorescence_t)
       active.lifetreading_efflorescence = copy( get_secondary_action<efflorescence_t>( "efflorescence_lifetreading" ),
@@ -13215,8 +13347,14 @@ struct thriving_growth_rng_t : public proc_rng_t
 
   int _calculate( const coeffs_t& c, action_state_t* s )
   {
-    // at least 1: efflorescence is a ground effect and never fills its dot list
-    auto raw = c.scale * c.scale_mul / std::pow( as<double>( std::max<size_t>( 1, c.dot_list->size() ) ), c.dot_exp );
+    // Efflorescence is a ground effect with no dot list: per the dev notes its value is "just divided by the number
+    // of targets healed", so one tick adds the value once whatever the number of allies it heals (it used to add it
+    // per ally: ~3x the blooms; the user's log: ~31 blooms/min vs 49 in the sim before). The others: / (active
+    // HoTs or DoTs)^exponent.
+    double divisor = c.dot_list == &p->dot_lists.efflorescence
+                       ? as<double>( std::max( 1u, s->n_targets ) )
+                       : std::pow( as<double>( std::max<size_t>( 1, c.dot_list->size() ) ), c.dot_exp );
+    auto raw = c.scale * c.scale_mul / divisor;
     auto val = player->rng().range( 0.0, raw * rng_mult );
 
     count += val;
@@ -14106,6 +14244,28 @@ void druid_t::combat_begin()
       }
     }
   }
+
+  // Everbloom: your Lifebloom gains a stack every 4 sec, up to 3, ticking for x stacks (the final bloom doesn't grow).
+  // The user's dummy log (2026-11-09): stacks 4.0 s apart in two tests with different haste, although the talent says
+  // 5 sec, on a timer of their own (the first one 2.7 / 4.2 s after the cast).
+  if ( everbloom_max_stack > 1 )
+  {
+    auto pulse = [ this ] {
+      for ( auto t : sim->player_non_sleeping_list )
+      {
+        auto td = find_target_data( t );
+        if ( !td || !td->hots.lifebloom->is_ticking() )
+          continue;
+
+        td->hots.lifebloom->max_stack = everbloom_max_stack;
+        td->hots.lifebloom->increment( 1 );
+      }
+    };
+    make_event( *sim, timespan_t::from_seconds( rng().range( 0.0, 4.0 ) ), [ this, pulse ] {
+      pulse();
+      make_repeating_event( *sim, 4_s, pulse );
+    } );
+  }
 }
 
 // druid_t::recalculate_resource_max ========================================
@@ -14534,6 +14694,8 @@ void druid_t::create_options()
   // Restoration
   add_option( opt_float( "druid.time_spend_healing", options.time_spend_healing ) );
   add_option( opt_string( "druid.symbiotic_relationship", options.symbiotic_relationship ) );
+  add_option( opt_float( "druid.efflorescence_coverage", options.efflorescence_coverage, 0.0, 1.0 ) );
+  add_option( opt_float( "druid.bursting_growth_coverage", options.bursting_growth_coverage, 0.0, 1.0 ) );
 }
 
 role_e druid_t::primary_role() const
@@ -14629,6 +14791,35 @@ void druid_t::assess_damage( school_e school, result_amount_type dtype, action_s
     buff.ironfur->up();
 
   player_t::assess_damage( school, dtype, s );
+
+  if ( is_sleeping() || resources.current[ RESOURCE_HEALTH ] <= 0 || s->result_amount <= 0 )
+    return;
+
+  double max_hp = resources.max[ RESOURCE_HEALTH ];
+
+  // Aessina's Renewal: a hit over 12% of max health heals 10% of max health (30 s internal cooldown)
+  if ( active.aessinas_renewal && aessinas_renewal_icd->up() &&
+       s->result_amount > max_hp * talent.aessinas_renewal->effectN( 2 ).percent() )
+  {
+    aessinas_renewal_icd->start( talent.aessinas_renewal->internal_cooldown() );
+    debug_cast<druid_fixed_heal_t*>( active.aessinas_renewal )
+      ->heal_for( this, max_hp * active.aessinas_renewal->data().effectN( 1 ).percent() );
+  }
+
+  // Well-Honed Instincts: below 40% health, Frenzied Regeneration (8% of max health every second for 3 s)
+  if ( active.wellhoned_frenzied_regeneration && wellhoned_instincts_icd->up() &&
+       health_percentage() < talent.wellhoned_instincts->effectN( 2 ).base_value() )
+  {
+    wellhoned_instincts_icd->start( timespan_t::from_seconds( talent.wellhoned_instincts->effectN( 1 ).base_value() ) );
+    buff.wellhoned_frenzied_regeneration->trigger();
+    auto heal = debug_cast<druid_fixed_heal_t*>( active.wellhoned_frenzied_regeneration );
+    const auto& fr = heal->data();
+    int ticks = std::max( 1, as<int>( fr.duration() / fr.effectN( 1 ).period() ) );
+    for ( int i = 1; i <= ticks; i++ )
+      make_event( *sim, fr.effectN( 1 ).period() * i, [ this, heal, pct = fr.effectN( 1 ).percent() ] {
+        heal->heal_for( this, resources.max[ RESOURCE_HEALTH ] * pct );
+      } );
+  }
 }
 
 // Target Data ==============================================================
@@ -15295,6 +15486,9 @@ void druid_t::parse_player_effects()
   }
 
   parse_effects( buff.barkskin );
+  // Well-Honed Instincts' Frenzied Regeneration (Restoration): Verdant Heart's healing received (already in the spell
+  // data, like Barkskin's)
+  parse_effects( buff.wellhoned_frenzied_regeneration, effect_mask_t( false ).enable( 2 ) );
   parse_effects( buff.celestial_alignment );
   parse_effects( buff.cenarius_might );
   parse_effects( buff.incarnation_moonkin );

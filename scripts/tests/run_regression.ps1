@@ -244,15 +244,18 @@ Check $g 'gear check: setups per pattern' (@($cs.setups | ForEach-Object { $_.ro
 Check $g 'gear check: no limit tests' (@($cs.setups | Where-Object { @($_.tests).Count -gt 0 }).Count) 0
 Check $g 'gear check: one level with raid health' (@($cs.setups | Where-Object { @($_.levels).Count -eq 1 -and $_.levels[0].stats.raid_health -gt 0 }).Count) 6
 # Your limit with the fast search (tolerance_search_sets=0, what the .bat files run): current gear only, a rough pass
-# then aimed full tests. Close to the full search's 130.1% for the druid (bursts every 30 sec) in far fewer tests.
+# then aimed full tests. Close to the full search for the druid (bursts every 30 sec; 2026-11-09, after the Symbiotic
+# Blooms fix: coverage 0.32 full 123.4% / fast 123.5% in 4 tests; coverage 0.6: 126.0%; + Source of Magic 6k / Mana Spring 3k per min, the profile: 128.4%).
 $fast = Invoke-Simc 'fast_limit' @('scripts\restoration_druid.simc', 'scripts\fights\patchwerk.simc', 'scripts\tests\tolerance_sets.simc',
   'iterations=1', 'tolerance=1', 'tolerance_search_sets=0', 'tolerance_tests=none', 'tolerance_share=0.2032', 'tolerance_levels=none',
   'tolerance_noise_runs=0')
 $fs = $fast.sim.tolerance
 $fmain = @($fs.setups | Where-Object { $_.role -eq 'main' })[0]
 $flim = ($fmain.tests | Where-Object { $_.test -eq 'combined' }).score
-Check $g 'fast limit near the full search (125-135%)' ([int]($flim -gt 1.25 -and $flim -lt 1.35)) 1
-Check $g 'fast limit: at most 8 full tests' ([int](@($fmain.tests[0].probes).Count -le 8)) 1
+Check $g 'fast limit near the full search (120-132%)' ([int]($flim -gt 1.20 -and $flim -lt 1.32)) 1
+# At most 12: with druid.efflorescence_coverage=0.6 (2026-11-09) the death rate creeps up slowly near 5% and the aimed
+# tests approach from below in small steps (11 tests for 126.0%, same answer as the full search).
+Check $g 'fast limit: at most 12 full tests' ([int](@($fmain.tests[0].probes).Count -le 12)) 1
 Check $g 'fast limit: gear sets not searched' (@($fs.setups | Where-Object { $_.role -eq 'set' -and @($_.tests).Count -gt 0 }).Count) 0
 # Damage patterns (fights\patchwerk.simc: bursts every 30 sec, and the same bursts every 1 min): the search runs once
 # per pattern and the pattern's options reach the boss. Half the burst damage is clearly easier (130% vs 154% at full

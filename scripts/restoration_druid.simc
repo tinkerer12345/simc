@@ -12,12 +12,23 @@ infinite_health=0
 death_recap=20
 professions=leatherworking=100/inscription=100
 spec=restoration
-# Silverblooms' own talents and gear (SimC addon export, 2026-11-08)
+# Silverblooms' own talents and gear (SimC addon export, 2026-11-09)
 talents=CkGADBD3hSPCL9Y9gz68WcKvMYMmZZmZMzMmthZwsZsNmBAAAAAAAAAALGa2MjpZG4BMLmZmZYYGAAAAAGAAAAIAAgZbmlmtZ2sxYmZwMbgmBAYmBgB
 set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
 omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
 # Flask: Flask of the Magisters (mastery) instead of SimC's Restoration default, Flask of the Blood Knights (haste)
 flask=magisters_2
+# How often an ally stands in your Efflorescence (it follows your Lifebloom target): 0.6 = the positioning you aim for
+# (your Coiled Altar log of 2026-11-09 shows 0.32, 84 Efflorescence heals/min); 1 = the raid always stacked on it.
+druid.efflorescence_coverage=0.6
+# How often each of Bursting Growth's 2 nearby allies is within its 10 yards (a burst heals 3 at most): your log shows
+# ~0.8 (2.6 players per burst).
+druid.bursting_growth_coverage=0.8
+# Symbiotic Relationship bond: a squishy ally, as you play it (empty = the first tank).
+druid.symbiotic_relationship=Frost_Mage
+# Mana from other players, per minute (tracked as their own mana gains): an Evoker's Source of Magic, a Shaman's Mana Spring.
+source_of_magic_mana_per_minute=6000
+mana_spring_mana_per_minute=3000
 
 # Enigmatic Dreamwatcher's Somnolent Stare (334)
 head=,id=271528,enchant_id=7961,gem_id=240900,bonus_id=13334/6652/13696/13847/13692/12854/13658/13695,redirected_base_stats=271875
@@ -45,8 +56,8 @@ feet=,id=244569,enchant_id=7993,bonus_id=12214/13667/12497/13751/14001/8960/1238
 finger1=,id=272150,enchant_id=8025,gem_id=240900,bonus_id=13668/12854,content_tuning=7481
 # Band of the Swarmcaller (334)
 finger2=,id=281029,enchant_id=8025,gem_id=240900,bonus_id=6652/13668/13334/12854
-# Hex Lord's Dooming Idol (334; 2 Venomstones short of 341)
-trinket1=,id=270169,bonus_id=6652/13334/12854
+# Hex Lord's Dooming Idol (341)
+trinket1=,id=270169,bonus_id=6652/13334/12856
 # Wavecaller's Seastone (341)
 trinket2=,id=270167,bonus_id=40/13335/12856
 # Jan'thrazet, the Soul Fang (341)
@@ -69,6 +80,8 @@ actions.precombat+=/rejuvenation,target=Protection_Warrior
 # combo points, Ferocious Bite at 5 for damage and Master Shapeshifter mana; the next heal shifts back. Started only
 # while the raid is healthy. Never Convoke in a DPS form.
 actions=variable,name=ramp,value=cooldown.tranquility.remains<15&encounter.big_burst.remains<15
+# Barkskin just before every big burst lands (good play, user 2026-11-09; also triggers Matted Fur and Flower Walk)
+actions+=/barkskin,if=encounter.big_burst.remains<=1
 # Tranquility as a big burst lands (Vashnik: an Imbibe's Expulsions; the ramp below sets it up), or in an emergency
 actions+=/tranquility,if=encounter.big_burst.ago<3|raid_health.pct<60
 actions+=/heart_of_the_wild,if=buff.cat_form.up
@@ -91,10 +104,13 @@ actions+=/regrowth,target_self=1,if=buff.natures_swiftness.up
 actions+=/convoke_the_spirits,if=!buff.natures_swiftness.up
 # Tranquility ramp, from 15 sec before a big burst lands (encounter.big_burst.remains: the encounter's script)
 # while Tranquility will be ready: dump Swiftmend charges but keep the last, Wild Growth, Regrowths until 5 are out
-# (Rejuvenations from the filler), then Swiftmend yourself with the last charge and spread its Soul of the Forest
-# Rejuvenation to 3 allies; Tranquility as the damage lands (Flourish extends every HoT by 2 sec per tick), then
-# Regrowths (below).
-actions+=/swiftmend,target_self=1,if=variable.ramp&encounter.big_burst.remains<=4
+# (Rejuvenations from the filler), then Swiftmend the lowest ally with a HoT with the last charge and spread its Soul of
+# the Forest Rejuvenation to 3 allies; Tranquility as the damage lands (Flourish extends every HoT by 2 sec per tick),
+# then Regrowths (below).
+# Swiftmend targets (sim test 2026-11-10): Blooming Frenzy blooms your Lifebloom 3 times on ANY Swiftmend (your log), so
+# a self-Swiftmend only adds its vine to blooms 2-3 (~0.6k HPS of Everbloom) while it mostly overheals you; on the
+# lowest ally with a HoT it adds ~8.6k effective HPS: limit +1.5..2 points, deaths about halved.
+actions+=/swiftmend,target_if=min:target.health.pct+(!(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking))*1000,if=variable.ramp&encounter.big_burst.remains<=4
 actions+=/rejuvenation,target_if=min:target.health.pct,if=variable.ramp&buff.soul_of_the_forest_tree.up
 actions+=/swiftmend,target_if=min:target.health.pct,if=variable.ramp&encounter.big_burst.remains>4&charges>=2
 actions+=/wild_growth,target_if=min:target.health.pct,if=variable.ramp
@@ -107,9 +123,9 @@ actions+=/natures_cure,target_if=max:target.dispellable,if=target.dispellable>=3
 # Rejuvenation + Germination on yourself and on the tank at all times
 actions+=/rejuvenation,target_self=1,if=dot.rejuvenation.refreshable|dot.germination.refreshable
 actions+=/rejuvenation,target=Protection_Warrior,if=dot.rejuvenation.refreshable|dot.germination.refreshable
-# Swiftmend: consume your own Regrowth HoT when charges are capping; if you have none, a Regrowth on anyone also
-# lands its HoT on you (Rampant Growth: you are the Lifebloom target). Or spot heal someone low who has a HoT.
-actions+=/swiftmend,target_self=1,if=charges_fractional>=1.8&dot.regrowth.ticking
+# Swiftmend when charges are capping: the lowest ally with a HoT (a Regrowth first if none is out). Or spot heal
+# someone low who has a HoT.
+actions+=/swiftmend,target_if=min:target.health.pct+(!(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking))*1000,if=charges_fractional>=1.8
 actions+=/regrowth,target_if=min:target.health.pct,if=cooldown.swiftmend.charges_fractional>=1.8
 actions+=/swiftmend,target_if=min:target.health.pct,if=target.health.pct<50&(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking)
 # Soul of the Forest Rejuvenation: Power of the Archdruid puts it on 3 allies

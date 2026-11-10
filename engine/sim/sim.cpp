@@ -4012,6 +4012,7 @@ void sim_t::create_options()
   add_option( opt_float( "encounter_damage_tank", encounter_damage_tank, 0, 100 ) );
   add_option( opt_float( "encounter_damage_avoidable", encounter_damage_avoidable, 0, 100 ) );
   add_option( opt_float( "encounter_damage_all", encounter_damage_all, 0, 100 ) );
+  add_option( opt_float( "encounter_healing_done", encounter_healing_done, -1, 10 ) );
   for ( auto kind : { "raid_tanks", "raid_healers", "raid_ranged", "raid_melee" } )
     add_option( opt_func( kind, parse_raid_members ) );
   add_option( opt_float( "raid_member_health", raid_stand_in.health, 1, std::numeric_limits<double>::max() ) );

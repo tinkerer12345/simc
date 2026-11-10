@@ -426,6 +426,9 @@ struct player_t : public actor_t
   player_collected_data_t collected_data;
   death_recap_t death_recap;  // opt-in, see death_recap=<seconds>
   raid_frames_t raid_frames;  // opt-in, see raid_frames=1
+  // opt-in mana from other players, per minute: an Evoker's Source of Magic, a Shaman's Mana Spring
+  double source_of_magic_mana_per_minute = 0;
+  double mana_spring_mana_per_minute     = 0;
   bool collect_pet_sequence_data;
 
 

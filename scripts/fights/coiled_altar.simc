@@ -20,5 +20,7 @@ raid_member_avoidance=0
 raid_tank_damage_reduction=0.35
 raid_tank_physical_reduction=0.57
 
+# Fury of the Dead (Venomous Abyss zone buff): +8% damage and healing in the week of 2026-11-08, +1% per week up to 15%.
+encounter_healing_done=0.08
 encounter=CoiledAltar
 enemy_health=1000000000

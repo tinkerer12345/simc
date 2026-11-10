@@ -12,6 +12,9 @@ infinite_health=0
 death_recap=20
 professions=tailoring=100/enchanting=100
 spec=preservation
+# Mana from other players, per minute (tracked as its own mana gain): a Shaman's Mana Spring. No Source of Magic: you are the
+# Evoker who casts it on someone else (add source_of_magic_mana_per_minute=6000 if your raid has a second Evoker).
+mana_spring_mana_per_minute=3000
 # Duskryth's own talents and gear (SimC addon export, 2026-10-30, raid loadout)
 talents=CwbBPJc41CfcseY0baneJ1IHrBAAAAAYmZwMjZYGzmhZmZbYAAgZMj5BMGzIMDAAAwMzMZGzMPwsMzMAYGzALgFwMMhsZYzwAYmZMA
 set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1

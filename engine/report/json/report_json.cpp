@@ -1573,6 +1573,7 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
     damage[ "tank" ]                       = sim.encounter_damage_tank;
     damage[ "avoidable" ]                  = sim.encounter_damage_avoidable;
     damage[ "all" ]                        = sim.encounter_damage_all;
+    options_root[ "encounter_healing_done" ] = sim.encounter_healing_done;
   }
   options_root[ "desired_targets" ] = sim.desired_targets;
   options_root[ "default_aura_delay" ] = sim.default_aura_delay.mean;

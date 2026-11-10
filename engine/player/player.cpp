@@ -1,4 +1,4 @@
-﻿// ==========================================================================
+// ==========================================================================
 // Dedmonwakeen's Raid DPS/TPS Simulator.
 // Send questions to natehieter@gmail.com
 // ==========================================================================
@@ -5614,6 +5614,10 @@ double player_t::composite_player_heal_multiplier( const action_state_t* ) const
   if ( buffs.entropic_embrace && buffs.entropic_embrace->check() )
     m *= 1.0 + buffs.entropic_embrace->data().effectN( 3 ).percent();
 
+  // encounter sims only: a zone buff on the raid's healing (encounter_healing_done)
+  if ( sim->encounter_healing_done != 0 && !sim->encounter_str.empty() && !is_enemy() )
+    m *= 1.0 + sim->encounter_healing_done;
+
   return m;
 }
 
@@ -6145,6 +6149,24 @@ void player_t::combat_begin()
 
   if ( raid_frames.enabled )
     raid_frames.combat_begin( *this );
+
+  // Mana other players give (opt-in, per minute, every 2 sec), each its own gain so it can be tracked:
+  // source_of_magic_mana_per_minute (an Evoker's Source of Magic), mana_spring_mana_per_minute (a Shaman's Mana Spring).
+  if ( resources.max[ RESOURCE_MANA ] > 0 )
+  {
+    for ( auto [ name, per_minute ] : { std::pair<const char*, double>{ "source_of_magic", source_of_magic_mana_per_minute },
+                                        std::pair<const char*, double>{ "mana_spring", mana_spring_mana_per_minute } } )
+    {
+      if ( per_minute <= 0 )
+        continue;
+      auto gain     = get_gain( name );
+      double amount = per_minute * 2.0 / 60.0;
+      make_repeating_event( *sim, 2_s, [ this, gain, amount ] {
+        if ( !is_sleeping() )
+          resource_gain( RESOURCE_MANA, amount, gain );
+      } );
+    }
+  }
 
   // Trigger registered pre-pull functions
   for ( const auto& f : precombat_begin_functions )
@@ -13545,6 +13567,8 @@ void player_t::create_options()
   add_option( opt_bool( "infinite_health", resources.infinite_resource[ RESOURCE_HEALTH ] ) );
   add_option( opt_timespan( "death_recap", death_recap.window, 0_ms, 120_s ) );
   add_option( opt_bool( "raid_frames", raid_frames.enabled ) );
+  add_option( opt_float( "source_of_magic_mana_per_minute", source_of_magic_mana_per_minute, 0.0, 1e7 ) );
+  add_option( opt_float( "mana_spring_mana_per_minute", mana_spring_mana_per_minute, 0.0, 1e7 ) );
   add_option( opt_bool( "infinite_mana", resources.infinite_resource[ RESOURCE_MANA ] ) );
   add_option( opt_bool( "infinite_rage", resources.infinite_resource[ RESOURCE_RAGE ] ) );
   add_option( opt_bool( "infinite_runic", resources.infinite_resource[ RESOURCE_RUNIC_POWER ] ) );

@@ -3,38 +3,38 @@
                            "players":  20,
                            "fights":  199,
                            "wipes":  199,
-                           "simulation_length":  48.641030150753859,
-                           "healer_hps":  868184.2120256673,
-                           "healer_damage_taken":  3151307.7515154175,
-                           "healer_fight_length":  48.641030150753859,
-                           "raid_damage_taken":  58823400.184241205,
+                           "simulation_length":  48.85713065326643,
+                           "healer_hps":  874895.3364153509,
+                           "healer_damage_taken":  2585388.936508133,
+                           "healer_fight_length":  48.85713065326643,
+                           "raid_damage_taken":  59567131.222050257,
                            "raid_frames_units":  20,
                            "raid_frames_deaths":  18,
                            "death_recaps":  1
                        },
     "patchwerk_healer_profile":  {
                                      "raid_member_health":  901360.0,
-                                     "healer_hps":  363659.4466295162,
-                                     "raid_damage_taken":  111966850.03068195
+                                     "healer_hps":  361978.3775355483,
+                                     "raid_damage_taken":  111019165.62331747
                                  },
     "evoker_healer_profile":  {
                                   "wipes":  0,
-                                  "healer_hps":  327933.74346163016,
-                                  "healer_damage_taken":  4992062.99838706,
-                                  "raid_damage_taken":  111044978.96641563
+                                  "healer_hps":  329097.13471998149,
+                                  "healer_damage_taken":  5023217.965700577,
+                                  "raid_damage_taken":  111054270.89410315
                               },
     "MID1_Priest_Shadow":  {
-                               "dps":  130914.151900513,
+                               "dps":  130914.1519005129,
                                "hps":  null,
                                "dtps":  null
                            },
     "MID1_Death_Knight_Blood":  {
-                                    "dps":  69002.7698358459,
-                                    "hps":  39728.097243041615,
+                                    "dps":  69002.76983584589,
+                                    "hps":  39728.09724304161,
                                     "dtps":  19130312.2556774
                                 },
     "MID1_Druid_Balance":  {
-                               "dps":  130733.89991002361,
+                               "dps":  130733.89991002358,
                                "hps":  null,
                                "dtps":  null
                            },
@@ -44,12 +44,12 @@
                              "dtps":  null
                          },
     "MID1_Druid_Guardian":  {
-                                "dps":  76559.63847130537,
+                                "dps":  76559.63847130533,
                                 "hps":  28560.18923085383,
                                 "dtps":  20557459.2378402
                             },
     "MID2_Druid_Feral":  {
-                             "dps":  262974.6066428589,
+                             "dps":  262974.60664285896,
                              "hps":  null,
                              "dtps":  null
                          },

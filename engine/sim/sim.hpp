@@ -158,6 +158,8 @@ struct sim_t : private sc_thread_t
   double encounter_damage_tank   = 1.0;
   double encounter_damage_avoidable = 1.0;
   double encounter_damage_all    = 1.0;
+  // A zone buff on every raid member's healing in encounter sims (e.g. the Venomous Abyss's Fury of the Dead): +x%
+  double encounter_healing_done  = 0.0;
   // Set by an encounter that has debuffs players must dispel: the stacks of such a debuff on a player that the healer
   // under test should dispel (0 = none), and the dispel itself (returns true if something was removed). Empty otherwise.
   std::function<double( const player_t* )> encounter_dispellable;
