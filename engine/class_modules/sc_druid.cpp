@@ -6991,6 +6991,7 @@ struct swiftmend_t final : public druid_heal_t
 {
   double consumed_pct = 0.0;
   double consumed_bonus = 0.0;  // base heal added for the consumed HoT during this execute
+  dot_t* pending_consume = nullptr;  // the consumed HoT, cancelled at the end of execute
   double surge_base = 0.0;  // renewing surge: cooldown reduction, more on lower health targets
   double surge_max = 0.0;
   double surge_hp = 1.0;    // target health when cast, for renewing surge
@@ -7074,24 +7075,21 @@ struct swiftmend_t final : public druid_heal_t
 
     p()->buff.soul_of_the_forest_tree->trigger();
 
-    if ( p()->specialization() != DRUID_RESTORATION )
-      return;
+    auto consume = [ this ] {
+      if ( pending_consume && pending_consume->is_ticking() )
+        pending_consume->cancel();
+      pending_consume = nullptr;
+    };
 
-    // Everbloom: Blooming Frenzy, Lifebloom blooms 3 times in rapid succession: 0.25 s apart in the user's log
-    // (2026-11-08), so Implant's Symbiotic Bloom (below) lands before the 2nd and 3rd bloom (+26% on a self-Swiftmend)
-    if ( p()->talent.everbloom_3.ok() && p()->active.lifebloom_bloom )
+    if ( p()->specialization() != DRUID_RESTORATION )
     {
-      if ( auto lb = lifebloom_target( p() ) )
-      {
-        auto bloom = p()->active.lifebloom_bloom;
-        bloom->execute_on_target( lb );
-        for ( int i = 1; i < as<int>( p()->talent.everbloom_3->effectN( 1 ).base_value() ); i++ )
-          make_event( *sim, 250_ms * i, [ bloom, lb ] {
-            if ( !lb->is_sleeping() )
-              bloom->execute_on_target( lb );
-          } );
-      }
+      consume();
+      return;
     }
+
+    // Order from the user's raw raid log (2026-11-11, millisecond timestamps): Swiftmend heals, Implant's Symbiotic
+    // Bloom and Reforestation (Tree of Life on the 4th) land at the same instant, and the first Blooming Frenzy bloom
+    // comes ~17 ms later, so all three blooms see the vine and the Tree.
 
     // Reforestation: every 4th Swiftmend grants Tree of Life for a short while. Convoke's Swiftmends don't count
     // (user's log: 8 Trees of Life from 32 cast Swiftmends; counting Convoke's gave the sim 1.7 Trees/min vs 1.2).
@@ -7106,13 +7104,31 @@ struct swiftmend_t final : public druid_heal_t
     // Implant: Swiftmend grows a Symbiotic Bloom on its target
     if ( p()->talent.implant.ok() && p()->talent.thriving_growth.ok() )
       p()->trigger_symbiotic_bloom( target );
+
+    // Everbloom: Blooming Frenzy, Lifebloom blooms 3 times in rapid succession, 0.25 s apart
+    if ( p()->talent.everbloom_3.ok() && p()->active.lifebloom_bloom )
+    {
+      if ( auto lb = lifebloom_target( p() ) )
+      {
+        auto bloom = p()->active.lifebloom_bloom;
+        bloom->execute_on_target( lb );
+        consume();
+        for ( int i = 1; i < as<int>( p()->talent.everbloom_3->effectN( 1 ).base_value() ); i++ )
+          make_event( *sim, 250_ms * i, [ bloom, lb ] {
+            if ( !lb->is_sleeping() )
+              bloom->execute_on_target( lb );
+          } );
+      }
+    }
+
+    consume();
   }
 
   void impact( action_state_t* s ) override
   {
-    if ( auto d = consumed_hot( s->target ) )
-      d->cancel();
-    else
+    // the consumed HoT goes after the first Blooming Frenzy bloom (execute): the log lists its removal after that bloom
+    pending_consume = consumed_hot( s->target );
+    if ( !pending_consume )
       sim->error( "Swiftmend impact with no HoT ticking" );
 
     druid_heal_t::impact( s );
@@ -7128,11 +7144,15 @@ struct tranquility_t final : public druid_heal_t
   {
     timespan_t flourish_ext = 0_ms;
 
-    tranquility_tick_t( druid_t* p )
-      : druid_heal_t( "tranquility_tick", p, find_trigger( p->talent.tranquility ).trigger() )
+    tranquility_tick_t( druid_t* p, std::string_view n = "tranquility_tick", const spell_data_t* s = nullptr,
+                        flag_e f = flag_e::NONE )
+      : druid_heal_t( n, p, s ? s : find_trigger( p->talent.tranquility ).trigger(), f )
     {
       background = dual = true;
       aoe = -1;
+      // "Healing decreased beyond 5 targets" (740 #3): the generic sqrt(5 / targets) reduction. The user's logs
+      // (2026-11-11): a tick is 2.75x the same target's last Rejuvenation tick, sim 6.0x without it, 3.0x with it
+      reduced_aoe_targets = p->talent.tranquility->effectN( 3 ).base_value();
 
       if ( p->talent.flourish.ok() )
         flourish_ext = timespan_t::from_seconds( p->talent.flourish->effectN( 1 ).base_value() );
@@ -7203,13 +7223,21 @@ struct wild_growth_t final : public trigger_thriving_growth_t<use_dot_list_t<dru
   int inc_mod;
 
   DRUID_ABILITY( wild_growth_t, base_t, "wild_growth", p->talent.wild_growth ),
-    decay_coeff( 0.07 * ( 1.0 - p->talent.unstoppable_growth->effectN( 1 ).percent() ) ),
+    decay_coeff( 0.0 ),
     inc_mod( as<int>( p->talent.incarnation_tree->effectN( 3 ).base_value() ) )
   {
     aoe = as<int>( data().effectN( 2 ).base_value() + p->talent.improved_wild_growth->effectN( 1 ).base_value() );
 
-    // '0-tick' coeff, also unknown if this is hard set to 0.175 or based on a formula as below
-    spell_power_mod.tick += decay_coeff / 2.0;
+    // Falloff as a share of the coefficient (the old fixed 0.07 was sized for a 0.14 coefficient and made it flat), and
+    // the data's coefficient is where it ENDS. The user's raid log (2026-11-11): WG tick / the same moment's 3-stack
+    // Lifebloom tick on the druid (whole night, ~1,250 ticks; the same test puts Rejuvenation within 1% of its data)
+    // runs from 1.26x the data at ~0.5 s to 1.04x at ~6.5 s (start ~1.29x, mean ~1.15x). With Unstoppable Growth
+    // rank 2 (SimC reads it as 60% less falloff) that is a base falloff of ~0.72 x the coefficient. Only this build
+    // anchors it: without Unstoppable Growth the start (1.72x) is an extrapolation.
+    decay_coeff = spell_power_mod.tick * 0.72 * ( 1.0 - p->talent.unstoppable_growth->effectN( 1 ).percent() );
+
+    // starts at coefficient + falloff and declines to the coefficient
+    spell_power_mod.tick += decay_coeff;
 
     form_mask = CASTER_FORM;
 
@@ -10004,6 +10032,7 @@ struct convoke_the_spirits_t final : public trigger_control_of_the_dream_t<druid
     // restoration, caster form
     action_t* conv_wild_growth = nullptr;
     action_t* conv_swiftmend = nullptr;
+    action_t* conv_tranquility = nullptr;  // exceptional: one Tranquility pulse
   } actions;
 
   std::vector<convoke_cast_e> cast_list;
@@ -10074,6 +10103,9 @@ struct convoke_the_spirits_t final : public trigger_control_of_the_dream_t<druid
 
       if ( p()->talent.swiftmend.ok() )
         actions.conv_swiftmend = get_convoke_action<swiftmend_t>( "swiftmend" );
+
+      if ( p()->talent.tranquility.ok() )
+        actions.conv_tranquility = get_convoke_action<tranquility_t::tranquility_tick_t>( "tranquility" );
     }
 
     // Call form-specific initialization to create necessary actions & setup variables
@@ -10421,7 +10453,12 @@ struct convoke_the_spirits_t final : public trigger_control_of_the_dream_t<druid
       case BEAR_FORM:    _execute_bear();    break;
       case CAT_FORM:     _execute_cat();     break;
       case MOONKIN_FORM: _execute_moonkin(); break;
-      default:           break;
+      default:
+        // Restoration in caster form: the exceptional spell is one Tranquility pulse (user's log, 109 Convokes with
+        // Cenarius' Guidance: in 48% of them, never twice = the guidance deck's 1 in 2)
+        if ( p()->specialization() == DRUID_RESTORATION && actions.conv_tranquility )
+          insert_exceptional();
+        break;
     }
 
     cast_list.insert( cast_list.end(), max_ticks - cast_list.size(), CAST_SPEC );
@@ -10463,37 +10500,60 @@ struct convoke_the_spirits_t final : public trigger_control_of_the_dream_t<druid
       default: break;
     }
 
-    // Restoration in caster form: no form picks the spell, so the slot would cast nothing. Icy Veins 12.1.5: a
-    // convoke usually holds 0-2 Wild Growth, 2-4 Swiftmend, 2-4 Wrath and a handful of Rejuvenation / Regrowth.
-    if ( conv_type == CAST_SPEC && p()->form == CASTER_FORM && p()->specialization() == DRUID_RESTORATION )
+    // Restoration in caster form: no form picks the spell, so the slot would cast nothing.
+    if ( p()->form == CASTER_FORM && p()->specialization() == DRUID_RESTORATION )
     {
-      auto roll = rng().range( 0.0, 12.0 );
-
-      if ( roll < 1.0 && actions.conv_wild_growth )
+      if ( conv_type == CAST_EXCEPTIONAL )
       {
-        conv_cast = actions.conv_wild_growth;
-        conv_tar = lowest_health_ally();
-      }
-      else if ( roll < 4.0 && actions.conv_swiftmend )
-      {
-        // needs one of your HoTs to consume: the lowest ally that has one
-        conv_cast = actions.conv_swiftmend;
-        conv_tar = lowest_health_ally( [ this ]( player_t* t ) { return actions.conv_swiftmend->target_ready( t ); } );
-        if ( !conv_tar )
-          conv_type = CAST_HEAL;
-      }
-      else if ( roll < 7.0 )
-      {
-        conv_cast = actions.conv_wrath;
-        conv_tar = sim->target_non_sleeping_list.empty() ? nullptr : sim->target_non_sleeping_list[ 0 ];
-      }
-      else
-      {
-        conv_type = CAST_HEAL;
+        if ( actions.conv_tranquility )
+          actions.conv_tranquility->execute_on_target( p() );
+        return;
       }
 
-      if ( conv_type != CAST_HEAL )
+      if ( conv_type == CAST_SPEC )
       {
+        // per-Convoke counts in the user's raw log (2026-11-08, 109 Convokes with Cenarius' Guidance, 12 slots):
+        // Regrowth 2.10, Rejuvenation 1.76, Wild Growth 1.25, Swiftmend 1.24, Wrath 1.35, Moonfire 1.13 and
+        // the rest of the 12 slots show nothing in caster form (Rake 0.21, other forms' abilities); w_none tuned so the
+        // sim lands the same ~9.0 non-Tranquility spells per Convoke
+        static constexpr double w_wg = 1.25, w_sm = 1.24, w_wrath = 1.35, w_moon = 1.13, w_regrowth = 2.10,
+                                w_rejuv = 1.76, w_none = 2.40;
+        auto roll = rng().range( 0.0, w_wg + w_sm + w_wrath + w_moon + w_regrowth + w_rejuv + w_none );
+        auto enemy = sim->target_non_sleeping_list.empty() ? nullptr : sim->target_non_sleeping_list[ 0 ];
+
+        if ( ( roll -= w_wg ) < 0 )
+        {
+          conv_cast = actions.conv_wild_growth;
+          conv_tar = lowest_health_ally();
+        }
+        else if ( ( roll -= w_sm ) < 0 )
+        {
+          // needs one of your HoTs to consume: the lowest ally that has one (none: the slot does nothing)
+          conv_cast = actions.conv_swiftmend;
+          if ( conv_cast )
+            conv_tar = lowest_health_ally( [ this ]( player_t* t ) { return actions.conv_swiftmend->target_ready( t ); } );
+        }
+        else if ( ( roll -= w_wrath ) < 0 )
+        {
+          conv_cast = actions.conv_wrath;
+          conv_tar = enemy;
+        }
+        else if ( ( roll -= w_moon ) < 0 )
+        {
+          conv_cast = actions.conv_moonfire;
+          conv_tar = enemy;
+        }
+        else if ( ( roll -= w_regrowth ) < 0 )
+        {
+          conv_cast = actions.conv_regrowth;
+          conv_tar = rng().range( conv_cast->target_list() );
+        }
+        else if ( ( roll -= w_rejuv ) < 0 )
+        {
+          conv_cast = actions.conv_rejuvenation;
+          conv_tar = rng().range( conv_cast->target_list() );
+        }
+
         if ( conv_cast && conv_tar )
           conv_cast->execute_on_target( conv_tar );
         return;
@@ -11383,7 +11443,7 @@ void druid_t::init_spells()
   talent.everbloom_1                    = ST( "Everbloom", 1 );
   talent.everbloom_2                    = ST( "Everbloom", 2 );
   talent.everbloom_3                    = ST( "Everbloom", 3 );
-  talent.flash_of_clarity               = ST( "Flash of Clarity" );  // TODO: NYI
+  talent.flash_of_clarity               = ST( "Flash of Clarity" );
   talent.flourish                       = ST( "Flourish" );
   talent.germination                    = ST( "Germination" );
   talent.grove_guardians                = ST( "Grove Guardians" );  // TODO: NYI
@@ -15438,6 +15498,7 @@ void druid_t::parse_action_effects( action_t* action )
   _a->parse_effects( buff.call_of_the_elder_druid, effect_mask_t( true ).disable( 10, 11, 12 ) );
   // consumed by your own Regrowth only (background copies and convoke don't use it up); it used to never be consumed,
   // so one proc made every Regrowth free for 15 sec
+  // Flash of Clarity sets effect #2 (+40% Regrowth direct heal) through the talent's own spell modifier
   _a->parse_effects( buff.clearcasting_tree, [ action, this ]( action_state_t* ) {
     if ( !action->background )
       buff.clearcasting_tree->decrement();

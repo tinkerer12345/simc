@@ -18,3 +18,5 @@ profileset."Sigil of the Impending Eclipse 341 for Hex Lord's Dooming Idol"+=tri
 
 # Your Idol upgraded to 341 (2 more Venomstones): compare with the Sigil at 341 above
 profileset."Hex Lord's Dooming Idol 341 (upgraded)"+=trinket1=,id=270169,bonus_id=6652/13334/12854,ilevel=341
+profileset."Amulet of the Twin Fangs 341 (vault; 1 socket: diamond)"+=neck=,id=268251,gem_id=240983,bonus_id=6652/13668/13334/12849,ilevel=341
+profileset."Amulet of the Twin Fangs 341 (vault; 2 sockets, both gems)"+=neck=,id=268251,gem_id=240983/240900,bonus_id=6652/13668/13334/12849,ilevel=341
