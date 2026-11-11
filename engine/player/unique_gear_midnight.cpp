@@ -637,7 +637,13 @@ void rite_of_the_hashey( special_effect_t& effect )
 
       // The enchant favors the highest secondary stat while above 80% health. Instead of tracking
       // health, roll against the configured uptime for how often that condition is met.
-      auto stat = rng().roll( listener->midnight_opts.rite_of_the_hashey_uptime )
+      // Encounter sims (the healer fork) have real health: use the rule itself. A healer's raid log (2026-11-08): haste
+      // and mastery, its two highest, got 91% of the procs (49/42%), crit and versatility 5/4%, while the healer was at
+      // >= 80% health 91.5% of the time; the fixed 60% roll gave 56/17/13/13%.
+      bool favored = !listener->sim->encounter_str.empty()
+                       ? listener->health_percentage() >= 80
+                       : rng().roll( listener->midnight_opts.rite_of_the_hashey_uptime );
+      auto stat = favored
                     ? util::highest_stat( listener, secondary_ratings )
                     : secondary_ratings[ rng().range( secondary_ratings.size() ) ];
 

@@ -6762,6 +6762,19 @@ struct regrowth_t final : public trigger_thriving_growth_t<use_dot_list_t<druid_
     bool sotf = cast_like && p()->buff.soul_of_the_forest_tree->check();
     bool ns = !background && p()->buff.natures_swiftness->check();
 
+    // Overgrowth: the Nature's Swiftness Regrowth also applies Lifebloom, Rejuvenation and Wild Growth to the target
+    // (on yourself that refreshes your Lifebloom). They land BEFORE the Regrowth heals (the user's raid log, ms
+    // timestamps: Rejuvenation, Lifebloom and Wild Growth applied, then the Regrowth heal), so its heal counts them.
+    if ( ns && p()->talent.overgrowth.ok() )
+    {
+      if ( auto lb = dynamic_cast<lifebloom_t*>( p()->find_action( "lifebloom" ) ) )
+        lb->apply_free( target );
+      if ( p()->active.rejuvenation_archdruid )
+        p()->active.rejuvenation_archdruid->execute_on_target( target );
+      if ( p()->active.wild_growth_overgrowth )
+        p()->active.wild_growth_overgrowth->execute_on_target( target );
+    }
+
     is_direct = true;
     base_t::execute();
     is_direct = false;
@@ -6792,21 +6805,6 @@ struct regrowth_t final : public trigger_thriving_growth_t<use_dot_list_t<druid_
           rampant->trigger_dot( s );
           action_state_t::release( s );
         }
-      }
-    }
-
-    if ( !background )
-    {
-      // Overgrowth: the Nature's Swiftness Regrowth also applies Lifebloom, Rejuvenation and Wild Growth to the
-      // target (on yourself that refreshes your Lifebloom)
-      if ( ns && p()->talent.overgrowth.ok() )
-      {
-        if ( auto lb = dynamic_cast<lifebloom_t*>( p()->find_action( "lifebloom" ) ) )
-          lb->apply_free( target );
-        if ( p()->active.rejuvenation_archdruid )
-          p()->active.rejuvenation_archdruid->execute_on_target( target );
-        if ( p()->active.wild_growth_overgrowth )
-          p()->active.wild_growth_overgrowth->execute_on_target( target );
       }
     }
 
