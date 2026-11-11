@@ -1295,6 +1295,12 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
     sn[ "pattern" ] = s.pattern;
     if ( s.combination )
       sn[ "combination" ] = true;
+    if ( s.screen_fights )
+    {
+      sn[ "screen" ][ "fights" ] = s.screen_fights;
+      sn[ "screen" ][ "diff" ]   = s.screen_diff;
+      sn[ "screen" ][ "out" ]    = s.screened_out;
+    }
     sn[ "seed" ] = s.seed;
     auto opts    = sn[ "options" ].make_array();
     for ( const auto& o : s.options )

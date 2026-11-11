@@ -543,6 +543,8 @@ struct druid_t final : public parse_player_effects_t
   timespan_t rampant_thorn_berserk_extension;  // mid2 4pc
   // Restoration
   player_t* symbiotic_relationship_target = nullptr;  // bonded ally, chosen in combat_begin()
+  double symbiotic_relationship_pool_partner = 0.0;   // collected for the bonded ally until the next 1 s pulse
+  double symbiotic_relationship_pool_self = 0.0;      // collected for the druid until the next 1 s pulse
   timespan_t lifetreading_efflo_end = 0_ms;           // end of the Efflorescence that follows Lifebloom
   int reforestation_count = 0;                        // Swiftmend casts towards the next Tree of Life
   int everbloom_max_stack = 0;                       // Lifebloom stacks from Everbloom's pulse (0: no Everbloom)
@@ -599,6 +601,7 @@ struct druid_t final : public parse_player_effects_t
     std::string symbiotic_relationship;  // bonded ally's name; empty = first tank, "none" = no bond
     // Chance that an ally is inside your Efflorescence on a tick (1 = the whole raid always stacked on it).
     double efflorescence_coverage = 1.0;
+    double flower_walk_coverage = 1.0;      // Flower Walk: chance each other ally is near the druid (1 = all)
     // Chance that each of Bursting Growth's nearby allies is within its 10 yards (1 = always).
     double bursting_growth_coverage = 1.0;
   } options;
@@ -2665,17 +2668,12 @@ struct druid_heal_t : public druid_spell_base_t<heal_t>
     if ( !partner || !heal || this == heal || s->result_total <= 0 )
       return;
 
+    // collected here, paid out once per second (druid_t::combat_begin)
     const auto& data = p()->find_spell( 474754 );
     if ( s->target == player && !partner->is_sleeping() )
-    {
-      heal->base_dd_min = heal->base_dd_max = s->result_total * data->effectN( 1 ).percent();
-      heal->execute_on_target( partner );
-    }
+      p()->symbiotic_relationship_pool_partner += s->result_total * data->effectN( 1 ).percent();
     else if ( s->target == partner )
-    {
-      heal->base_dd_min = heal->base_dd_max = s->result_total * data->effectN( 2 ).percent();
-      heal->execute_on_target( player );
-    }
+      p()->symbiotic_relationship_pool_self += s->result_total * data->effectN( 2 ).percent();
   }
 
   void impact( action_state_t* s ) override
@@ -6245,10 +6243,16 @@ struct efflorescence_t final : public druid_heal_t
       name_str_reporting = "efflorescence";
     }
 
+    mutable bool roll_targets = false;  // set by execute: build and filter the list once per tick
+
     std::vector<player_t*>& target_list() const override
     {
-      // get the full list
+      // get the full list (a tick asks more than once: only the first call after execute() filters it; filtering the
+      // cached list again rolled the coverage twice, i.e. coverage squared, until 2026-11-11)
       auto& tl = druid_heal_t::target_list();
+      if ( !roll_targets )
+        return tl;
+      roll_targets = false;
 
       // druid.efflorescence_coverage: only the allies standing in it this tick; the player it was placed under (with
       // Lifetreading, the Lifebloom target) is always in it
@@ -6257,9 +6261,15 @@ struct efflorescence_t final : public druid_heal_t
 
       rng().shuffle( tl.begin(), tl.end() );
 
-      range::sort( tl, []( const player_t* l, const player_t* r ) {
-        return l->health_percentage() < r->health_percentage();
-      } );
+      // Encounter sims: Efflorescence picks at random among the allies standing in it, not the lowest. The user's raid
+      // log (2026-11-08, 6,939 picks): picked allies average 89.7% health vs the raid's 89.1% (Wild Growth, a smart
+      // heal: 81.3% vs 87.6%); 25% of its heals land on full-health allies. Upstream (no encounter) keeps lowest first.
+      if ( sim->encounter_str.empty() )
+      {
+        range::sort( tl, []( const player_t* l, const player_t* r ) {
+          return l->health_percentage() < r->health_percentage();
+        } );
+      }
 
       return tl;
     }
@@ -6268,6 +6278,7 @@ struct efflorescence_t final : public druid_heal_t
     {
       // force re-evaluation of targets every tick
       target_cache.is_valid = false;
+      roll_targets = true;
 
       // nobody standing in it (druid.efflorescence_coverage): the tick heals no one
       if ( target_list().empty() )
@@ -6361,10 +6372,11 @@ struct everbloom_t final : public druid_fixed_heal_t
   {
     auto& tl = druid_fixed_heal_t::target_list();
 
+    // random INJURED allies, not the lowest: the user's raid log (2026-11-08, 21,967 heals): 8% of the picks at full
+    // health while 34% of the raid is; injured picks average 86.8% vs the injured raid's 85.2% (no lowest-first).
+    // Full-health allies only fill in when too few are injured.
     rng().shuffle( tl.begin(), tl.end() );
-    range::sort( tl, []( const player_t* l, const player_t* r ) {
-      return l->health_percentage() < r->health_percentage();
-    } );
+    std::stable_partition( tl.begin(), tl.end(), []( const player_t* t ) { return t->health_percentage() < 100; } );
 
     return tl;
   }
@@ -6548,8 +6560,14 @@ static player_t* lifebloom_target( const druid_t* p )
   return nullptr;
 }
 
-// Up to n allies other than `main` for extra HoT applications (Power of the Archdruid): allies without the HoT
-// first, then the lowest health.
+// Up to n allies other than `main` for extra HoT applications (Power of the Archdruid). The user's raid log
+// (2026-11-08, positions within the 20 yd range):
+// - Rejuvenation (~900 spreads): random INJURED allies first, full-health ones only to fill in. No preference for
+//   allies missing a Rejuvenation (44% of picks had one vs 45% of nearby allies) or for room for Germination (7% of
+//   picks already had both vs 10% nearby, also with >= 3 nearby missing one), no lowest-first (injured picks rank 0.45
+//   among nearby injured), but injured first (picks at full 13% when >= 2 nearby are injured, 74% otherwise).
+// - Regrowth (only 29 spreads: likely, not proven): allies WITHOUT Regrowth first (0 of 29 picks had one vs 15% of
+//   nearby allies), no injured preference (57% of picks at full with >= 2 injured nearby).
 static std::vector<player_t*> extra_hot_targets( const druid_t* p, const player_t* main, size_t n,
                                                  dot_t* druid_td_t::hots_t::* hot )
 {
@@ -6558,17 +6576,18 @@ static std::vector<player_t*> extra_hot_targets( const druid_t* p, const player_
     if ( t != main && !t->is_pet() && !t->is_enemy() )
       tl.push_back( t );
 
-  auto has_hot = [ p, hot ]( const player_t* t ) {
-    auto td = p->find_target_data( t );
-    return td && ( td->hots.*hot )->is_ticking();
-  };
-
   p->sim->rng().shuffle( tl.begin(), tl.end() );
-  range::sort( tl, [ has_hot ]( const player_t* l, const player_t* r ) {
-    if ( has_hot( l ) != has_hot( r ) )
-      return !has_hot( l );
-    return l->health_percentage() < r->health_percentage();
-  } );
+  if ( hot == &druid_td_t::hots_t::regrowth )
+  {
+    std::stable_partition( tl.begin(), tl.end(), [ p, hot ]( const player_t* t ) {
+      auto td = p->find_target_data( t );
+      return !( td && ( td->hots.*hot )->is_ticking() );
+    } );
+  }
+  else
+  {
+    std::stable_partition( tl.begin(), tl.end(), []( const player_t* t ) { return t->health_percentage() < 100; } );
+  }
 
   if ( tl.size() > n )
     tl.resize( n );
@@ -7292,12 +7311,11 @@ struct bursting_growth_heal_t final : public druid_heal_t
   {
     auto& tl = druid_heal_t::target_list();
 
+    // the bloom's target first, then random nearby allies (not the most injured): the user's raid log (2026-11-08,
+    // 17,354 heals) has the picks at 89.9% health vs the raid's 89.5%, 28% on full-health allies
     rng().shuffle( tl.begin(), tl.end() );
-    range::sort( tl, [ this ]( const player_t* l, const player_t* r ) {
-      if ( ( l == target ) != ( r == target ) )
-        return l == target;
-      return l->health_percentage() < r->health_percentage();
-    } );
+    if ( auto it = range::find( tl, target ); it != tl.end() )
+      std::iter_swap( tl.begin(), it );
 
     // druid.bursting_growth_coverage: each of the nearby allies is in range with that chance (no one replaces them)
     if ( double c = p()->options.bursting_growth_coverage; c < 1.0 && tl.size() > 1 )
@@ -7836,15 +7854,26 @@ struct flower_walk_heal_t final : public druid_heal_t
     aoe = as<int>( data().effectN( 2 ).base_value() );
   }
 
+  // The flowers grow under the druid: the druid is always in range, other allies each with druid.flower_walk_coverage,
+  // picked at random whatever their health. The user's raid log (2026-11-08, 559 pulses): the druid in 92% of pulses,
+  // 1.8 heals per pulse, 40% of the heals on full-health allies. Size per heal: 0.2 x SP with mastery and versatility
+  // only (formula test vs the druid's Lifebloom tick: 0.96 of it).
+  mutable bool roll_targets = false;  // set by execute: build and filter the list once per pulse
+
   std::vector<player_t*>& target_list() const override
   {
     auto& tl = druid_heal_t::target_list();
+    if ( !roll_targets )
+      return tl;
+    roll_targets = false;
 
-    range::erase_remove( tl, []( player_t* t ) { return t->health_percentage() >= 100.0; } );
+    double c = p()->options.flower_walk_coverage;
+    range::erase_remove( tl, [ this, c ]( player_t* t ) { return t != player && c < 1.0 && !rng().roll( c ); } );
     rng().shuffle( tl.begin(), tl.end() );
-    range::sort( tl, []( const player_t* l, const player_t* r ) {
-      return l->health_percentage() < r->health_percentage();
-    } );
+
+    // the druid first, so a short list still holds it
+    if ( auto it = range::find( tl, player ); it != tl.end() )
+      std::iter_swap( tl.begin(), it );
 
     return tl;
   }
@@ -7852,6 +7881,7 @@ struct flower_walk_heal_t final : public druid_heal_t
   void execute() override
   {
     target_cache.is_valid = false;
+    roll_targets = true;
     if ( target_list().empty() )
       return;
 
@@ -14313,6 +14343,26 @@ void druid_t::combat_begin()
     }
   }
 
+  // Symbiotic Relationship pays out once per second (474754 #3, periodic 1 s; the user's raid log: ~89 heals per
+  // minute, not one per heal): what it collected since the last pulse, each way.
+  symbiotic_relationship_pool_partner = symbiotic_relationship_pool_self = 0.0;
+  if ( symbiotic_relationship_target && active.symbiotic_relationship )
+  {
+    auto pulse = [ this ] {
+      auto heal = debug_cast<druid_fixed_heal_t*>( active.symbiotic_relationship );
+      auto partner = symbiotic_relationship_target;
+      if ( symbiotic_relationship_pool_partner > 0 && !partner->is_sleeping() )
+        heal->heal_for( partner, symbiotic_relationship_pool_partner );
+      if ( symbiotic_relationship_pool_self > 0 && !is_sleeping() )
+        heal->heal_for( this, symbiotic_relationship_pool_self );
+      symbiotic_relationship_pool_partner = symbiotic_relationship_pool_self = 0.0;
+    };
+    make_event( *sim, timespan_t::from_seconds( rng().range( 0.0, 1.0 ) ), [ this, pulse ] {
+      pulse();
+      make_repeating_event( *sim, 1_s, pulse );
+    } );
+  }
+
   // Everbloom: your Lifebloom gains a stack every 4 sec, up to 3, ticking for x stacks (the final bloom doesn't grow).
   // The user's dummy log (2026-11-09): stacks 4.0 s apart in two tests with different haste, although the talent says
   // 5 sec, on a timer of their own (the first one 2.7 / 4.2 s after the cast).
@@ -14763,6 +14813,7 @@ void druid_t::create_options()
   add_option( opt_float( "druid.time_spend_healing", options.time_spend_healing ) );
   add_option( opt_string( "druid.symbiotic_relationship", options.symbiotic_relationship ) );
   add_option( opt_float( "druid.efflorescence_coverage", options.efflorescence_coverage, 0.0, 1.0 ) );
+  add_option( opt_float( "druid.flower_walk_coverage", options.flower_walk_coverage, 0.0, 1.0 ) );
   add_option( opt_float( "druid.bursting_growth_coverage", options.bursting_growth_coverage, 0.0, 1.0 ) );
 }
 

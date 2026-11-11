@@ -9,6 +9,7 @@
 #include "sim/option.hpp"
 #include "sim/tolerance_stats.hpp"
 
+#include <map>
 #include <optional>
 #include <string>
 #include <utility>
@@ -58,6 +59,10 @@ struct setup_result_t
   std::vector<std::pair<std::string, std::pair<std::string, unsigned>>> gear;  // slot -> (SimC item string, item level)
   std::vector<test_result_t> tests;
   std::vector<probe_t> levels;  // fixed damage levels (tolerance_levels), with the measurements
+  // The quick screen (tolerance_screen_iterations): raid health against current gear on the same few fights.
+  unsigned screen_fights = 0;  // 0 = not screened
+  double screen_diff     = 0;  // this set minus current gear, raid health (0-1)
+  bool screened_out      = false;  // clearly behind: no full check, reported as a downgrade from the screen
 };
 
 struct tolerance_t
@@ -90,8 +95,18 @@ struct tolerance_t
   // tolerance_levels=limit: each pattern's level is current gear's limit there (levels holds the last one).
   bool levels_at_limit = false;
   unsigned level_iterations = 0;
+  // Two-stage gear check: every gear set first plays tolerance_screen_iterations fights at the level (0 = off), current
+  // gear too, on the same fights; a set more than tolerance_screen_margin raid health behind current gear stops there.
+  unsigned screen_iterations = 0;
+  double screen_margin       = 0.004;
   // This sim's measurements (tolerance_stats=1, set on the level runs): every sim and thread collects its own fights.
   fight_stats_t stats;
+  // Limit searches remembered between runs (tolerance_cache=<file>, empty = off): each fast search is filed under a
+  // fingerprint of everything that decides it (the run's options, the setup's own lines, and a short sample run of that
+  // exact setup, which changes with any engine, profile or fight change), so a stale result is never reused.
+  std::string cache_file;
+  std::map<std::string, test_result_t> cache;
+  bool cache_changed = false;
   std::string healer_html;           // the healer report to write
   std::string healer_html_template;  // its template (an HTML file with a __SIMC_DATA__ placeholder)
 
@@ -117,6 +132,11 @@ private:
   // Current gear's limit (all damage): a rough pass of rough_iterations fights per step brackets it, then full tests
   // aimed where the worst player's death rate crosses max_death_rate narrow it to the precision.
   test_result_t fast_search( const sim_control_t& base, setup_result_t* setup );
+  // fast_search through the cache (tolerance_cache): set_lines = the setup's own profile lines (empty for current gear)
+  test_result_t cached_fast_search( const sim_control_t& base, const std::vector<std::string>& set_lines,
+                                    setup_result_t* setup );
+  void load_cache();
+  void save_cache() const;
   // One pattern's gear sets with more raid health than current gear beyond the noise (indices into results); first =
   // that pattern's current gear.
   std::vector<size_t> point_upgrades( size_t first ) const;

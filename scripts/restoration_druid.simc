@@ -18,12 +18,16 @@ set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
 omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
 # Flask: Flask of the Magisters (mastery) instead of SimC's Restoration default, Flask of the Blood Knights (haste)
 flask=magisters_2
-# How often an ally stands in your Efflorescence (it follows your Lifebloom target): 0.6 = the positioning you aim for
-# (your Coiled Altar log of 2026-11-09 shows 0.32, 84 Efflorescence heals/min); 1 = the raid always stacked on it.
-druid.efflorescence_coverage=0.6
+# How often an ally stands in your Efflorescence (it follows your Lifebloom target): 0.36 = the positioning you aim for
+# (you chose 0.6 when the sim rolled it twice, i.e. 0.36; your raid log of 2026-11-08 shows ~0.1, 2.4 heals per
+# pulse); 1 = the raid always stacked on it.
+druid.efflorescence_coverage=0.36
 # How often each of Bursting Growth's 2 nearby allies is within its 10 yards (a burst heals 3 at most): your log shows
 # ~0.8 (2.6 players per burst).
 druid.bursting_growth_coverage=0.8
+# How often each other ally is near you while Flower Walk grows flowers (Barkskin; you are always healed if in the
+# 3): your log shows ~0.045 (1.8 players per pulse, you in 92% of them).
+druid.flower_walk_coverage=0.045
 # Symbiotic Relationship bond: a squishy ally, as you play it (empty = the first tank).
 druid.symbiotic_relationship=Frost_Mage
 # Mana from other players, per minute (tracked as their own mana gains): an Evoker's Source of Magic, a Shaman's Mana Spring.

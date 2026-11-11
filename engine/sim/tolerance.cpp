@@ -131,6 +131,9 @@ void tolerance_t::create_options()
   sim->add_option( opt_map_list( "tolerance_pattern.", pattern_map ) );
   sim->add_option( opt_string( "tolerance_levels", levels_str ) );
   sim->add_option( opt_uint( "tolerance_level_iterations", level_iterations ) );
+  sim->add_option( opt_uint( "tolerance_screen_iterations", screen_iterations ) );
+  sim->add_option( opt_float( "tolerance_screen_margin", screen_margin, 0, 1 ) );
+  sim->add_option( opt_string( "tolerance_cache", cache_file ) );
   sim->add_option( opt_bool( "tolerance_stats", stats.enabled ) );
   sim->add_option( opt_float( "tolerance_recovery_margin", stats.recovery_margin, 0, 1 ) );
   sim->add_option( opt_float( "tolerance_burst_window", stats.burst_window, 1, 120 ) );
@@ -380,6 +383,116 @@ test_result_t tolerance_t::fast_search( const sim_control_t& base, setup_result_
   return r;
 }
 
+// FNV-1a, 64 bit: a stable name for a cache entry (std::hash isn't guaranteed stable between builds).
+static std::string fingerprint_hash( const std::string& s )
+{
+  uint64_t h = 1469598103934665603ULL;
+  for ( unsigned char c : s )
+  {
+    h ^= c;
+    h *= 1099511628211ULL;
+  }
+  return fmt::format( "{:016x}", h );
+}
+
+// Cache file: one entry per limit search.
+//   E <hash> <score> <first_fail> <probes>
+//   P <pct> <pass> <players_dying> <mana_end> <oom_at> <hps> <wipe_rate> <fight_length> <deaths> [<name> <rate>]...
+void tolerance_t::load_cache()
+{
+  static bool loaded = false;
+  if ( loaded )
+    return;
+  loaded = true;
+
+  std::ifstream in( cache_file );
+  std::string line, key;
+  test_result_t* cur = nullptr;
+  while ( std::getline( in, line ) )
+  {
+    std::istringstream ls( line );
+    std::string tag;
+    ls >> tag;
+    if ( tag == "E" )
+    {
+      size_t n;
+      test_result_t r;
+      r.test = "combined";
+      ls >> key >> r.score >> r.first_fail >> n;
+      cur = ls ? &( cache[ key ] = r ) : nullptr;
+    }
+    else if ( tag == "P" && cur )
+    {
+      probe_t p;
+      size_t nd;
+      ls >> p.pct >> p.pass >> p.players_dying >> p.mana_end >> p.oom_at >> p.hps >> p.wipe_rate >> p.fight_length >> nd;
+      for ( size_t i = 0; i < nd && ls; i++ )
+      {
+        std::string name;
+        double rate;
+        ls >> name >> rate;
+        p.deaths.emplace_back( name, rate );
+      }
+      if ( ls )
+        cur->probes.push_back( p );
+    }
+  }
+}
+
+void tolerance_t::save_cache() const
+{
+  std::ofstream out( cache_file );
+  for ( const auto& [ key, r ] : cache )
+  {
+    out << fmt::format( "E {} {:.17g} {:.17g} {}\n", key, r.score, r.first_fail, r.probes.size() );
+    for ( const auto& p : r.probes )
+    {
+      out << fmt::format( "P {:.17g} {} {} {:.17g} {:.17g} {:.17g} {:.17g} {:.17g} {}", p.pct, p.pass ? 1 : 0, p.players_dying,
+                          p.mana_end, p.oom_at, p.hps, p.wipe_rate, p.fight_length, p.deaths.size() );
+      for ( const auto& [ name, rate ] : p.deaths )
+        out << fmt::format( " {} {:.17g}", name, rate );
+      out << "\n";
+    }
+  }
+}
+
+test_result_t tolerance_t::cached_fast_search( const sim_control_t& base, const std::vector<std::string>& set_lines,
+                                               setup_result_t* setup )
+{
+  if ( cache_file.empty() )
+    return fast_search( base, setup );
+  load_cache();
+
+  // The fingerprint: every option of this run (profile, fight, pattern, the set's lines), the search settings, and a
+  // short sample of this exact setup: any change to the engine, the character or the fight changes the sample.
+  probe_t sample = probe( base, "combined", 1.0, 0, 100, 0, nullptr );
+  std::string key;
+  static const std::vector<std::string> outputs_only = { "json",        "json2",          "output",      "html",
+                                                         "healer_html", "healer_html_template", "tolerance_cache",
+                                                         "tolerance_share_source", "xml", "log", "report_details" };
+  for ( const auto& o : base.options )
+    if ( range::find( outputs_only, o.name ) == outputs_only.end() )
+      key += o.scope + "\x1f" + o.name + "=" + o.value + "\n";
+  for ( const auto& l : set_lines )
+    key += "set:" + l + "\n";
+  key += fmt::format( "{}|{}|{}|{}|{}|{}|{:.6f}|{:.6f}|{:.6f}|{}", share, iterations, rough_iterations, precision,
+                      max_death_rate, sim->threads, sample.hps, sample.fight_length, sample.mana_end,
+                      sample.deaths.empty() ? 0.0 : sample.deaths.front().second );
+  std::string hash = fingerprint_hash( key );
+
+  if ( auto it = cache.find( hash ); it != cache.end() )
+  {
+    fmt::print( "  {:<24} limit {:.1f}% (remembered: nothing changed since it was searched)\n",
+                setup ? setup->name : "", it->second.score * 100 );
+    return it->second;
+  }
+
+  auto r        = fast_search( base, setup );
+  cache[ hash ] = r;
+  save_cache();
+  return r;
+}
+
 // The setup at each fixed damage level, all damage together, with the measurements.
 void tolerance_t::run_levels( const sim_control_t& base, int seed, setup_result_t& setup )
 {
@@ -427,6 +540,14 @@ test_result_t tolerance_t::search( const sim_control_t& base, const std::string&
   return r;
 }
 
+// Raid health kept on a level run, -1 without measurements.
+static double probe_health( const probe_t& p )
+{
+  if ( !p.has_stats || p.stats.health_seconds <= 0 )
+    return -1;
+  return p.stats.health_time / p.stats.health_seconds;
+}
+
 void tolerance_t::analyze()
 {
   if ( !enabled || sim->parent || sim->is_canceled() )
@@ -458,7 +579,7 @@ void tolerance_t::analyze()
     if ( search_enabled )
     {
       main.tests.push_back( search_sets ? search( base, "combined", 0, 1.0, 1.25, iterations, precision, 0, &main )
-                                        : fast_search( base, &main ) );
+                                        : cached_fast_search( base, {}, &main ) );
       score = main.tests.front().score;
       if ( score > 0 && i == 0 )
       {
@@ -488,6 +609,15 @@ void tolerance_t::analyze()
     if ( sets.empty() || ( search_enabled && search_sets && score <= 0 ) )
       continue;
 
+    // The quick screen (gear check only): current gear on a few fights at the level, the sets on the same fights next.
+    double screen_base = -1;
+    bool screening     = screen_iterations > 0 && !( search_enabled && search_sets ) && !levels.empty();
+    if ( screening )
+    {
+      fmt::print( "Quick screen: {} fights per gear set\n", screen_iterations );
+      screen_base = probe_health( probe( base, "combined", levels.back(), 0, screen_iterations, 0, nullptr, true ) );
+    }
+
     // Gear sets: the same search on the same random numbers, starting at the profile's score with small steps.
     for ( const auto& [ name, set_lines ] : sets )
     {
@@ -500,6 +630,24 @@ void tolerance_t::analyze()
       s.options = set_lines;
       sim_control_t control( base );
       apply_set( control, set_lines, sim->profileset_main_actor_index );
+      if ( screen_base >= 0 )
+      {
+        // the same fights as current gear's screen: clearly behind it means no full check
+        auto sp = probe( control, "combined", levels.back(), 0, screen_iterations, 0, &s, true );
+        double h = probe_health( sp );
+        if ( h >= 0 )
+        {
+          s.screen_fights = screen_iterations;
+          s.screen_diff   = h - screen_base;
+          s.screened_out  = s.screen_diff < -screen_margin;
+        }
+        if ( s.screened_out )
+        {
+          fmt::print( "  {}: {:+.2f} points on the quick screen, no full check\n", s.name, 100 * s.screen_diff );
+          results.push_back( std::move( s ) );
+          continue;
+        }
+      }
       if ( search_enabled && search_sets )
         s.tests.push_back( search( control, "combined", 0, score, 1.02, iterations, precision, 0, &s ) );
       run_levels( control, 0, s );
@@ -533,7 +681,7 @@ void tolerance_t::analyze()
         fmt::print( "More points, its limit: {}\n", results[ i ].name );
         sim_control_t control( base );
         apply_set( control, results[ i ].options, sim->profileset_main_actor_index );
-        auto t = fast_search( control, &results[ i ] );
+        auto t = cached_fast_search( control, results[ i ].options, &results[ i ] );
         results[ i ].tests.push_back( std::move( t ) );
       }
 
@@ -551,7 +699,7 @@ void tolerance_t::analyze()
         sim_control_t control( base );
         apply_set( control, s.options, sim->profileset_main_actor_index );
         run_levels( control, 0, s );
-        s.tests.push_back( fast_search( control, &s ) );
+        s.tests.push_back( cached_fast_search( control, s.options, &s ) );
         results.push_back( std::move( s ) );
       }
     }

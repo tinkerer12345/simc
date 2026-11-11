@@ -1389,6 +1389,11 @@ function gearCheckOf(pattern) {
   const fights = measuresOf(main, level)?.fights || 0;
   const mainLim = limitOf(main);
   const rows = setups.filter(s => s.role === "set").map(s => {
+    // Stopped on the quick screen: clearly behind current gear on the same few fights, so no full check.
+    if (s.screen?.out) {
+      const d = s.screen.diff;
+      return { name: s.name, combination: !!s.combination, changes: changesOf(s.gear), v: b + d, d, lim: null, limD: null, verdict: "worse", quick: true, reason: `${signedPts2(d)} on a quick check of ${s.screen.fights} fights` };
+    }
     const v = health(s), d = v == null ? null : v - b;
     // More points is an upgrade only if the limit doesn't drop: the engine searches the limit of every set with more
     // points, since a healthier raid on average doesn't always mean a higher limit.
@@ -1718,7 +1723,8 @@ if (compareOnly) {
         const r = c.rows.find(x => x.name === r0.name);
         return !r && r0.combination ? `<td class="faint" style="font-size:12px">Not built here: fewer than 2 upgrades on this pattern</td>` : !r || r.d == null ? "<td>–</td>"
           : `<td><span class="chip ${r.verdict}">${VERDICT[r.verdict]}</span> <b>${points(r.v)}</b> <small class="faint">${signedPts2(r.d)}</small>${
-            r.lim != null ? `<br><small class="faint">limit ${fmtPct(r.lim, 1)} (${signed(r.limD, 1).replace("%", " points")})</small>` : ""}</td>`;
+            r.lim != null ? `<br><small class="faint">limit ${fmtPct(r.lim, 1)} (${signed(r.limD, 1).replace("%", " points")})</small>` : ""}${
+            r.quick ? `<br><small class="faint">quick check: clearly behind, not run in full</small>` : ""}</td>`;
       }).join("")}</tr>`).join("")}</tbody></table></div>`
     : `<div class="panel empty">This report has no gear sets to check. Add them to the gear sets file.</div>`;
   app.appendChild(sec);

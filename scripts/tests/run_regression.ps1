@@ -252,10 +252,12 @@ $fast = Invoke-Simc 'fast_limit' @('scripts\restoration_druid.simc', 'scripts\fi
 $fs = $fast.sim.tolerance
 $fmain = @($fs.setups | Where-Object { $_.role -eq 'main' })[0]
 $flim = ($fmain.tests | Where-Object { $_.test -eq 'combined' }).score
-Check $g 'fast limit near the full search (120-132%)' ([int]($flim -gt 1.20 -and $flim -lt 1.32)) 1
+Check $g 'fast limit near the full search (108-122%)' ([int]($flim -gt 1.08 -and $flim -lt 1.22)) 1
 # At most 12: with druid.efflorescence_coverage=0.6 (2026-11-09) the death rate creeps up slowly near 5% and the aimed
 # tests approach from below in small steps (11 tests for 126.0%, same answer as the full search). 14 since 2026-11-11
 # (Tranquility 5-target cap + Convoke mix from the log: 13 tests for 125.2%, passing 119.4..125.2 in small steps).
+# 2026-11-11: random target picks from the log (Efflorescence, Bursting Growth, Everbloom among injured, Power of the
+# Archdruid) moved the limit to ~115% (window 108-122%).
 Check $g 'fast limit: at most 14 full tests' ([int](@($fmain.tests[0].probes).Count -le 14)) 1
 Check $g 'fast limit: gear sets not searched' (@($fs.setups | Where-Object { $_.role -eq 'set' -and @($_.tests).Count -gt 0 }).Count) 0
 # Damage patterns (fights\patchwerk.simc: bursts every 30 sec, and the same bursts every 1 min): the search runs once
