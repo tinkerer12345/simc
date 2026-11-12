@@ -954,6 +954,85 @@ void to_json( JsonOutput& arr, const ::report::json::report_configuration_t& rep
   root[ "specialization" ] = util::specialization_string( p.specialization() );
   root[ "profile_source" ] = util::profile_source_string( p.profile_source_ );
   root[ "talents" ] = p.talents_str;
+  // Encounter sims (the healer fork): every node of the player's class, spec and chosen hero trees with its position,
+  // so the healer report can draw the trees (the talent values page). Taken nodes carry their rank.
+  if ( !p.sim->encounter_str.empty() && !p.player_traits.empty() && !p.is_enemy() )
+  {
+    bool ptr = maybe_ptr( p.dbc->ptr );
+    std::map<unsigned, unsigned> taken;  // trait node entry -> rank
+    for ( const auto& [ tree, entry, rank ] : p.player_traits )
+      taken[ entry ] = rank;
+    auto for_spec = [ &p ]( const trait_data_t& t ) {
+      return range::all_of( t.id_spec, []( unsigned s ) { return s == 0; } ) ||
+             range::contains( t.id_spec, static_cast<unsigned>( p.specialization() ) );
+    };
+    auto nodes = root[ "talent_tree" ].make_array();
+    std::set<unsigned> seen;  // one entry per node: the taken one, else the first
+    for ( auto tree : { talent_tree::CLASS, talent_tree::SPECIALIZATION, talent_tree::HERO } )
+    {
+      auto all = trait_data_t::data( util::class_id( p.type ), tree, ptr );
+      for ( int pass = 0; pass < 2; pass++ )
+      {
+        for ( const auto& t : all )
+        {
+          if ( t.row <= 0 || t.col <= 0 || seen.count( t.id_node ) || !for_spec( t ) )
+            continue;
+          if ( tree == talent_tree::HERO && !p.player_sub_trees.count( t.id_sub_tree ) )
+            continue;
+          if ( t.node_type == 3 )  // the hero tree selection node
+            continue;
+          bool is_taken = taken.count( t.id_trait_node_entry );
+          if ( pass == 0 && !is_taken )
+            continue;
+          seen.insert( t.id_node );
+          auto n          = nodes.add();
+          n[ "tree" ]     = tree == talent_tree::CLASS ? "class" : tree == talent_tree::SPECIALIZATION ? "spec" : "hero";
+          n[ "name" ]     = t.name;
+          n[ "spell" ]    = t.id_spell;
+          n[ "row" ]      = t.row;
+          n[ "col" ]      = t.col;
+          n[ "max_rank" ] = t.max_ranks;
+          n[ "rank" ]     = is_taken ? taken[ t.id_trait_node_entry ] : 0u;
+          n[ "choice" ]   = t.node_type == 2;
+          n[ "node" ]     = t.id_node;
+          n[ "entry" ]    = t.id_trait_node_entry;
+          if ( t.node_type == 1 )  // tiered node (apex): ranks add up over its entries, one entry per tier
+          {
+            unsigned total = 0, max_total = 0;
+            auto tiers = n[ "tiers" ].make_array();
+            for ( const auto& o : trait_data_t::data( t.id_node, util::class_id( p.type ), tree, ptr ) )
+            {
+              if ( !for_spec( o ) )
+                continue;
+              unsigned r = taken.count( o.id_trait_node_entry ) ? taken[ o.id_trait_node_entry ] : 0u;
+              total += r;
+              max_total += o.max_ranks;
+              auto e          = tiers.add();
+              e[ "entry" ]    = o.id_trait_node_entry;
+              e[ "spell" ]    = o.id_spell;
+              e[ "max_rank" ] = o.max_ranks;
+              e[ "rank" ]     = r;
+            }
+            n[ "rank" ]     = total;
+            n[ "max_rank" ] = max_total;
+          }
+          if ( t.node_type == 2 )  // every option of a choice node (the talent values page tests the other one too)
+          {
+            auto opts = n[ "options" ].make_array();
+            for ( const auto& o : trait_data_t::data( t.id_node, util::class_id( p.type ), tree, ptr ) )
+            {
+              if ( !for_spec( o ) )
+                continue;
+              auto e       = opts.add();
+              e[ "name" ]  = o.name;
+              e[ "entry" ] = o.id_trait_node_entry;
+              e[ "spell" ] = o.id_spell;
+            }
+          }
+        }
+      }
+    }
+  }
   root[ "party" ] = p.party;
   root[ "ready_type" ] = p.ready_type;
   root[ "bugs" ] = p.bugs;
@@ -1328,6 +1407,70 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
     auto lv = sn[ "levels" ].make_array();
     for ( const auto& p : s.levels )
       probe_json( p, lv.add() );
+    if ( !t.ran.empty() )
+      sn[ "ran" ] = t.ran;
+  }
+
+  // tolerance_keep: an earlier report's sets that this run didn't play are carried over unchanged ("kept"). If the
+  // profile's own result on a pattern moved since then (engine, profile or fight changed), they are "stale": their
+  // raid health is shifted by the same amount, so each keeps the difference to current gear it was measured with.
+  if ( !t.keep_data.empty() )
+  {
+    rapidjson::Document old;
+    old.Parse( t.keep_data.c_str() );
+    if ( !old.HasParseError() && old.IsObject() && old.HasMember( "sim" ) && old[ "sim" ].HasMember( "tolerance" ) &&
+         old[ "sim" ][ "tolerance" ].HasMember( "setups" ) && old[ "sim" ][ "tolerance" ][ "setups" ].IsArray() )
+    {
+      auto health = []( const rapidjson::Value& s ) -> rapidjson::Value* {
+        if ( !s.HasMember( "levels" ) || !s[ "levels" ].IsArray() || s[ "levels" ].Empty() )
+          return nullptr;
+        auto& last = const_cast<rapidjson::Value&>( s[ "levels" ][ s[ "levels" ].Size() - 1 ] );
+        if ( !last.HasMember( "stats" ) || !last[ "stats" ].HasMember( "raid_health" ) )
+          return nullptr;
+        return &last[ "stats" ][ "raid_health" ];
+      };
+      auto& olds = old[ "sim" ][ "tolerance" ][ "setups" ];
+      std::map<std::string, double> old_main, new_main;  // pattern -> the profile's raid health
+      for ( auto& s : olds.GetArray() )
+        if ( s.HasMember( "role" ) && std::string( s[ "role" ].GetString() ) == "main" )
+          if ( auto h = health( s ) )
+            old_main[ s[ "pattern" ].GetString() ] = h->GetDouble();
+      for ( const auto& s : t.results )
+        if ( s.role == "main" && !s.levels.empty() && s.levels.back().stats.health_seconds > 0 )
+          new_main[ s.pattern ] = s.levels.back().stats.health_time / s.levels.back().stats.health_seconds;
+      unsigned kept = 0;
+      bool stale    = false;
+      for ( auto& s : olds.GetArray() )
+      {
+        if ( !s.HasMember( "role" ) || std::string( s[ "role" ].GetString() ) != "set" || !s.HasMember( "name" ) ||
+             !s.HasMember( "pattern" ) )
+          continue;
+        std::string name = s[ "name" ].GetString(), pattern = s[ "pattern" ].GetString();
+        if ( !t.keep_except.empty() && util::str_prefix_ci( name, t.keep_except ) &&
+             !t.reused.count( name + "\x1f" + pattern ) )
+          continue;
+        if ( range::any_of( t.results, [ & ]( const auto& r ) { return r.name == name && r.pattern == pattern; } ) )
+          continue;
+        if ( !new_main.count( pattern ) )
+          continue;  // a damage pattern this run doesn't have
+        rapidjson::Value copy( s, setups.doc().GetAllocator() );
+        copy.RemoveMember( "kept" );
+        copy.RemoveMember( "stale" );
+        copy.AddMember( "kept", true, setups.doc().GetAllocator() );
+        if ( old_main.count( pattern ) && std::abs( old_main[ pattern ] - new_main[ pattern ] ) > 1e-9 )
+        {
+          if ( auto h = health( copy ) )
+            h->SetDouble( h->GetDouble() + new_main[ pattern ] - old_main[ pattern ] );
+          copy.AddMember( "stale", true, setups.doc().GetAllocator() );
+          stale = true;
+        }
+        setups.val().PushBack( copy, setups.doc().GetAllocator() );
+        kept++;
+      }
+      root[ "kept_sets" ] = kept;
+      if ( stale )
+        root[ "kept_stale" ] = true;
+    }
   }
 }
 

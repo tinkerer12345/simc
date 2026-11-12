@@ -317,6 +317,118 @@ a.wh-item:hover { text-decoration: underline; }
 .chip { display: inline-block; padding: 3px 11px; border-radius: 999px; font-weight: 700; font-size: 13px; border: 1.5px solid currentColor; }
 .chip.equal { color: var(--ink-3); }
 .chip.tradeoff, .tradeoff { color: var(--c4); }
+/* Talent values page: the talent trees, each node coloured by its value */
+.tt-bar { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 4px 0 14px; }
+.tt-bar button { background: var(--panel-2, var(--panel)); color: var(--ink-2); border: 1px solid var(--line); border-radius: 999px;
+  padding: 5px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+.tt-bar button.on { color: var(--ink); border-color: var(--accent); }
+.tt-legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12.5px; color: var(--ink-2); margin-left: auto; }
+.tt-legend i { display: inline-block; width: 11px; height: 11px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+.tt-stage { display: grid; grid-template-columns: auto minmax(240px, 1fr); gap: 16px; align-items: start; }
+@media (max-width: 900px) { .tt-stage { grid-template-columns: 1fr; } }
+.tt-stage .tt-detail { margin-top: 0; position: sticky; top: 70px; }
+.tt-tabs { display: inline-flex; gap: 6px; margin-right: 14px; }
+.tt-node.zero { border-color: var(--ink-3) !important; }
+.tt-legend i.heat { background: linear-gradient(90deg, color-mix(in srgb, var(--heal) 30%, var(--ink-3)), var(--heal)); width: 22px; }
+.tt-legend i.dash { border: 2px dashed var(--heal); background: none; }
+/* talent values tree: the value chip sits centred on top of the node, larger, in full green */
+.tt-stage .tt-badge { top: -12px; bottom: auto; left: 50%; right: auto; transform: translateX(-50%); font-size: 11.5px; font-weight: 800; padding: 1px 7px; border-radius: 8px; border-width: 1.5px; }
+.tt-stage .tt-node.good .tt-badge { color: var(--heal); background: color-mix(in srgb, var(--heal) 14%, var(--bg)); }
+.tt-stage .tt-node.bad .tt-badge { background: color-mix(in srgb, var(--dmg) 14%, var(--bg)); }
+.tt-stage .tt-rank { top: auto; bottom: -9px; left: -7px; }
+.tt-stage .tt-alt { top: auto; bottom: -9px; right: -9px; }
+.tt-stage .tt-canvas { margin-top: 6px; }
+.tt-trees { display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: 12px; }
+.tt-warn { border-left: 3px solid var(--c4, #d8a43a); padding-left: 10px; }
+.tt-tree { padding: 14px 12px; overflow-x: auto; --tt-ring: var(--ink); }
+.tt-tree h3 { margin: 0 0 10px; font-size: 15px; } .tt-tree h3 .faint { font-weight: 500; font-size: 13px; }
+.tt-canvas { position: relative; margin: 0 auto; }
+.tt-canvas svg { position: absolute; inset: 0; }
+.tt-canvas line { stroke: var(--line); stroke-width: 1.5; }
+.tt-canvas line.on { stroke: var(--tt-ring); stroke-width: 2.5; opacity: .85; }
+.tt-node { position: absolute; width: 32px; height: 32px; border-radius: 7px; border: 2px solid var(--line); display: flex;
+  align-items: center; justify-content: center; font-size: 9.5px; font-weight: 600; color: var(--ink-2); background: var(--panel);
+  line-height: 1.05; text-align: center; cursor: pointer; box-sizing: border-box; }
+.tt-node .tt-abbr { position: absolute; }
+.tt-node img { position: absolute; inset: 0; width: 100%; height: 100%; border-radius: 5px; object-fit: cover; }
+.tt-node.choice, .tt-node.choice img { border-radius: 50%; }
+.tt-node.good { border-color: var(--heal); color: var(--ink); background: color-mix(in srgb, var(--heal) 22%, var(--panel)); }
+.tt-node.zero { border-color: var(--c4, #d8a43a); color: var(--ink); background: color-mix(in srgb, var(--c4, #d8a43a) 18%, var(--panel)); }
+.tt-node.bad { border-color: var(--dmg); color: var(--ink); background: color-mix(in srgb, var(--dmg) 22%, var(--panel)); }
+.tt-node.untested, .tt-node.nyi { border-color: var(--ink-3); }
+.tt-node.nyi .tt-badge { color: var(--ink-3); }
+.tt-legend i.nyi { font-style: normal; font-size: 9px; font-weight: 700; width: auto; height: auto; padding: 0 3px; border: 1px solid var(--ink-3); color: var(--ink-3); border-radius: 5px; }
+.tt-node.mine { --glow: transparent; box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--tt-ring), 0 0 14px 3px var(--glow); }
+.tt-node.mine.zz { box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--tt-ring), 0 0 12px 2px color-mix(in srgb, var(--tt-ring) 35%, transparent); }
+.tt-node.notmine { border-style: dashed; background: var(--panel); color: var(--ink-3); }
+.tt-node.notmine img { filter: grayscale(1) brightness(.55); }
+.tt-node.notmine .tt-abbr { opacity: .5; }
+.tt-node.sel { outline: 2px solid var(--accent); outline-offset: 5px; }
+.tt-node:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
+.tt-badge { position: absolute; right: -12px; bottom: -9px; z-index: 2; font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 6px;
+  background: var(--bg); border: 1px solid currentColor; white-space: nowrap; }
+.tt-node.good .tt-badge { color: var(--heal); } .tt-node.zero .tt-badge { color: var(--c4, #d8a43a); } .tt-node.bad .tt-badge { color: var(--dmg); }
+.tt-node.notmine .tt-badge { border-style: dashed; }
+.tt-rank { position: absolute; left: -6px; top: -8px; z-index: 2; font-size: 9px; color: var(--ink); background: var(--bg); border-radius: 5px; padding: 0 3px; font-weight: 600; }
+.tt-alt { position: absolute; right: -9px; top: -9px; z-index: 2; font-size: 11px; font-weight: 800; color: var(--heal); background: var(--bg); border-radius: 50%; padding: 0 2px; line-height: 1.2; }
+.tt-legend i.ring { width: 9px; height: 9px; border-radius: 3px; border: 2px solid var(--ink); }
+.tt-detail { margin-top: 14px; padding: 12px 16px; display: grid; gap: 5px; font-size: 13.5px; }
+.tt-detail-head { font-size: 15px; margin-bottom: 2px; }
+.tt-sub { padding-left: 14px; color: var(--ink-2); }
+.tt-tip { max-width: 360px; display: grid; gap: 4px; }
+/* talents page: at a glance, routes, compact rotation rows */
+.gl { padding: 16px 20px; margin-bottom: 28px; display: grid; gap: 10px; }
+.gl h2 { margin: 0 0 4px; font-size: 20px; }
+.gl-row { display: flex; gap: 12px; align-items: flex-start; font-size: 14.5px; line-height: 1.45; }
+.gl-ico { flex: none; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; font-size: 13px; border: 2px solid var(--ink-3); color: var(--ink-3); }
+.gl-ico.good { border-color: var(--heal); color: var(--heal); } .gl-ico.zero { border-color: var(--c4, #d8a43a); color: var(--c4, #d8a43a); }
+.gl-sub { margin-top: 3px; font-size: 13.5px; }
+.gl-link { font-size: 12.5px; margin-left: 6px; color: var(--accent); }
+.gl-foot { margin: 4px 0 0; font-size: 12.5px; }
+.gl-pct { display: inline-block; min-width: 46px; text-align: right; font-weight: 700; font-size: 13px; font-variant-numeric: tabular-nums; }
+.gl-pct.good { color: var(--heal); } .gl-pct.bad { color: var(--dmg); } .gl-pct.zero { color: var(--ink-3); }
+.rt-take-t { color: var(--heal); font-weight: 600; } .rt-drop-t { color: var(--dmg); font-weight: 600; margin-left: 8px; }
+.rt-explain { padding: 12px 14px; font-size: 13.5px; } .rt-explain p { margin: 6px 0 0; color: var(--ink-2); }
+.rt-line { font-size: 13.5px; } .gl-pct small { font-weight: 500; color: var(--ink-3); font-size: 11px; margin-right: 2px; }
+.rt-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 440px); gap: 16px; align-items: start; margin-bottom: 28px; }
+@media (max-width: 900px) { .rt-wrap { grid-template-columns: 1fr; } }
+.rt-list { display: grid; gap: 6px; }
+.rt-row, .ch-row > summary { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; font: inherit; font-size: 13.5px; color: var(--ink);
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 9px 12px; cursor: pointer; }
+.rt-row:hover, .ch-row > summary:hover { border-color: var(--ink-3); }
+.rt-row.on { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.rt-txt { flex: 1; min-width: 0; } .rt-pcts { flex: none; white-space: nowrap; }
+.rt-more { margin-top: 6px; } .rt-more > summary { cursor: pointer; color: var(--ink-2); font-size: 13px; margin-bottom: 6px; }
+.rt-more .rt-row { margin-bottom: 6px; }
+.rt-detail { padding: 12px 14px; display: grid; gap: 4px; font-size: 13.5px; margin: 8px 0 0; }
+.rt-list .rt-explain { margin-top: 8px; }
+.gl-pct { min-width: 0; margin-left: 10px; }
+.rt-head { font-size: 14.5px; } .rt-change { margin: 2px 0 4px; }
+.rt-view .tt-trees { justify-content: flex-start; }
+.tt-node.rt-keep { border-color: var(--ink-3); color: var(--ink-3); background: var(--panel); filter: grayscale(1) brightness(.5); }
+.tt-node.rt-keep img { filter: grayscale(1) brightness(.7); }
+.tt-node.rt-off { border-style: dashed; border-color: var(--line); color: var(--ink-3); background: var(--panel); filter: grayscale(1) brightness(.3); }
+.tt-node.rt-off img { filter: grayscale(1) brightness(.5); }
+.rt-view line { opacity: .2; }
+.tt-node.rt-take, .tt-node.rt-drop { z-index: 3; }
+.tt-node.rt-take { border-color: var(--heal); color: var(--ink); background: color-mix(in srgb, var(--heal) 35%, var(--panel)); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--heal); }
+.tt-node.rt-drop { border-color: var(--dmg); border-style: dashed; color: var(--ink); background: color-mix(in srgb, var(--dmg) 30%, var(--panel)); box-shadow: 0 0 0 2px var(--bg), 0 0 0 4px var(--dmg); }
+.rt-mark { position: absolute; right: -9px; bottom: -9px; z-index: 2; font-size: 10px; font-weight: 800; padding: 0 4px; border-radius: 6px; background: var(--bg); }
+.rt-take .rt-mark { color: var(--heal); border: 1px solid var(--heal); } .rt-drop .rt-mark { color: var(--dmg); border: 1px solid var(--dmg); }
+.rt-caveat { color: var(--c4, #d8a43a); font-size: 13px; }
+.sim-when { font-size: 12.5px; color: var(--ink-3); margin: -4px 0 8px; } .sim-when.stale { color: var(--c4, #d8a43a); }
+.cg-old { border-left: 4px solid var(--heal); }
+.cg-list { display: grid; gap: 12px; margin-bottom: 28px; }.cg { padding: 12px 14px; display: grid; gap: 6px; }.cg-q { font-size: 15px; margin-bottom: 2px; } .cg-verdict { font-size: 12.5px; font-weight: 600; margin-left: 8px; } .cg-verdict.keep { color: var(--ink-3); } .cg-verdict.good { color: var(--heal); }.cg-row > summary, .cg-row.cg-now { display: flex; align-items: center; gap: 10px; font-size: 13.5px; padding: 7px 10px; border-radius: 8px; border: 1px solid var(--line); cursor: pointer; list-style: none; }.cg-row > summary::-webkit-details-marker { display: none; } .cg-row > summary:hover { border-color: var(--ink-3); }.cg-row.cg-now { cursor: default; background: var(--panel-2, var(--panel)); }.cg-lbl { flex: 1; min-width: 0; } .cg-bars { display: flex; gap: 14px; flex: none; }.cb { display: flex; align-items: center; gap: 6px; } .cb-lbl { font-size: 11px; color: var(--ink-3); width: 72px; text-align: right; }.cb-track { position: relative; width: 120px; height: 8px; border-radius: 4px; background: var(--line); }.cb-track::after { content: ""; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: var(--ink-3); }.cb-fill { position: absolute; top: 0; bottom: 0; border-radius: 4px; } .cb-fill.good { background: var(--heal); } .cb-fill.bad { background: var(--dmg); } .cb-fill.zero { background: var(--ink-3); }.cb .gl-pct { width: 48px; margin-left: 0; }.cg-more { margin: 6px 10px 2px; font-size: 13px; color: var(--ink-2); }@media (max-width: 760px) { .cg-row > summary, .cg-row.cg-now { flex-wrap: wrap; } .cg-bars { width: 100%; flex-direction: column; gap: 4px; } }
+.ch-list { display: grid; gap: 6px; margin-bottom: 28px; }
+.ch-row > summary { list-style: none; } .ch-row > summary::-webkit-details-marker { display: none; }
+.ch-more { padding: 8px 14px 4px; font-size: 13.5px; } .ch-more p { margin: 0 0 6px; color: var(--ink-2); }
+.tt-how { margin: 2px 0 10px; } .tt-how > summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+.ch-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; margin-bottom: 28px; }
+.ch-card { border-left: 4px solid var(--line); padding: 14px 16px; }
+.ch-card.good { border-left-color: var(--heal); } .ch-card.bad { border-left-color: var(--dmg); } .ch-card.zero { border-left-color: var(--c4, #d8a43a); }
+.ch-card h3 { margin: 0 0 6px; font-size: 15px; } .ch-card p { margin: 0 0 10px; color: var(--ink-2); font-size: 13.5px; }
+.ch-card .ch-say { font-weight: 600; margin-bottom: 8px; }
+.ch-card .ch-pats { display: grid; gap: 4px; font-size: 13px; }
 .heal-table td { text-align: right; }
 .heal-table thead th:not(:first-child) { text-align: right; }
 .heal-table tr.base th, .heal-table tr.base td { font-weight: 700; }
@@ -1516,6 +1628,429 @@ function scoreExplain() {
     <h4>What it can't tell you</h4><p>The simulated healer plays a fixed priority list (the rotation in your profile): no mistakes, no
       reacting like a player. Results are for that rotation and this fight: use them to compare gear, not players. Most gear lands within
       the margin of error, and "no real difference" is a real answer.</p>`);
+}
+
+// ----- talent values (restoration_druid_talents.bat): every talent of the trees on the same fights at the limit, same
+// margin of error as the gear check. "Talent: <name>" switches one of yours off, "Add: <name>" takes one you don't have on
+// top of your build, "Swap: <a> for <b>" takes a choice node's other option, "Choice: <text>" plays the rotation another
+// way. Talents are given by trait entry id (<tree>_talents=<entry>:<rank>), which maps every set onto the JSON's talent_tree.
+const talentSets = tolSetups.filter(s => s.role === "set");
+const TALENT_SET = /^(Talent|Add|Swap|Choice|Build|Tier): /;
+if (compareOnly && checks.length && talentSets.length && talentSets.every(s => TALENT_SET.test(s.name))) {
+  // Node links and icons (Raidbots' public talent data, the current patch): SimC's talent data has neither.
+  const TALENT_LAYOUT = { "Restoration Druid": { next: {82199:[82239,82223,82222],82220:[82223,82219,82218],82217:[82219,82205,104084],91044:[82200,82208],82223:[82218,82225],82219:[82218,104084,104085],82205:[82214],82222:[82225,82221],82218:[82225,82227,104085],104084:[104085,82211,82214],82208:[82214,93714],82225:[82224,82228,82198],104085:[82228,82206],82211:[82206],82214:[82206,82210,82232],93714:[100223],82228:[82198,82229,100177],82206:[82232,82229,82240],82210:[100223],82198:[82236,82235,100177],82229:[82234],82232:[82240,82209,82207],82236:[100176],82235:[100176,104082],82234:[104081,82233,104080],82209:[104079,100175],82207:[100175],100176:[82237,100174,82246],82233:[82230,104078,92229],100175:[100173,82243,82244],82230:[82231],104078:[82231],92229:[82231],82049:[82047,82050,104125],82047:[82079],82050:[82051],104125:[82083],82079:[82055,82057],82051:[82055,92674],82083:[92674,82082],82055:[82057,82054],92674:[82054,82082],82057:[82043,82059,103874],82054:[82053],82082:[82045,82056,82081],82059:[82058,82060,82062],103874:[82062],82043:[94535,82065,82062],82053:[82065],82056:[82065,110694,82080],82045:[103873,82080],82081:[103873,82075],82060:[82048,82074],82058:[82048],82062:[82048,82064],94535:[82064],82065:[82067,82064],110694:[82067],82080:[82067,82052],103873:[82052],82075:[82052,82076],82048:[82070,82046,82074],82064:[82070,82063,82072],82067:[82068,82066,82072],82052:[82068,82076,103876],82074:[82073],82046:[82073],82070:[82073,82077],82063:[82077],82072:[82077,82069],82066:[82069],82068:[82069,82071],103876:[82071],82076:[82071],94626:[94629,94621,109717,94623],94629:[94624],94623:[94622],94621:[94625],109717:[109716],94624:[94631],94622:[94630],94625:[94628],109716:[109715],94631:[94627],94630:[94627],94628:[94627],109715:[94627],94600:[94599,94602,109714,94593],94599:[94605],94602:[94604],94593:[94595],109714:[109713],94605:[94591],94604:[94592],94595:[94601],109713:[109712],94591:[94606],94592:[94606],94601:[94606],109712:[94606]}, icon: {103277:"ability_druid_disembowel",103298:"ability_bullrush",103295:"spell_nature_rejuvenation",112967:"spell_arcane_starfire",103318:"ability_xavius_tormentingswipe",103301:"inv_misc_monsterclaw_03",103297:"spell_nature_spiritarmor",103283:"ability_druid_flourish",103278:"spell_arcane_arcane03",103300:"ability_ghoulfrenzy",103296:"ability_bullrush",128590:"ability_shaman_cleansespirit",103286:"spell_nature_forceofnature",103299:"ability_druid_mangle.tga",103303:"ability_druid_predatoryinstincts",103305:"ability_druid_ironfur",128591:"spell_nature_stoneclawtotem",103289:"spell_nature_sleep",103292:"ability_druid_healinginstincts",116102:"ability_mage_firestarter",103302:"ability_racial_cannibalize",103306:"inv_misc_pelt_bear_03",103284:"ability_druid_naturalperfection",103288:"ability_skyreach_lens_flare",103276:"spell_druid_wildcharge",103275:"ability_druid_dash_orange",103307:"ability_hunter_beastsoothe",128587:"spell_nature_earthbind",128581:"spell_nature_healingtouch",123868:"spell_arcane_arcane01",103314:"ability_druid_dash",103313:"ability_druid_tigersroar",123796:"inv_misc_pelt_15",103312:"spell_druid_stampedingroar_cat",103319:"spell_nature_rejuvenation",103287:"ability_druid_typhoon",103285:"spell_druid_massentanglement",128589:"spell_druid_ursolsvortex",123795:"spell_nature_stoneclawtotem",128586:"ability_druid_tigersroar",128585:"spell_shadow_vampiricaura",103311:"inv_trinket_ardenweald_02_green",128584:"spell_nature_starfall",128583:"ability_druid_galewinds",128582:"ability_skyreach_wind",123794:"spell_nature_giftofthewild",103316:"ability_druid_demoralizingroar",103315:"ability_druid_bash",123793:"ability_druid_markofursol",103308:"spell_druid_stamedingroar",128580:"ability_druid_disembowel",128579:"spell_druid_equinox",114300:"inv_trinket_ardenweald_02_yellow",123792:"ability_druid_focusedgrowth",103323:"spell_lifegivingspeed",103326:"ability_druid_mastershapeshifter",103309:"spell_holy_blessingofagility",103324:"spell_nature_lightning",103100:"inv_misc_herb_felblossom",103098:"inv_relics_idolofrejuvenation",103101:"spell_nature_ravenform",128707:"spell_nature_crystalball",137508:"inv_relics_totemoflife",137507:"ability_druid_giftoftheearthmother",103103:"ability_druid_overgrowth",103102:"spell_nature_ravenform",103142:"spell_nature_resistnature",103109:"ability_druid_manatree",114808:"ability_druid_serenefocus",103111:"inv_misc_herb_talandrasrose",103108:"spell_nature_tranquility",103141:"spell_druid_ironbark",103113:"spell_druid_germination",128708:"inv12_ability_druid_lifetreading",117104:"ability_druid_forceofnature",103106:"spell_druid_wildburst",103110:"spell_nature_crystalball",103096:"ability_druid_flourish",103140:"archaeology_5_0_crackedmogurunestone",103139:"spell_druid_ironbark",103114:"inv_relics_idolofhealth",103112:"spell_nature_resistnature",103117:"inv_misc_herb_liferoot_stem",117105:"spell_nature_protectionformnature",103121:"spell_druid_rampantgrowth",137510:"spell_nature_healingtouch",103138:"ability_druid_flourish",128274:"ability_druid_empoweredtouch",103131:"spell_nature_naturetouchgrow",103099:"inv_misc_head_dragon_green",103120:"ability_druid_improvedtreeform",103119:"inv_ability_druid_convokethespirits",103123:"spell_unused2",103105:"spell_frost_windwalkon",103130:"spell_druid_symbiosis",114809:"ability_druid_mastershapeshifter",103097:"inv_misc_head_dragon_green",103126:"ability_druid_healinginstincts",103118:"ability_druid_treeoflife",103128:"talentspec_druid_restoration",103122:"ability_druid_dreamstate",103124:"spell_nature_rejuvenation",128277:"ability_druid_empoweredrejuvination",103132:"ability_druid_replenish",103129:"spell_lifegivingseed",103134:"inv_misc_herb_felblossom",103125:"inv_herbalism_70_yserallineseed",103127:"inv_10_herb_seed_magiccolor5",137040:"inv12_apextalent_druid_everbloom",137039:"inv12_apextalent_druid_everbloom",137038:"inv12_apextalent_druid_everbloom",117226:"inv_ability_wildstalkerdruid_thrivinggrowth",117231:"spell_druid_lunarinspiration",117223:"ability_druid_supriseattack",117221:"ability_druid_skinteeth",135975:"spell_lifegivingseed",117224:"spell_nature_healingtouch",117222:"spell_druid_ursolsvortex",119855:"inv_misc_trailofflowers",117225:"inv_misc_marrigolds_01",119854:"talentspec_druid_restoration",135974:"inv_collections_armor_flowerbracelet_b_01",117234:"inv_misc_herb_16",117233:"ability_creature_poison_04",117232:"inv_helm_misc_rose_a_01_red",117230:"inv_misc_herb_evergreenmoss",117229:"ability_creature_poison_03",135973:"inv_misc_thornnecklace",117227:"spell_druid_massentanglement",117195:"inv_ability_keeperofthegrovedruid_dreamsurge_fiendly",117194:"spell_nature_starfall",117197:"spell_nature_abolishmagic",117186:"spell_nature_resistnature",135972:"ui_darkshore_warfront_alliance_dryad",117201:"spell_nature_naturesblessing",117200:"ability_druid_manatree",117199:"achievement_reputation_guardiansofcenarius",117189:"ability_druid_protectionofthegrove",117188:"ability_druid_serenefocus",135971:"inv_stave_2h_druid_a_01",117184:"inv_herbalism_70_dreamleaf",117895:"inv_misc_trailofflowers",117185:"ability_xavius_dreamsimulacrum",117894:"inv_cloth_outdooremeralddream_d_01_buckle",117196:"spell_nature_thorns",135970:"ability_druid_naturalperfection",117203:"ability_druid_forceofnature"} } };
+  const layout = TALENT_LAYOUT[healer?.specialization] || { next: {}, icon: {} };
+  const pctOf = (c, d) => c.b > 0 ? 100 * d / c.b : 0;
+  const fmtShare = v => `${Math.abs(v) < 0.05 ? "0" : Math.abs(v).toFixed(1)}%`;
+  const signedShare = v => Math.abs(v) < 0.05 ? "0%" : (v > 0 ? "+" : "−") + fmtShare(v);
+  const rowOf = (c, n) => c.rows.find(x => x.name === n);
+
+  // Rotation choices as cards: what the choice means, the verdict in one sentence, the numbers per damage pattern.
+  const CHOICE_TEXT = {
+    "apl_variable.sm_self=1": "Your Swiftmends go on yourself whenever your own Regrowth is on you (a Rampant Growth copy counts), instead of on the lowest player with one of your HoTs.",
+    "apl_variable.sm_self=2": "Every Swiftmend goes on yourself, instead of on the lowest player with one of your HoTs.",
+    "apl_variable.regrowth_first=1": "When someone is below 50% with none of your HoTs, Regrowth them first so a Swiftmend can follow, ahead of most of your other healing.",
+    "apl_variable.regrowth_first=2": "The same Regrowth on a low player with none of your HoTs, but only when nothing more important is up.",
+    "apl_variable.blanket=1": "Spend spare mana on Rejuvenation for everyone missing one (kept on schedule to last the fight), before falling back to Starsurge.",
+    "apl_variable.germ=0": "Your play until 2026-11-12: two Rejuvenations on yourself and the tank at all times, a second on others once everyone nearby has one.",
+    "apl_variable.germ=1": "Only you and the tank ever carry two Rejuvenations; everyone else gets one, never a second.",
+    "apl_variable.germ=2": "You and the tank keep one Rejuvenation instead of two at all times; a second goes on anyone (you and the tank included) only once everyone nearby has one.",
+    "apl_variable.germ=3": "You and the tank keep two as now; other players get a second Rejuvenation only when a raid burst is about to land (within 5 seconds), otherwise one each.",
+    "apl_variable.germ=4": "One Rejuvenation on you and the tank, and other players get a second one only when a raid burst is about to land.",
+    "apl_variable.germ=5": "You keep two Rejuvenations on yourself (more Harmony on your Lifebloom blooms and their Everbloom spreads); the tank keeps one.",
+    "apl_variable.germ=6": "The tank keeps two Rejuvenations; you keep one on yourself.",
+    "apl_variable.germ=7": "You never put a second Rejuvenation on anyone yourself, except the tank (tank busters) and anyone below 50%; Power of the Archdruid's spreads still make doubles when they land on someone who has one.",
+    "apl_variable.rj_pre=8": "When Convoke is about to be ready, press Rejuvenation (on players without one first) until 8 are out, then Convoke.",
+    "apl_variable.rj_pre=12": "When Convoke is about to be ready, press Rejuvenation until 12 are out, then Convoke.",
+    "apl_variable.rj_pre=16": "When Convoke is about to be ready, press Rejuvenation until 16 are out, then Convoke.",
+    "apl_variable.rj_keep=6": "Outside ramps, keep about 6 Rejuvenations out (on players without one first), whatever their health, instead of 5 plus more while someone is hurt.",
+    "apl_variable.rj_keep=10": "Outside ramps, keep about 10 Rejuvenations out.",
+    "apl_variable.rj_keep=14": "Outside ramps, keep about 14 Rejuvenations out.",
+    "apl_variable.blanket=2": "Spend spare mana on Rejuvenation for everyone missing one, even ahead of your filler Regrowths.",
+  };
+  const choiceNames = [...new Set(checks.flatMap(c => c.rows.filter(r => r.name.startsWith("Choice: ")).map(r => r.name)))];
+
+  // Every talent set mapped onto the tree by trait entry id.
+  const tree = healer?.talent_tree || [];
+  const tests = {};  // entry -> [{ kind: "remove"|"add"|"swap", set, from? }]
+  for (const s of talentSets) {
+    // only single-talent tests belong on a node; legal builds (several talents) and rotation choices have their own sections
+    if (!/^(Talent|Add|Swap|Tier): /.test(s.name)) continue;
+    const m = /^\w+_talents=(.+)$/.exec(s.options?.[0] || "");
+    if (!m) continue;
+    const parts = m[1].split("/").map(p => p.split(":").map(Number));
+    const kind = s.name.startsWith("Talent: ") ? "remove" : s.name.startsWith("Swap: ") ? "swap" : s.name.startsWith("Tier: ") ? "tier" : "add";
+    const entry = kind === "swap" ? parts[1]?.[0] : parts[0]?.[0];
+    (tests[entry] ||= []).push({ kind, set: s.name, from: kind === "swap" ? parts[0][0] : null });
+  }
+  // Talents the sim can't value (checked in sc_druid.cpp, 2026-11-12): their numbers would mean nothing, so the page says why.
+  const NOT_SIMULATED = {
+    "Restoration Druid": {
+      "Verdancy": "SimC doesn't simulate it yet", "Verdant Infusion": "SimC doesn't simulate it yet",
+      "Regenesis": "SimC doesn't simulate it yet", "Regenerative Heartwood": "SimC doesn't simulate it yet",
+      "Embrace of the Dream": "SimC doesn't simulate it yet", "Waking Dream": "SimC doesn't simulate it yet",
+      "Grove Guardians": "SimC doesn't simulate it yet", "Dream of Cenarius": "SimC doesn't simulate it yet",
+      "Incarnation: Tree of Life": "your priority list never casts it",
+    },
+  }[healer?.specialization] || {};
+  // What each tier of a tiered (apex) node does, by its spell; tiers fill in order.
+  const TIER_TEXT = { 392167: "the extra Lifebloom stacks", 1244331: "the final bloom healing injured allies", 1244470: "Blooming Frenzy" };
+  const tierLoss = (n, keep) => { let left = keep; return (n.tiers || []).filter(t => { const r = Math.min(left, t.max_rank); left -= r; return r < t.max_rank; })
+    .map(t => TIER_TEXT[t.spell] || `tier ${t.entry}`).join(", "); };
+  const optionsOf = n => n.choice && n.options?.length ? n.options : [{ name: n.name, entry: n.entry, spell: n.spell }];
+  // What a node is worth on pattern c: for yours, what switching it off costs; for one you don't have, the best of its
+  // options taken on top of your build. Positive = it helps you.
+  const valueOf = (n, c) => {
+    const d = t => { const r = rowOf(c, t.set); return r && r.d != null ? r.d : null; };
+    if (n.rank > 0) {
+      const rm = (tests[n.entry] || []).find(t => t.kind === "remove");
+      const v = rm && !NOT_SIMULATED[n.name] ? d(rm) : null;
+      const alts = optionsOf(n).filter(o => o.entry !== n.entry).flatMap(o => (tests[o.entry] || []).filter(t => t.kind === "swap").map(t => ({ o, d: d(t), say: `Taking <b>${esc(o.name)}</b> instead:` })));
+      const more = (tests[n.entry] || []).filter(t => t.kind === "add").map(t => ({ o: { name: `${n.name} (all ${n.max_rank} ranks)` }, d: d(t), ranks: true, say: `Taking all ${n.max_rank} ranks:` }));
+      // a tiered (apex) node stepped down: what its last tiers are worth (positive = they help)
+      const tiers = (tests[n.entry] || []).filter(t => t.kind === "tier").map(t => {
+        const keep = +/down to (\d+)/.exec(t.set)[1], lost = tierLoss(n, keep), x = d(t);
+        return { o: { name: `${n.name}: ranks ${keep + 1}-${n.max_rank}` }, d: x == null ? null : -x, tier: keep, say: `Its ranks ${keep + 1}-${n.max_rank} (${lost}) are worth:` };
+      });
+      return { v: v == null ? null : -v, shown: n, tiers: tiers.filter(a => a.d != null), alts: alts.concat(more).filter(a => a.d != null && !NOT_SIMULATED[a.o.name]), nyi: NOT_SIMULATED[n.name],
+        nyiAlts: optionsOf(n).filter(o => o.entry !== n.entry && NOT_SIMULATED[o.name]) };
+    }
+    const adds = optionsOf(n).filter(o => !NOT_SIMULATED[o.name]).map(o => ({ o, t: (tests[o.entry] || []).find(t => t.kind === "add") })).filter(x => x.t)
+      .map(x => ({ o: x.o, d: d(x.t), say: `<b>${esc(x.o.name)}</b> (the other option):` })).filter(x => x.d != null).sort((a, b) => b.d - a.d);
+    const nyiOpts = optionsOf(n).filter(o => NOT_SIMULATED[o.name]);
+    return { v: adds.length ? adds[0].d : null, shown: adds.length ? adds[0].o : nyiOpts[0] || n, alts: adds.slice(1),
+      nyi: !adds.length && nyiOpts.length ? NOT_SIMULATED[nyiOpts[0].name] : null, nyiAlts: adds.length ? nyiOpts : nyiOpts.slice(1) };
+  };
+  const clsOf = (v, c) => v == null ? "untested" : v > c.noise ? "good" : v < -c.noise ? "bad" : "zero";
+  const sentence = (n, c) => {
+    const { v, shown, alts, nyi, nyiAlts, tiers = [] } = valueOf(n, c), share = v == null ? 0 : pctOf(c, v), cls = clsOf(v, c);
+    const pts = v == null ? "" : ` <span class="faint">(${signedPts2(v)})</span>`;
+    let s;
+    if (nyi) s = `<b>Not simulated</b>: ${nyi}, so the sim can't say what it's worth.`;
+    else if (v == null) s = n.name === "Rejuvenation" ? "Not tested: other spells need Rejuvenation." : "Not tested.";
+    else if (n.rank > 0) s = cls === "good" ? `Worth it: with it you keep <b>${fmtShare(share)} more</b> raid health${pts}.`
+      : cls === "zero" ? `Within the noise${pts}: it changes nothing you can measure here (often utility, defensive or movement, or rarely used).`
+      : `The sim kept <b>${fmtShare(share)} more</b> raid health <b>without</b> it${pts}: on this fight and with your priority list you'd do better without it (worth a second look, not proof).`;
+    else s = cls === "good" ? `Taking it would keep <b>${fmtShare(share)} more</b> raid health${pts}, counted on top of your build: you'd have to drop a talent for it, so compare with what yours are worth.`
+      : cls === "zero" ? `Taking it changes nothing you can measure${pts} (often utility, or something your priority list doesn't cast).`
+      : `Taking it would cost you <b>${fmtShare(share)}</b> of the raid health you keep${pts}, even for free.`;
+    const alt = alts.map(a => `<div class="tt-sub">${a.say} ${signedShare(pctOf(c, a.d))} <span class="faint">(${signedPts2(a.d)}, ${clsOf(a.d, c) === "good" ? "better" : clsOf(a.d, c) === "bad" ? "worse" : "within the noise"})</span></div>`).join("");
+    const nyiAlt = nyiAlts.map(o => `<div class="tt-sub"><b>${esc(o.name)}</b>${n.rank > 0 ? " instead" : " (the other option)"}: not simulated (${NOT_SIMULATED[o.name]}).</div>`).join("");
+    const tierHtml = tiers.map(a => `<div class="tt-sub">${a.say} ${signedShare(pctOf(c, a.d))} <span class="faint">(${signedPts2(a.d)}, ${clsOf(a.d, c) === "good" ? "worth it" : clsOf(a.d, c) === "bad" ? "better without" : "within the noise"})</span></div>`).join("");
+    return `<div><b>${esc(patternLabel(c.pattern))}:</b> ${s}</div>${tierHtml}${alt}${nyiAlt}`;
+  };
+  const detailHtml = n => {
+    const { shown } = valueOf(n, checks[0]);
+    const what = n.rank > 0 ? `You have it${n.max_rank > 1 ? ` (${n.rank}/${n.max_rank})` : ""}.` : "You don't have it.";
+    return `<div class="tt-detail-head"><b>${esc(n.rank > 0 ? n.name : shown.name)}</b> <span class="faint">${what}</span></div>${checks.map(c => sentence(n, c)).join("")}`;
+  };
+
+  const SMALL = { STEP: 42, SIZE: 32, PAD: 12 }, BIG = { STEP: 64, SIZE: 46, PAD: 18 };
+  const abbr = name => name.split(/[\s-]+/).filter(w => /^[A-Z]/.test(w)).map(w => w[0]).join("").slice(0, 3) || name.slice(0, 3);
+  const iconOf = entry => layout.icon[entry] ? `<img src="https://wow.zamimg.com/images/wow/icons/large/${layout.icon[entry]}.jpg" alt="" loading="lazy" onerror="this.remove()">` : "";
+  const at = (n, g) => `left:${g.PAD + (n.col - 1) * g.STEP}px;top:${g.PAD + (n.row - 1) * g.STEP}px;width:${g.SIZE}px;height:${g.SIZE}px`;
+  // Colour scales with value: the most valuable talent of the pattern is full green, small values fade toward grey.
+  const heatMax = c => Math.max(1e-9, ...tree.map(n => valueOf(n, c).v ?? 0));
+  const nodeHtml = (n, c, i, g = BIG) => {
+    const { v, shown, alts, nyi } = valueOf(n, c), cls = nyi ? "nyi" : clsOf(v, c), mine = n.rank > 0;
+    const better = mine && alts.some(a => a.d > c.noise);
+    const h = cls === "good" ? Math.min(1, Math.max(0, v / heatMax(c))) : 0;
+    const col = cls === "good" ? `color-mix(in srgb, var(--heal) ${Math.round(30 + 70 * h)}%, var(--ink-3))` : "";
+    const badge = nyi ? `<span class="tt-badge">?</span>` : v == null || cls === "zero" ? "" : `<span class="tt-badge">${signedShare(pctOf(c, v))}</span>`;
+    return `<div class="tt-node ${cls} ${mine ? "mine" : "notmine"}${n.choice ? " choice" : ""}" data-i="${i}" tabindex="0"
+      style="${at(n, g)}${col ? `;border-color:${col}` : ""}${mine && h > 0.5 ? `;--glow:${col}` : ""}">
+      <span class="tt-abbr">${esc(abbr(shown.name))}</span>${iconOf(shown.entry)}
+      ${n.max_rank > 1 && mine ? `<span class="tt-rank">${n.rank}/${n.max_rank}</span>` : ""}${better ? `<span class="tt-alt" title="another option is better">&#8644;</span>` : ""}${badge}</div>`;
+  };
+
+  // Every value as a table too: yours by what switching them off costs, then the ones you don't have by what they'd add.
+  const tableRows = tree.flatMap(n => {
+    if (n.rank > 0) {
+      const own = [{ label: n.name, mine: true, v: c => valueOf(n, c).v }];
+      const alts = optionsOf(n).filter(o => o.entry !== n.entry).map(o => ({ label: `${o.name} instead of ${n.name}`, mine: false, nyiName: o.name, v: c => valueOf(n, c).alts.find(a => a.o.entry === o.entry)?.d ?? null }));
+      const more = (tests[n.entry] || []).some(t => t.kind === "add") ? [{ label: `${n.name}: all ${n.max_rank} ranks`, mine: false, v: c => valueOf(n, c).alts.find(a => a.ranks)?.d ?? null }] : [];
+      const tiers = (tests[n.entry] || []).filter(t => t.kind === "tier").map(t => { const keep = +/down to (\d+)/.exec(t.set)[1];
+        return { label: `${n.name}: ranks ${keep + 1}-${n.max_rank} only (${tierLoss(n, keep)})`, mine: true, v: c => valueOf(n, c).tiers?.find(a => a.tier === keep)?.d ?? null }; });
+      return own.concat(tiers, alts, more);
+    }
+    return optionsOf(n).map(o => ({ label: o.name, mine: false, nyiName: o.name, v: c => { const x = valueOf(n, c); return x.shown.entry === o.entry ? x.v : x.alts.find(a => a.o.entry === o.entry)?.d ?? null; } }));
+  });
+  const cell = (c, v, mine, label0) => {
+    if (NOT_SIMULATED[label0]) return `<td><span class="chip equal">Not simulated</span> <small class="faint">${NOT_SIMULATED[label0]}</small></td>`;
+    if (v == null) return "<td>–</td>";
+    const cls = clsOf(v, c), chip = cls === "good" ? "worse" : cls === "bad" ? "better" : "equal";
+    const label = mine ? (cls === "good" ? "Worth it" : cls === "bad" ? "Better without?" : "Within the noise")
+      : (cls === "good" ? "Would help" : cls === "bad" ? "Would hurt" : "Within the noise");
+    return `<td><span class="chip ${chip}">${label}</span> <b>${signedShare(pctOf(c, v))}</b> <small class="faint">(${signedPts2(v)})</small></td>`;
+  };
+  const tableOf = (rows, title) => `<h3 style="margin:16px 0 8px">${title}</h3><div class="panel tbl-wrap"><table class="cmp"><thead><tr><th>Talent</th>${
+    checks.map(c => `<th>${esc(patternLabel(c.pattern))}</th>`).join("")}</tr></thead><tbody>${rows
+    .sort((a, b) => (b.v(checks[0]) ?? -99) - (a.v(checks[0]) ?? -99))
+    .map(r => `<tr><th scope="row">${esc(r.label)}</th>${checks.map(c => cell(c, r.v(c), r.mine, r.nyiName)).join("")}</tr>`).join("")}</tbody></table></div>`;
+
+  const sec = el("section", { id: "talents" });
+  sec.style.marginTop = "28px";
+
+  // ----- how fresh each section is: the newest "ran" stamp among its sets; kept sets came from an earlier full run.
+  const ranOf = prefix => { const xs = talentSets.filter(s => prefix.test(s.name)); const r = xs.map(s => s.ran).filter(Boolean).sort().pop();
+    return { ran: r, kept: xs.some(s => s.kept), stale: xs.some(s => s.stale) }; };
+  const fresh = prefix => { const x = ranOf(prefix); if (!x.ran && !x.kept) return "";
+    return `<div class="sim-when${x.stale ? " stale" : ""}">${x.kept ? `From the last full talent run${x.ran ? ` (${esc(x.ran)})` : ""}` : `Simulated ${esc(x.ran)}`}${
+      x.stale ? ": your setup has changed since then. Run <b>talents</b> to refresh these numbers." : ""}</div>`; };
+  const TALENT_RX = /^(Talent|Add|Swap|Tier|Build): /, CHOICE_RX = /^Choice: /;
+
+  // One set over the damage patterns: its rows, a colour (good / zero / bad) and the % per pattern.
+  const judge = n => {
+    const rows = checks.map(c => ({ c, r: rowOf(c, n) })).filter(x => x.r && x.r.d != null);
+    const vs = rows.map(x => x.r.verdict);
+    const cls = vs.some(v => v === "worse" || v === "tradeoff") ? "bad" : vs.some(v => v === "better") ? "good" : "zero";
+    return { rows, cls, mean: rows.reduce((s, x) => s + pctOf(x.c, x.r.d), 0) / Math.max(1, rows.length) };
+  };
+  const pcts = rows => rows.map(({ c, r }) => `<span class="gl-pct ${r.verdict === "better" ? "good" : r.verdict === "worse" || r.verdict === "tradeoff" ? "bad" : "zero"}" title="${esc(patternLabel(c.pattern))}"><small>${esc(shortPat(c))}</small> ${signedShare(pctOf(c, r.d))}</span>`).join("");
+  const shortPat = c => patternLabel(c.pattern).replace(/^Bursts every /i, "") + (/^Bursts every /i.test(patternLabel(c.pattern)) ? " bursts" : "");
+  const healthNow = c => (c.b * 100).toFixed(1) + "%", healthWith = (c, d) => ((c.b + d) * 100).toFixed(1) + "%";
+  // What the % means, in plain words, with this run's own numbers.
+  const explainPct = () => `<div class="panel rt-explain"><b>What the % means</b>
+    <p>The sim tracks how healthy your raid stays across the fight, on average (a dead player counts as empty). With your current
+      talents the raid stays at ${checks.map(c => `<b>${healthNow(c)}</b> (${esc(shortPat(c))})`).join(" and ")}.</p>
+    <p><b>+1.0%</b> means the raid keeps 1% more of its health than now (for example ${healthNow(checks[0])} &rarr; ${healthWith(checks[0], checks[0].b * 0.01)}):
+      fewer players sitting low when the next hit lands, so fewer deaths. <b>&minus;</b> means it keeps less.</p>
+    <p>Each swap is played on both damage patterns. Anything within about &plusmn;${(100 * checks[0].noise / checks[0].b).toFixed(1)}% is noise and reads "Same".</p></div>`;
+  const patNames = checks.map(c => esc(patternLabel(c.pattern))).join(" / ");
+  const CHIP = { good: ["better", "Better"], zero: ["equal", "Same"], bad: ["worse", "Worse"] };
+  const chipOf = cls => `<span class="chip ${CHIP[cls][0]}">${CHIP[cls][1]}</span>`;
+
+  // ----- talent routes: what a legal build changes on the tree (from its talent lines), drawn on the tree
+  const buildNames = [...new Set(checks.flatMap(c => c.rows.filter(r => r.name.startsWith("Build: ")).map(r => r.name)))];
+  const changeOf = name => {
+    const m = /^(\w+)_talents=(.+)$/.exec(talentSets.find(s => s.name === name)?.options?.[0] || "");
+    if (!m) return null;
+    const part = Object.fromEntries(m[2].split("/").map(p => p.split(":").map(Number)));
+    const treeName = m[1] === "class" ? "class" : m[1] === "spec" ? "spec" : "hero";
+    const after = {}, label = {}, take = [], drop = [];
+    for (const n of tree) {
+      let r = n.rank, nm = n.name;
+      if (n.tiers) r = n.tiers.reduce((s, t) => s + (part[t.entry] ?? t.rank), 0);
+      else if (n.choice && n.options) {
+        const on = n.options.find(o => part[o.entry] > 0);
+        if (on) { r = 1; nm = on.name; } else if (part[n.entry] === 0) r = 0;
+      } else if (part[n.entry] != null) r = part[n.entry];
+      after[n.node] = r; label[n.node] = nm;
+      if (r > n.rank) take.push({ n, name: nm, from: n.rank, to: r });
+      if (r < n.rank) drop.push({ n, name: n.name, from: n.rank, to: r });
+    }
+    return { treeName, after, label, take, drop };
+  };
+  // Talents whose measured value is known to be shaky: a route touching one says so.
+  const CAVEAT = { "Restoration Druid": { "Unstoppable Growth": "Unstoppable Growth's value is uncertain: without it the sim estimates Wild Growth's healing (no log to check it against yet). Treat this route as unproven." } }[healer?.specialization] || {};
+  const caveatsOf = ch => [...new Set(ch.take.concat(ch.drop).map(x => CAVEAT[x.n.name]).filter(Boolean))];
+  const rankWord = x => x.n.max_rank > 1 ? ` ${x.to}/${x.n.max_rank}` : "";
+  const changeText = ch => `<span class="rt-take-t">+ ${ch.take.map(x => esc(x.name) + rankWord(x)).join(", ")}</span>
+    <span class="rt-drop-t">− ${ch.drop.map(x => esc(x.name) + (x.to > 0 ? ` to ${x.to}/${x.n.max_rank}` : "")).join(", ")}</span>`;
+
+  // A tree drawn from any rank function; nodeFn draws each node.
+  const drawTree = (t, label, rankOf, nodeFn, g = SMALL) => {
+    const { STEP, SIZE, PAD } = g;
+    const nodes = tree.map((n, i) => ({ n, i })).filter(x => x.n.tree === t);
+    if (!nodes.length) return "";
+    const minCol = Math.min(...nodes.map(x => x.n.col)), minRow = Math.min(...nodes.map(x => x.n.row));
+    const placed = nodes.map(x => ({ n: { ...x.n, col: x.n.col - minCol + 1, row: x.n.row - minRow + 1 }, i: x.i }));
+    const byNode = Object.fromEntries(placed.map(x => [x.n.node, x.n]));
+    const W = PAD * 2 + (Math.max(...placed.map(x => x.n.col)) - 1) * STEP + SIZE, H = PAD * 2 + (Math.max(...placed.map(x => x.n.row)) - 1) * STEP + SIZE;
+    const cx = n => PAD + (n.col - 1) * STEP + SIZE / 2, cy = n => PAD + (n.row - 1) * STEP + SIZE / 2;
+    const lines = placed.flatMap(({ n }) => (layout.next[n.node] || []).map(id => byNode[id]).filter(Boolean).map(m =>
+      `<line x1="${cx(n)}" y1="${cy(n)}" x2="${cx(m)}" y2="${cy(m)}" class="${rankOf(n) > 0 && rankOf(m) > 0 ? "on" : ""}"/>`)).join("");
+    const points = placed.reduce((s, x) => s + rankOf(x.n), 0);
+    return `<div class="panel tt-tree"><h3>${label} <span class="faint">${t === "hero" ? "" : esc((healer?.specialization || "").split(" ")[t === "class" ? 1 : 0] || "") + " · "}${points} points</span></h3>
+      <div class="tt-canvas" style="width:${W}px;height:${H}px"><svg width="${W}" height="${H}" aria-hidden="true">${lines}</svg>
+      ${placed.map(x => nodeFn(x.n, x.i, g)).join("")}</div></div>`;
+  };
+  const TREES = [["class", "Class"], ["hero", "Hero"], ["spec", "Specialization"]];
+  const treeHtml = (c, t) => { const x = TREES.find(y => y[0] === t) || TREES[2]; return drawTree(x[0], x[1], n => n.rank, (n, i, g) => nodeHtml(n, c, i, g), BIG); };
+  const routeHtml = name => {
+    const ch = changeOf(name);
+    if (!ch) return "";
+    const node = (n, i, g) => {
+      const r = ch.after[n.node], took = r > n.rank, lost = r < n.rank;
+      const cls = took ? "rt-take" : lost ? "rt-drop" : r > 0 ? "rt-keep" : "rt-off";
+      const mark = took ? `<span class="rt-mark">+${n.max_rank > 1 ? r - n.rank : ""}</span>` : lost ? `<span class="rt-mark">−${n.max_rank > 1 && r > 0 ? n.rank - r : ""}</span>` : "";
+      return `<div class="tt-node ${cls}${n.choice ? " choice" : ""}" style="${at(n, g)}" title="${esc(ch.label[n.node])}${
+        took ? ": take" : lost ? (r > 0 ? `: down to ${r}/${n.max_rank}` : ": drop") : ""}"><span class="tt-abbr">${esc(abbr(ch.label[n.node]))}</span>${iconOf((n.choice && n.options?.find(o => o.name === ch.label[n.node]))?.entry ?? n.entry)}${n.max_rank > 1 && r > 0 ? `<span class="tt-rank">${r}/${n.max_rank}</span>` : ""}${mark}</div>`;
+    };
+    const t = TREES.find(x => x[0] === ch.treeName);
+    return `<div class="tt-trees">${drawTree(t[0], t[1], n => ch.after[n.node], node)}</div>`;
+  };
+  const routeDetail = name => {
+    const ch = changeOf(name), j = judge(name);
+    const nyi = ch.take.filter(x => NOT_SIMULATED[x.name]).map(x => x.name);
+    const say = j.cls === "good" ? (j.rows.every(x => x.r.verdict === "better") ? "An upgrade on both damage patterns." : "Better on one damage pattern, the same on the other.")
+      : j.cls === "bad" ? "Your build is better: keep it." : "No real difference.";
+    return `<div class="rt-head">${chipOf(j.cls)} <b>${say}</b></div><div class="rt-change">${changeText(ch)}</div>
+      ${j.rows.map(({ c, r }) => `<div class="rt-line"><b>${esc(shortPat(c))}:</b> your raid stays at <b>${healthWith(c, r.d)}</b> health instead of ${healthNow(c)} <span class="gl-pct ${r.verdict === "better" ? "good" : r.verdict === "worse" || r.verdict === "tradeoff" ? "bad" : "zero"}">${signedShare(pctOf(c, r.d))}</span></div>`).join("")}
+      ${nyi.length ? `<div class="faint">${esc(nyi.join(", "))}: not simulated, only there to open the path.</div>` : ""}
+      ${caveatsOf(ch).map(t => `<div class="rt-caveat">&#9888; ${esc(t)}</div>`).join("")}`;
+  };
+  const builds = buildNames.map(n => ({ n, j: judge(n) })).sort((a, b) => b.j.mean - a.j.mean);
+  const goodBuilds = builds.filter(b => b.j.cls !== "bad"), badBuilds = builds.filter(b => b.j.cls === "bad");
+  const routeRow = b => { const ch = changeOf(b.n); return `<button class="rt-row" data-b="${esc(b.n)}">${chipOf(b.j.cls)}<span class="rt-txt">${changeText(ch)}</span><span class="rt-pcts">${pcts(b.j.rows)}</span></button>`; };
+  const buildsHtml = builds.length ? `
+    <div class="section-head" id="routes"><h2>Talent routes</h2>${fresh(TALENT_RX)}
+      <p>Legal swaps from your build: the cheapest path to a talent worth having, paid for by the talents you'd lose least. Pick one to see it on your tree
+        (<span class="rt-take-t">green +</span> take, <span class="rt-drop-t">red −</span> drop). The % is how much more raid health you keep: see "What the % means".</p></div>
+    <div class="rt-wrap"><div class="rt-list">${goodBuilds.length ? goodBuilds.map(routeRow).join("") : `<div class="panel faint" style="padding:12px">No swap beats your build.</div>`}
+      ${badBuilds.length ? `<details class="rt-more"><summary>${badBuilds.length} more swaps that lose</summary>${badBuilds.map(routeRow).join("")}</details>` : ""}
+      <div class="panel rt-detail" id="rt-detail"></div>${explainPct()}</div>
+      <div class="rt-view"><div id="rt-tree"></div></div></div>` : "";
+
+  // ----- rotation choices: grouped by the question they answer, your play first, a bar per damage pattern
+  const CHOICE_GROUPS = [
+    { key: "sm_self", q: "Who gets your Swiftmend?", now: "The lowest player with one of your HoTs",
+      opts: { 1: "Yourself, whenever your Regrowth is on you", 2: "Always yourself" } },
+    { key: "regrowth_first", q: "Regrowth a low player first, so Swiftmend can follow?", now: "No: Swiftmend only players who already have your HoTs",
+      opts: { 1: "Yes, ahead of most of your healing", 2: "Yes, but only when nothing more important is up" } },
+    { key: "germ", q: "When do you put a second Rejuvenation (Germination) on someone?", now: "One on yourself and the tank; a second on anyone once everyone nearby has one",
+      opts: { 0: "Always two on yourself and the tank (your old play)", 1: "Only on yourself and the tank", 3: "On others only right before a burst", 7: "Archdruid makes the doubles; by hand only on the tank and anyone below 50%",
+        4: "Not permanently on you and the tank, others only before a burst", 5: "Keep your own double, not the tank's", 6: "Keep the tank's double, not your own" } },
+    { key: "rj_pre", q: "How many Rejuvenations before Convoke?", now: "None on purpose: Wild Growth, then Nature's Swiftness Regrowth, then Convoke",
+      opts: { 8: "Press until 8 are out", 12: "Press until 12 are out", 16: "Press until 16 are out" } },
+    { key: "rj_keep", q: "How many Rejuvenations the rest of the time?", now: "At least 5, more while someone is hurt and you have 30% mana",
+      opts: { 6: "About 6, whatever the health", 10: "About 10", 14: "About 14" } },
+    { key: "blanket", q: "Keep Rejuvenation on everyone?", now: "No: Rejuvenation where your priority list puts it",
+      opts: { 1: "Yes, with spare mana, before Starsurge", 2: "Yes, with spare mana, even before filler Regrowths" } },
+  ];
+  const choiceMax = Math.max(1, ...choiceNames.flatMap(n => judge(n).rows.map(({ c, r }) => Math.abs(pctOf(c, r.d)))));
+  const bar = (c, d, verdict) => {
+    const p = d == null ? 0 : pctOf(c, d), w = Math.min(50, 50 * Math.abs(p) / choiceMax);
+    const cls = verdict === "better" ? "good" : verdict === "worse" || verdict === "tradeoff" ? "bad" : "zero";
+    return `<div class="cb"><span class="cb-lbl">${esc(shortPat(c))}</span><span class="cb-track"><span class="cb-fill ${cls}" style="${p >= 0 ? "left:50%" : `left:${50 - w}%`};width:${Math.max(w, 0.8)}%"></span></span>
+      <span class="gl-pct ${cls}">${d == null ? "0%" : signedShare(p)}</span></div>`;
+  };
+  const choiceOpt = (label, n) => {
+    const j = judge(n), set = talentSets.find(s => s.name === n), text = CHOICE_TEXT[set?.options?.[0]];
+    return `<details class="cg-row"><summary>${chipOf(j.cls)}<span class="cg-lbl">${esc(label)}</span><span class="cg-bars">${j.rows.map(({ c, r }) => bar(c, r.d, r.verdict)).join("")}</span></summary>
+      ${text ? `<p class="cg-more">${text}</p>` : ""}</details>`;
+  };
+  const groupHtml = g => {
+    const opts = Object.entries(g.opts).map(([v, label]) => ({ label, n: talentSets.find(s => s.options?.[0] === `apl_variable.${g.key}=${v}`)?.name })).filter(o => o.n && choiceNames.includes(o.n));
+    if (!opts.length) return "";
+    const best = opts.map(o => judge(o.n)).some(j => j.cls === "good");
+    // Best first, ranked by the weakest damage pattern (the answer that holds up everywhere), then the average; your
+    // current play sits at its own rank (0 on every pattern): better answers above it, worse ones below.
+    const rank = j => [Math.min(...j.rows.map(({ c, r }) => pctOf(c, r.d))), j.mean];
+    const nowRow = `<div class="cg-row cg-now"><span class="chip equal">You now</span><span class="cg-lbl">${esc(g.now)}</span><span class="cg-bars">${checks.map(c => bar(c, null, "equal")).join("")}</span></div>`;
+    const rows = opts.map(o => ({ html: choiceOpt(o.label, o.n), k: rank(judge(o.n)) })).concat([{ html: nowRow, k: [0, 0] }])
+      .sort((a, b) => b.k[0] - a.k[0] || b.k[1] - a.k[1]);
+    return `<div class="panel cg"><div class="cg-q"><b>${esc(g.q)}</b> <span class="cg-verdict ${best ? "good" : "keep"}">${best ? "something here is better" : "keep your play"}</span></div>
+      ${rows.map(r => r.html).join("")}</div>`;
+  };
+  const OLD_RX = /^Choice: Your old rotation/;
+  const oldName = choiceNames.find(n => OLD_RX.test(n));
+  // How much more raid health your current rotation keeps than the old one, per pattern (positive = the new one is better).
+  const oldGain = () => { const j = judge(oldName); return j.rows.map(({ c, r }) => ({ c, v: c.b + r.d > 0 ? -100 * r.d / (c.b + r.d) : 0 })); };
+  const oldPanel = () => oldName ? `<div class="panel cg cg-old"><div class="cg-q"><b>Your rotation now vs ${esc(oldName.slice(8).replace(/^Your old rotation/, "your old rotation"))}</b></div>
+      <div class="cg-row cg-now"><span class="chip better">Now</span><span class="cg-lbl">With the rules adopted since</span><span class="cg-bars">${oldGain().map(({ c, v }) =>
+        `<div class="cb"><span class="cb-lbl">${esc(shortPat(c))}</span><span class="gl-pct ${v > 0 ? "good" : v < 0 ? "bad" : "zero"}">${signedShare(v)}</span></div>`).join("")}</span></div>
+      <p class="cg-more">How much more health your raid keeps with your current priority list than with the way you played before (same fights, same limit).</p></div>` : "";
+  const grouped = new Set(CHOICE_GROUPS.flatMap(g => Object.keys(g.opts).map(v => talentSets.find(s => s.options?.[0] === `apl_variable.${g.key}=${v}`)?.name)));
+  const loose = choiceNames.filter(n => !grouped.has(n) && !OLD_RX.test(n));
+  const choicesHtml = choiceNames.length ? `
+    <div class="section-head" id="rotation"><h2>Rotation choices</h2>${fresh(CHOICE_RX)}
+      <p>Each question is your priority list played another way, against how you play now. Bars: <span class="rt-take-t">green right</span> = the raid keeps more health,
+        <span class="rt-drop-t" style="margin-left:0">red left</span> = less. Open a line for what it means.</p></div>
+    <div class="cg-list">${oldPanel()}${CHOICE_GROUPS.map(groupHtml).join("")}${loose.length ? `<div class="panel cg"><div class="cg-q"><b>Other choices</b></div>${loose.map(n => choiceOpt(n.slice(8), n)).join("")}</div>` : ""}</div>` : "";
+
+  // ----- at a glance
+  const mean = n => checks.reduce((s, c) => { const x = valueOf(n, c); return s + (x.v == null ? 0 : pctOf(c, x.v)); }, 0) / checks.length;
+  const top = tree.filter(n => n.rank > 0 && !NOT_SIMULATED[n.name]).map(n => ({ n, v: mean(n) })).sort((a, b) => b.v - a.v).slice(0, 6);
+  const nyiNames = Object.keys(NOT_SIMULATED);
+  const goodChoices = choiceNames.filter(n => !OLD_RX.test(n)).map(n => ({ n, j: judge(n) })).filter(x => x.j.cls === "good");
+  // Per question: the best answer that beats your play, and how many others also do. Ungrouped choices are listed by name.
+  const worstOf = j => Math.min(...j.rows.map(({ c, r }) => pctOf(c, r.d)));  // the robust answer: best on its weakest pattern
+  const rotationGlance = () => {
+    const optName = (g, v) => talentSets.find(s => s.options?.[0] === `apl_variable.${g.key}=${v}`)?.name;
+    const asks = CHOICE_GROUPS.map(g => {
+      const wins = Object.entries(g.opts).map(([v, label]) => ({ label, n: optName(g, v) })).filter(o => o.n && choiceNames.includes(o.n))
+        .map(o => ({ ...o, j: judge(o.n) })).filter(o => o.j.cls === "good").sort((a, b) => worstOf(b.j) - worstOf(a.j) || b.j.mean - a.j.mean);
+      return wins.length ? { g, best: wins[0], more: wins.length - 1 } : null;
+    }).filter(Boolean);
+    const OLD_RX = /^Choice: Your old rotation/;
+  const oldName = choiceNames.find(n => OLD_RX.test(n));
+  // How much more raid health your current rotation keeps than the old one, per pattern (positive = the new one is better).
+  const oldGain = () => { const j = judge(oldName); return j.rows.map(({ c, r }) => ({ c, v: c.b + r.d > 0 ? -100 * r.d / (c.b + r.d) : 0 })); };
+  const oldPanel = () => oldName ? `<div class="panel cg cg-old"><div class="cg-q"><b>Your rotation now vs ${esc(oldName.slice(8).replace(/^Your old rotation/, "your old rotation"))}</b></div>
+      <div class="cg-row cg-now"><span class="chip better">Now</span><span class="cg-lbl">With the rules adopted since</span><span class="cg-bars">${oldGain().map(({ c, v }) =>
+        `<div class="cb"><span class="cb-lbl">${esc(shortPat(c))}</span><span class="gl-pct ${v > 0 ? "good" : v < 0 ? "bad" : "zero"}">${signedShare(v)}</span></div>`).join("")}</span></div>
+      <p class="cg-more">How much more health your raid keeps with your current priority list than with the way you played before (same fights, same limit).</p></div>` : "";
+  const grouped = new Set(CHOICE_GROUPS.flatMap(g => Object.keys(g.opts).map(v => optName(g, v))));
+    const loose = goodChoices.filter(x => !grouped.has(x.n));
+    const n = asks.length + loose.length;
+    return `<b>Rotation: ${n === 1 ? "one change is" : n + " changes are"} worth making.</b>
+      ${asks.map(a => `<div class="gl-sub">${esc(a.g.q)} <b>Best: ${esc(a.best.label.charAt(0).toLowerCase() + a.best.label.slice(1))}</b> <span class="rt-pcts">${pcts(a.best.j.rows)}</span>${
+        a.more ? ` <span class="faint">· ${a.more} other answer${a.more > 1 ? "s" : ""} also beat${a.more > 1 ? "" : "s"} your current play</span>` : ""}</div>`).join("")}
+      ${loose.map(x => `<div class="gl-sub">${esc(x.n.slice(8))} <span class="rt-pcts">${pcts(x.j.rows)}</span></div>`).join("")}`;
+  };
+  const glance = `
+    <div class="panel gl"><h2>At a glance</h2>
+      <div class="gl-row"><span class="gl-ico ${goodBuilds.some(b => b.j.cls === "good") ? "good" : "zero"}">${goodBuilds.some(b => b.j.cls === "good") ? "↑" : "✓"}</span><div>
+        ${goodBuilds.some(b => b.j.cls === "good") ? `<b>Talents: ${goodBuilds.filter(b => b.j.cls === "good").length === 1 ? "one swap is" : goodBuilds.filter(b => b.j.cls === "good").length + " swaps are"} worth trying</b>
+          ${goodBuilds.filter(b => b.j.cls === "good").map(b => `<div class="gl-sub">${changeText(changeOf(b.n))} <span class="rt-pcts">${pcts(b.j.rows)}</span>${caveatsOf(changeOf(b.n)).length ? ` <span class="rt-caveat" title="${esc(caveatsOf(changeOf(b.n)).join(" "))}">&#9888; unproven</span>` : ""}</div>`).join("")}`
+        : `<b>Talents: your build is the best legal build we found.</b>`} <a href="#routes" class="gl-link">routes</a></div></div>
+      ${oldName ? `<div class="gl-row"><span class="gl-ico good">&#10003;</span><div><b>Your rotation vs how you played until 2026-11-12:</b> your raid keeps ${oldGain().map(({ c, v }) =>
+        `<span class="gl-pct ${v > 0 ? "good" : "bad"}"><small>${esc(shortPat(c))}</small> ${signedShare(v)}</span>`).join(" ")} health. <a href="#rotation" class="gl-link">details</a></div></div>` : ""}
+      <div class="gl-row"><span class="gl-ico ${goodChoices.length ? "good" : "zero"}">${goodChoices.length ? "↑" : "✓"}</span><div>
+        ${goodChoices.length ? rotationGlance() : `<b>Rotation: keep how you play.</b> None of the ${choiceNames.length} alternatives does better.`} <a href="#rotation" class="gl-link">details</a></div></div>
+      <div class="gl-row"><span class="gl-ico zero">★</span><div><b>Your most valuable talents:</b> ${top.map(x => `${esc(x.n.name)} <span class="faint">${signedShare(x.v)}</span>`).join(" · ")}
+        <a href="#values" class="gl-link">all talents</a></div></div>
+      ${nyiNames.length ? `<div class="gl-row"><span class="gl-ico nyi">?</span><div><b>Not simulated:</b> <span class="faint">${esc(nyiNames.join(", "))}</span>. Their value is unknown, so no route uses them as a reason.</div></div>` : ""}
+      <p class="faint gl-foot">% = how much more of its health your raid keeps over the fight than with your current setup (+1.0%: ${healthNow(checks[0])} &rarr; ${healthWith(checks[0], checks[0].b * 0.01)} on ${esc(shortPat(checks[0]))}). Same fights at your limit; within the noise = "Same". Hints, not truth: your priority list doesn't adapt to talent changes.</p>
+    </div>`;
+
+  sec.innerHTML = glance + buildsHtml + choicesHtml + `
+    <div class="section-head" id="values"><h2>Talent values</h2>${fresh(TALENT_RX)}
+      <p>Every talent of your trees: <b>light ring = yours</b>, dashed = not taken; colour = what it does for you, badge = how much
+        (% of raid health kept; <b>−</b> = you'd keep more without it; for talents you don't have, what taking it would add for free). Tap one for the details.</p>
+      <details class="tt-how"><summary>How to read these values</summary><p class="tt-warn">Every value is played with your current priority list, which doesn't
+        change when a talent does. A passive talent (more healing on a spell you cast anyway) is measured fairly; a talent that adds a
+        button or changes how you'd play is undervalued. A surprising value usually means the priority list (or the sim) is missing
+        something. "?" talents aren't simulated at all: unknown, not zero. Multi-rank talents are switched off whole; values for talents you
+        don't have are counted on top of your build (the routes above are the real swaps). Margin of error: ${checks.map(c => `${esc(patternLabel(c.pattern))} ±${(c.noise * 100).toFixed(2)} pts`).join(" · ")}.</p></details>
+      <div class="tt-bar"><span class="tt-tabs">${TREES.map(([t, l]) => `<button data-t="${t}" class="${t === "spec" ? "on" : ""}">${l}</button>`).join("")}</span>
+        <span class="tt-tabs">${checks.map((c, i) => `<button data-p="${i}" class="${i === 0 ? "on" : ""}">${esc(shortPat(c))}</button>`).join("")}</span></div>
+      <div class="tt-legend"><span><i class="heat"></i>brighter green = worth more</span><span><i style="background:var(--ink-3)"></i>no measurable difference</span>
+        <span><i style="background:var(--dmg)"></i>better without it</span><span><i class="ring"></i>yours</span><span><i class="dash"></i>not taken (green = would help)</span><span><i class="nyi">?</i>not simulated</span><span><b style="color:var(--heal)">&#8644;</b> other option better</span></div></div>
+    <div class="tt-stage"><div id="tt-view">${treeHtml(checks[0], "spec")}</div>
+      <div class="panel tt-detail" id="tt-detail"><span class="faint">Click a talent to see what it's worth, in plain words.</span></div></div>
+    <details style="margin-top:14px"><summary>Every talent as a table</summary>
+      ${tableOf(tableRows.filter(r => r.mine), "Your talents: what each one is worth")}
+      ${tableOf(tableRows.filter(r => !r.mine), "Talents you don't have: what taking one would add")}</details>`;
+  app.appendChild(sec);
+  const pickRoute = name => {
+    if (!name) return;
+    sec.querySelectorAll(".rt-row").forEach(b => b.classList.toggle("on", b.dataset.b === name));
+    $("#rt-detail").innerHTML = routeDetail(name);
+    $("#rt-tree").innerHTML = routeHtml(name);
+  };
+  sec.querySelectorAll(".rt-row").forEach(b => b.addEventListener("click", () => pickRoute(b.dataset.b)));
+  pickRoute(builds[0]?.n);
+  let pat = 0;
+  const bindNodes = () => sec.querySelectorAll(".tt-node").forEach(d => {
+    const n = tree[+d.dataset.i];
+    bindInfoTip(d, () => { const x = valueOf(n, checks[0]); return `<div class="tt-tip"><b>${esc(n.rank > 0 ? n.name : x.shown.name)}</b>${x.nyi ? " · not simulated" : checks.map(c => { const v = valueOf(n, c).v; return v == null ? "" : ` · ${esc(shortPat(c))} ${signedShare(pctOf(c, v))}`; }).join("")}<div class="faint">click for details</div></div>`; });
+    const pin = () => { $("#tt-detail").innerHTML = detailHtml(n); sec.querySelectorAll(".tt-node.sel").forEach(x => x.classList.remove("sel")); d.classList.add("sel"); };
+    d.addEventListener("click", pin);
+    d.addEventListener("keydown", e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); pin(); } });
+  });
+  bindNodes();
+  let treeSel = "spec";
+  sec.querySelectorAll(".tt-bar button").forEach(b => b.addEventListener("click", () => {
+    const key = b.dataset.t ? "t" : "p";
+    sec.querySelectorAll(`.tt-bar button[data-${key}]`).forEach(x => x.classList.toggle("on", x === b));
+    if (b.dataset.t) treeSel = b.dataset.t; else pat = +b.dataset.p;
+    $("#tt-view").innerHTML = treeHtml(checks[pat], treeSel);
+    bindNodes();
+  }));
+  $("#nav").innerHTML = `<a href="#talents">At a glance</a>${buildNames.length ? `<a href="#routes">Talent routes</a>` : ""}${choiceNames.length ? `<a href="#rotation">Rotation</a>` : ""}<a href="#values">Talent values</a>`;
+  return;
 }
 
 // ----- your upgrades: per damage pattern, your limit, your current gear's points, the best gear set's and every upgrade

@@ -1,0 +1,160 @@
+# Talent values (restoration_druid_talents.bat): every talent of the tree, tested at your limit on the same fights.
+#   Talent: <name>  switches a talent of your build off (multi-rank talents lose every rank): what it is worth to you.
+#   Add: <name>     takes a talent you don't have ON TOP of your build (no point removed): what it would add.
+#   Swap: <a> for <b>  takes the other option of a choice node.
+# Talents are given by trait entry id (<tree>_talents=<entry>:<rank>; the report maps them onto the tree). Rejuvenation
+# can't be removed (other spells need it). Generated from the report JSON's talent_tree; regenerate when the build changes.
+profileset."Talent: Abundance"+=spec_talents=128277:0
+profileset."Talent: Aessina's Renewal"+=class_talents=128581:0
+profileset."Talent: Astral Influence"+=class_talents=103288:0
+profileset."Talent: Bond with Nature"+=hero_talents=117225:0
+profileset."Talent: Bursting Growth"+=hero_talents=135974:0
+profileset."Talent: Cenarius' Guidance"+=spec_talents=103118:0
+profileset."Talent: Circle of the Heavens"+=class_talents=128579:0
+profileset."Talent: Convoke the Spirits"+=spec_talents=103119:0
+profileset."Talent: Efflorescence"+=spec_talents=103111:0
+profileset."Talent: Everbloom"+=spec_talents=137040:0/137039:0/137038:0
+profileset."Talent: Feline Swiftness"+=class_talents=103314:0
+profileset."Talent: Flourish"+=spec_talents=103106:0
+profileset."Talent: Flower Walk"+=hero_talents=119855:0
+profileset."Talent: Forestwalk"+=class_talents=103323:0
+profileset."Talent: Frenzied Regeneration"+=class_talents=103298:0
+profileset."Talent: Germination"+=spec_talents=103113:0
+profileset."Talent: Gift of the Wild"+=class_talents=123794:0
+profileset."Talent: Green Thumb"+=hero_talents=135975:0
+profileset."Talent: Heart of the Wild"+=class_talents=103309:0
+profileset."Talent: Hunt Beneath the Open Skies"+=hero_talents=117231:0
+profileset."Talent: Implant"+=hero_talents=117229:0
+profileset."Talent: Improved Barkskin"+=class_talents=128591:0
+profileset."Talent: Improved Nature's Cure"+=class_talents=128590:0
+profileset."Talent: Improved Regrowth"+=spec_talents=103142:0
+profileset."Talent: Improved Wild Growth"+=spec_talents=103096:0
+profileset."Talent: Innervate"+=class_talents=103324:0
+profileset."Talent: Intensity"+=spec_talents=103105:0
+profileset."Talent: Ironbark"+=spec_talents=103141:0
+profileset."Talent: Killer Instinct"+=class_talents=103303:0
+profileset."Talent: Lethal Preservation"+=hero_talents=117224:0
+profileset."Talent: Lifebloom"+=spec_talents=103100:0
+profileset."Talent: Lifetreading"+=spec_talents=128708:0
+profileset."Talent: Lingering Healing"+=class_talents=103319:0
+profileset."Talent: Lycara's Teachings"+=class_talents=103311:0
+profileset."Talent: Master Shapeshifter"+=spec_talents=114809:0
+profileset."Talent: Matted Fur"+=class_talents=123796:0
+profileset."Talent: Natural Recovery"+=class_talents=103284:0
+profileset."Talent: Nature's Swiftness"+=spec_talents=103101:0
+profileset."Talent: Nurturing Dormancy"+=spec_talents=103132:0
+profileset."Talent: Nurturing Instinct"+=class_talents=103292:0
+profileset."Talent: Oakskin"+=class_talents=123795:0
+profileset."Talent: Omen of Clarity"+=spec_talents=128707:0
+profileset."Talent: Overgrowth"+=spec_talents=103103:0
+profileset."Talent: Patient Custodian"+=hero_talents=117232:0
+profileset."Talent: Photosynthesis"+=spec_talents=103129:0
+profileset."Talent: Power of the Archdruid"+=spec_talents=103121:0
+profileset."Talent: Prosperity"+=spec_talents=137507:0
+profileset."Talent: Rampancy"+=hero_talents=135973:0
+profileset."Talent: Rampant Growth"+=spec_talents=103112:0
+profileset."Talent: Reforestation"+=spec_talents=103125:0
+profileset."Talent: Renewing Surge"+=spec_talents=103114:0
+profileset."Talent: Root Network"+=hero_talents=117233:0
+profileset."Talent: Soothe"+=class_talents=103307:0
+profileset."Talent: Soul of the Forest"+=spec_talents=103109:0
+profileset."Talent: Stampeding Roar"+=class_talents=103312:0
+profileset."Talent: Starfire"+=class_talents=112967:0
+profileset."Talent: Starlight Conduit"+=class_talents=123868:0
+profileset."Talent: Starsurge"+=class_talents=103278:0
+profileset."Talent: Strategic Infusion"+=hero_talents=117223:0
+profileset."Talent: Swiftmend"+=spec_talents=103098:0
+profileset."Talent: Symbiotic Relationship"+=class_talents=123792:0
+profileset."Talent: Thick Hide"+=class_talents=103306:0
+profileset."Talent: Thriving Growth"+=hero_talents=117226:0
+profileset."Talent: Thriving Vegetation"+=spec_talents=103124:0
+profileset."Talent: Tranquility"+=spec_talents=103108:0
+profileset."Talent: Typhoon"+=class_talents=103287:0
+profileset."Talent: Unstoppable Growth"+=spec_talents=103138:0
+profileset."Talent: Ursoc's Spirit"+=class_talents=103297:0
+profileset."Talent: Ursol's Vortex"+=class_talents=128589:0
+profileset."Talent: Verdant Heart"+=class_talents=103296:0
+profileset."Talent: Vigorous Creepers"+=hero_talents=117227:0
+profileset."Talent: Well-Honed Instincts"+=class_talents=103313:0
+profileset."Talent: Wild Charge"+=class_talents=103276:0
+profileset."Talent: Wild Growth"+=class_talents=103283:0
+profileset."Talent: Wildstalker's Power"+=hero_talents=117221:0
+profileset."Tier: Everbloom down to 1/4"+=spec_talents=137040:1/137039:0/137038:0
+profileset."Tier: Everbloom down to 2/4"+=spec_talents=137040:1/137039:1/137038:0
+profileset."Tier: Everbloom down to 3/4"+=spec_talents=137040:1/137039:2/137038:0
+profileset."Add: Call of the Elder Druid"+=spec_talents=103123:1
+profileset."Add: Cultivation"+=spec_talents=137510:2
+profileset."Add: Dream of Cenarius"+=spec_talents=103122:1
+profileset."Add: Embrace of the Dream"+=spec_talents=103126:1
+profileset."Add: Flash of Clarity"+=spec_talents=103110:1
+profileset."Add: Fluid Form"+=class_talents=103326:1
+profileset."Add: Gale Winds"+=class_talents=128583:1
+profileset."Add: Grievous Wounds"+=class_talents=103318:1
+profileset."Add: Grove Guardians"+=spec_talents=117104:1
+profileset."Add: Harmonious Blooming"+=spec_talents=103134:1
+profileset."Add: Hibernate"+=class_talents=103289:1
+profileset."Add: Improved Ironbark"+=spec_talents=103139:1
+profileset."Add: Improved Stampeding Roar"+=class_talents=103308:1
+profileset."Add: Improved Swiftmend"+=spec_talents=128274:1
+profileset."Add: Incapacitating Roar"+=class_talents=103316:1
+profileset."Add: Incessant Tempest"+=class_talents=128582:1
+profileset."Add: Instincts of the Claw"+=class_talents=128585:1
+profileset."Add: Ironfur"+=class_talents=103305:1
+profileset."Add: Killer Instinct (2/2)"+=class_talents=103303:2
+profileset."Add: Lore of the Grove"+=class_talents=128584:1
+profileset."Add: Lycara's Inspiration"+=class_talents=114300:1
+profileset."Add: Maim"+=class_talents=103299:1
+profileset."Add: Mighty Bash"+=class_talents=103315:1
+profileset."Add: Moonkin Form"+=class_talents=103286:1
+profileset."Add: Nature's Bounty"+=spec_talents=103128:1
+profileset."Add: Perfectly-Honed Instincts"+=class_talents=128586:1
+profileset."Add: Primal Fury"+=class_talents=103302:1
+profileset."Add: Rake"+=class_talents=103277:1
+profileset."Add: Regenerative Heartwood"+=spec_talents=103131:1
+profileset."Add: Regenesis"+=spec_talents=103117:2
+profileset."Add: Rip"+=class_talents=103300:1
+profileset."Add: Stonebark"+=spec_talents=103140:1
+profileset."Add: Sunfire"+=class_talents=116102:1
+profileset."Add: Swipe"+=class_talents=103301:1
+profileset."Add: Tranquil Mind"+=spec_talents=114808:1
+profileset."Add: Ursine Vigor"+=class_talents=123793:1
+profileset."Add: Verdancy"+=spec_talents=103127:1
+profileset."Add: Waking Dream"+=spec_talents=103097:1
+profileset."Add: Wild Synthesis"+=spec_talents=117105:1
+profileset."Add: Ysera's Gift"+=spec_talents=103099:1
+profileset."Swap: Circle of the Wild for Circle of the Heavens"+=class_talents=128579:0/128580:1
+profileset."Swap: Cyclone for Soothe"+=class_talents=103307:0/128587:1
+profileset."Swap: Entangling Vortex for Flower Walk"+=hero_talents=119855:0/117222:1
+profileset."Swap: Harmonious Constitution for Bond with Nature"+=hero_talents=117225:0/119854:1
+profileset."Swap: Incarnation: Tree of Life for Convoke the Spirits"+=spec_talents=103119:0/103120:1
+profileset."Swap: Liveliness for Master Shapeshifter"+=spec_talents=114809:0/103130:1
+profileset."Swap: Mass Entanglement for Ursol's Vortex"+=class_talents=128589:0/103285:1
+profileset."Swap: Passing Seasons for Overgrowth"+=spec_talents=103103:0/103102:1
+profileset."Swap: Resilient Flourishing for Root Network"+=hero_talents=117233:0/117234:1
+profileset."Swap: Tiger Dash for Wild Charge"+=class_talents=103276:0/103275:1
+profileset."Swap: Twin Sprouts for Implant"+=hero_talents=117229:0/117230:1
+profileset."Swap: Verdant Infusion for Prosperity"+=spec_talents=137507:0/137508:1
+# Legal builds (Build: <taken> for <dropped>): a talent worth adding, with the cheapest path to it, paid for either by your lowest-value talents that keep the tree legal (paths through maxed parents, gates of 8 and 20/23 points) or by Everbloom from the top (apex ranks are spec points; tiers fill in order).
+profileset."Build: Nature's Bounty for Thriving Vegetation (to 1)"+=spec_talents=103124:1/103128:1
+profileset."Build: Harmonious Blooming for Reforestation"+=spec_talents=103125:0/103134:1
+profileset."Build: Ysera's Gift for Reforestation"+=spec_talents=103125:0/103099:1
+profileset."Build: Grove Guardians + Wild Synthesis for Reforestation, Thriving Vegetation (to 1)"+=spec_talents=103124:1/103125:0/117104:1/117105:1
+profileset."Build: Improved Swiftmend for Unstoppable Growth (to 1)"+=spec_talents=103138:1/128274:1
+profileset."Build: Tranquil Mind for Improved Regrowth"+=spec_talents=103142:0/114808:1
+profileset."Build: Flash of Clarity + Cultivation for Reforestation, Thriving Vegetation"+=spec_talents=103124:0/103125:0/103110:1/137510:2
+profileset."Build: Call of the Elder Druid for Reforestation"+=spec_talents=103125:0/103123:1
+profileset."Build: Flash of Clarity for Reforestation"+=spec_talents=103125:0/103110:1
+profileset."Build: Nature's Bounty + Harmonious Blooming for Thriving Vegetation"+=spec_talents=103124:0/103128:1/103134:1
+profileset."Build: Nature's Bounty + Harmonious Blooming + Ysera's Gift for Thriving Vegetation, Reforestation"+=spec_talents=103124:0/103125:0/103099:1/103128:1/103134:1
+profileset."Build: Nature's Bounty for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/103128:1
+profileset."Build: Harmonious Blooming for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/103134:1
+profileset."Build: Ysera's Gift for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/103099:1
+profileset."Build: Grove Guardians + Wild Synthesis for Everbloom (to 2)"+=spec_talents=137040:1/137039:1/137038:0/117104:1/117105:1
+profileset."Build: Improved Swiftmend for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/128274:1
+profileset."Build: Tranquil Mind for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/114808:1
+profileset."Build: Flash of Clarity + Cultivation for Everbloom (to 1)"+=spec_talents=137040:1/137039:0/137038:0/103110:1/137510:2
+profileset."Build: Call of the Elder Druid for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/103123:1
+profileset."Build: Flash of Clarity for Everbloom (to 3)"+=spec_talents=137040:1/137039:2/137038:0/103110:1
+profileset."Build: Nature's Bounty + Harmonious Blooming for Everbloom (to 2)"+=spec_talents=137040:1/137039:1/137038:0/103128:1/103134:1
+profileset."Build: Nature's Bounty + Harmonious Blooming + Ysera's Gift for Everbloom (to 1)"+=spec_talents=137040:1/137039:0/137038:0/103099:1/103128:1/103134:1
+profileset."Build: Nature's Bounty for Reforestation"+=spec_talents=103125:0/103128:1

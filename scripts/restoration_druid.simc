@@ -75,6 +75,24 @@ off_hand=,id=245769,bonus_id=12214/13667/13852/12497/13751/14001/12715/8793/1383
 # Protection Paladin: the tank with low sustain; the Blood DK gets none)
 # snapshot_stats: records the character sheet (gear, gems, enchants, buffs) for the report; it casts nothing.
 actions.precombat=snapshot_stats
+# Rotation choices for the talent values page (talent_sets.simc sets them with apl_variable.<name>=<n>); 0 = your play.
+# sm_self: Swiftmend yourself (1 = when your Regrowth is on you, 2 = always). regrowth_first: Regrowth on a low ally with
+# none of your HoTs so Swiftmend can follow (1 = high in the list, 2 = low). blanket: Rejuvenation on everyone missing it
+# while mana is on schedule (1 = above the Starsurge filler, 2 = above the Regrowth fillers).
+actions.precombat+=/variable,name=sm_self,op=reset
+actions.precombat+=/variable,name=regrowth_first,op=reset
+actions.precombat+=/variable,name=blanket,op=reset
+# germ (second Rejuvenation = Germination). ADOPTED 2026-11-12: 2 (one Rejuvenation on yourself and the tank, a second on
+# anyone once everyone nearby has one; +1.8% / +1.6% raid health, limit +2.6 / +4 points). 0 = your old play (always two
+# on yourself and the tank), 1 = only on yourself and the tank, 2 = never
+# permanently on yourself and the tank (one kept up there), 3 = on others only when a burst lands within 5 sec,
+# 4 = 2 and 3 together, 5 = no permanent double on the tank only (yours kept), 6 = none on you only (the tank's kept)
+actions.precombat+=/variable,name=germ,default=2,op=reset
+# rj_pre (rotation test, 0 = current): press Rejuvenation before Convoke until this many are up
+# rj_keep (rotation test, 0 = current: 5, more while someone is hurt and mana allows): keep about this many up otherwise
+# germ=7: no manual second Rejuvenation except on the tank and on anyone below 50% (Archdruid spreads make the rest)
+actions.precombat+=/variable,name=rj_pre,op=reset
+actions.precombat+=/variable,name=rj_keep,op=reset
 actions.precombat+=/lifebloom,target_self=1
 actions.precombat+=/rejuvenation,target_self=1
 actions.precombat+=/rejuvenation,target_self=1
@@ -84,6 +102,7 @@ actions.precombat+=/rejuvenation,target=Protection_Warrior
 # combo points, Ferocious Bite at 5 for damage and Master Shapeshifter mana; the next heal shifts back. Started only
 # while the raid is healthy. Never Convoke in a DPS form.
 actions=variable,name=ramp,value=cooldown.tranquility.remains<15&encounter.big_burst.remains<15
+actions+=/variable,name=mana_plan,value=100*fight_remains%(time+fight_remains),if=variable.blanket
 # Barkskin just before every big burst lands (good play, user 2026-11-09; also triggers Matted Fur and Flower Walk)
 actions+=/barkskin,if=encounter.big_burst.remains<=1
 # Tranquility as a big burst lands (Vashnik: an Imbibe's Expulsions; the ramp below sets it up), or in an emergency
@@ -100,6 +119,7 @@ actions+=/innervate,if=mana.pct<75
 actions+=/lifebloom,target_self=1,if=refreshable
 # Before every Convoke: Wild Growth, then Nature's Swiftness into Regrowth on yourself (Overgrowth refreshes your
 # Lifebloom and adds Rejuvenation and Wild Growth on you)
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.rj_pre>0&cooldown.convoke_the_spirits.remains<=gcd.max*2&active_dot.rejuvenation<variable.rj_pre
 actions+=/wild_growth,target_if=min:target.health.pct,if=cooldown.convoke_the_spirits.remains<=gcd.max*2&!buff.natures_swiftness.up
 # Hex Lord's Dooming Idol (when equipped; ignored otherwise): its Intellect right before every Convoke
 actions+=/use_item,name=hex_lords_dooming_idol,if=cooldown.convoke_the_spirits.remains<=gcd.max*2
@@ -114,38 +134,46 @@ actions+=/convoke_the_spirits,if=!buff.natures_swiftness.up
 # Swiftmend targets (sim test 2026-11-10): Blooming Frenzy blooms your Lifebloom 3 times on ANY Swiftmend (your log), so
 # a self-Swiftmend only adds its vine to blooms 2-3 (~0.6k HPS of Everbloom) while it mostly overheals you; on the
 # lowest ally with a HoT it adds ~8.6k effective HPS: limit +1.5..2 points, deaths about halved.
+actions+=/swiftmend,target_self=1,if=(variable.sm_self=2|variable.sm_self=1&dot.regrowth.ticking)&variable.ramp&encounter.big_burst.remains<=4
 actions+=/swiftmend,target_if=min:target.health.pct+(!(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking))*1000,if=variable.ramp&encounter.big_burst.remains<=4
 actions+=/rejuvenation,target_if=min:target.health.pct,if=variable.ramp&buff.soul_of_the_forest_tree.up
+actions+=/swiftmend,target_self=1,if=(variable.sm_self=2|variable.sm_self=1&dot.regrowth.ticking)&variable.ramp&encounter.big_burst.remains>4&charges>=2
 actions+=/swiftmend,target_if=min:target.health.pct,if=variable.ramp&encounter.big_burst.remains>4&charges>=2
 actions+=/wild_growth,target_if=min:target.health.pct,if=variable.ramp
 actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+target.health.pct,if=variable.ramp&active_dot.regrowth<5
-actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.ramp&active_dot.rejuvenation<12
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.ramp&active_dot.rejuvenation<12&(variable.germ=0|variable.germ=2|variable.germ=5|variable.germ=6|!(dot.rejuvenation.ticking|dot.germination.ticking)|(variable.germ=3|variable.germ=4)&encounter.burst.remains<5|variable.germ=7&target.health.pct<50)
 actions+=/ironbark,target_if=min:target.health.pct,if=target.health.pct<40
 # Exploding Infection (your 1 per wave): it gains a stack every tick and explodes on the raid when dispelled, so
 # dispel at 2 stacks while the raid is healthy and let it reach 3 when the raid is low
 actions+=/natures_cure,target_if=max:target.dispellable,if=target.dispellable>=3|target.dispellable>=2&raid_health.pct>=80
 # Rejuvenation + Germination on yourself and on the tank at all times
-actions+=/rejuvenation,target_self=1,if=dot.rejuvenation.refreshable|dot.germination.refreshable
-actions+=/rejuvenation,target=Protection_Warrior,if=dot.rejuvenation.refreshable|dot.germination.refreshable
+actions+=/rejuvenation,target_self=1,if=(dot.rejuvenation.refreshable|dot.germination.refreshable)&(variable.germ!=2&variable.germ!=4&variable.germ!=6&variable.germ!=7|!dot.rejuvenation.ticking)
+actions+=/rejuvenation,target=Protection_Warrior,if=(dot.rejuvenation.refreshable|dot.germination.refreshable)&(variable.germ!=2&variable.germ!=4&variable.germ!=5|!dot.rejuvenation.ticking)
 # Swiftmend when charges are capping: the lowest ally with a HoT (a Regrowth first if none is out). Or spot heal
 # someone low who has a HoT.
+actions+=/swiftmend,target_self=1,if=(variable.sm_self=2|variable.sm_self=1&dot.regrowth.ticking)&charges_fractional>=1.8
 actions+=/swiftmend,target_if=min:target.health.pct+(!(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking))*1000,if=charges_fractional>=1.8
 actions+=/regrowth,target_if=min:target.health.pct,if=cooldown.swiftmend.charges_fractional>=1.8
+actions+=/regrowth,target_if=min:target.health.pct,if=variable.regrowth_first=1&target.health.pct<50&!(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking)
+actions+=/swiftmend,target_self=1,if=variable.sm_self=2&injured_allies.50>=1
 actions+=/swiftmend,target_if=min:target.health.pct,if=target.health.pct<50&(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking)
 # Soul of the Forest Rejuvenation: Power of the Archdruid puts it on 3 allies
 actions+=/rejuvenation,target_if=min:target.health.pct,if=buff.soul_of_the_forest_tree.up
 actions+=/regrowth,target_if=min:target.health.pct,if=buff.clearcasting_tree.up
 # After a Tranquility (and in the Abundance window after a Convoke): spam Regrowth on allies without one, Rejuvenation
 # targets first (more Harmony), anyone low first of all
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.blanket=2&mana.pct>=variable.mana_plan-5&(dot.rejuvenation.ticking+dot.germination.ticking)<2
 actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+(target.health.pct>50)*50-dot.rejuvenation.ticking*20+target.health.pct*0.1,if=cooldown.tranquility.remains>165|buff.abundance.up&cooldown.convoke_the_spirits.remains>45&target.health.pct<90
 # Wild Growth when mana allows and it isn't needed for the next Convoke
 actions+=/wild_growth,target_if=min:target.health.pct,if=injured_allies.90>=5&mana.pct>=40&cooldown.convoke_the_spirits.remains>10
 # Low mana: fewer Rejuvenations, Regrowths with Abundance instead
 actions+=/regrowth,target_if=min:target.health.pct,if=buff.abundance.up&(target.health.pct<45|mana.pct<30&target.health.pct<70)
 # Starsurge while the raid is healthy: Master Shapeshifter returns more mana than it costs (10 casts on the kill)
+actions+=/regrowth,target_if=min:target.health.pct,if=variable.regrowth_first=2&target.health.pct<50&!(dot.rejuvenation.ticking|dot.germination.ticking|dot.regrowth.ticking|dot.wild_growth.ticking)
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.blanket=1&mana.pct>=variable.mana_plan-5&(dot.rejuvenation.ticking+dot.germination.ticking)<2
 actions+=/starsurge,if=raid_health.pct>=95
 # Rejuvenations in waves: always enough for Abundance (5), more while someone is hurt and mana allows
-actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*10+target.health.pct,if=active_dot.rejuvenation<5|target.health.pct<95&mana.pct>=30
+actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*10+target.health.pct,if=(variable.rj_keep=0&(active_dot.rejuvenation<5|target.health.pct<95&mana.pct>=30)|variable.rj_keep>0&active_dot.rejuvenation<variable.rj_keep)&(variable.germ=0|variable.germ=2|variable.germ=5|variable.germ=6|!(dot.rejuvenation.ticking|dot.germination.ticking)|(variable.germ=3|variable.germ=4)&encounter.burst.remains<5|variable.germ=7&target.health.pct<50)
 # Downtime: Starsurge or Wrath (Master Shapeshifter mana) instead of waiting
 actions+=/starsurge
 actions+=/wrath

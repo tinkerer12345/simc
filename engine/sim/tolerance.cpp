@@ -12,14 +12,18 @@
 #include "util/io.hpp"
 #include "util/util.hpp"
 
+#include "rapidjson/document.h"
+
 #include <algorithm>
 #include <cmath>
+#include <ctime>
 #include <fstream>
 #include <map>
 #include <sstream>
 
 namespace tolerance
 {
+double raid_health_of( const setup_result_t& s );  // below: raid health kept at the highest fixed level
 namespace
 {
 constexpr int default_seed = 31459;  // SimC's deterministic seed
@@ -134,6 +138,10 @@ void tolerance_t::create_options()
   sim->add_option( opt_uint( "tolerance_screen_iterations", screen_iterations ) );
   sim->add_option( opt_float( "tolerance_screen_margin", screen_margin, 0, 1 ) );
   sim->add_option( opt_string( "tolerance_cache", cache_file ) );
+  sim->add_option( opt_string( "tolerance_keep", keep_file ) );
+  sim->add_option( opt_string( "tolerance_keep_except", keep_except ) );
+  sim->add_option( opt_bool( "tolerance_reuse", reuse ) );
+  sim->add_option( opt_bool( "tolerance_upgrade_limits", upgrade_limits ) );
   sim->add_option( opt_bool( "tolerance_stats", stats.enabled ) );
   sim->add_option( opt_float( "tolerance_recovery_margin", stats.recovery_margin, 0, 1 ) );
   sim->add_option( opt_float( "tolerance_burst_window", stats.burst_window, 1, 120 ) );
@@ -162,6 +170,54 @@ void tolerance_t::initialize()
     if ( v <= 0 )
       throw sc_invalid_sim_argument( fmt::format( "tolerance_levels: invalid level '{}'.", l ) );
     levels.push_back( v );
+  }
+
+  // When this run started, stamped on its setups (the report says how old kept results are).
+  {
+    std::time_t now = std::time( nullptr );
+    char buf[ 32 ];
+    if ( std::strftime( buf, sizeof buf, "%Y-%m-%d %H:%M", std::localtime( &now ) ) )
+      ran = buf;
+  }
+  // tolerance_keep: read the earlier report now, before this run's report can overwrite it. A missing file is fine
+  // (the first run).
+  if ( !keep_file.empty() )
+  {
+    std::ifstream in( keep_file, std::ios::binary );
+    if ( in )
+    {
+      std::stringstream buf;
+      buf << in.rdbuf();
+      keep_data = buf.str();
+    }
+  }
+  if ( reuse && !keep_data.empty() )
+  {
+    rapidjson::Document old;
+    old.Parse( keep_data.c_str() );
+    if ( !old.HasParseError() && old.IsObject() && old.HasMember( "sim" ) && old[ "sim" ].HasMember( "tolerance" ) &&
+         old[ "sim" ][ "tolerance" ].HasMember( "setups" ) && old[ "sim" ][ "tolerance" ][ "setups" ].IsArray() )
+    {
+      for ( const auto& o : old[ "sim" ][ "tolerance" ][ "setups" ].GetArray() )
+      {
+        if ( !o.HasMember( "role" ) || !o.HasMember( "pattern" ) || !o.HasMember( "levels" ) || !o[ "levels" ].IsArray() ||
+             o[ "levels" ].Empty() )
+          continue;
+        const auto& last = o[ "levels" ][ o[ "levels" ].Size() - 1 ];
+        if ( !last.HasMember( "stats" ) || !last[ "stats" ].HasMember( "raid_health" ) )
+          continue;
+        std::string role = o[ "role" ].GetString(), pattern = o[ "pattern" ].GetString();
+        if ( role == "main" )
+          keep_main[ pattern ] = last[ "stats" ][ "raid_health" ].GetDouble();
+        else if ( role == "set" && o.HasMember( "name" ) && o.HasMember( "options" ) && !o.HasMember( "stale" ) )
+        {
+          std::string key = std::string( o[ "name" ].GetString() ) + "\x1f" + pattern;
+          for ( const auto& l : o[ "options" ].GetArray() )
+            key += std::string( "\x1f" ) + l.GetString();
+          keep_sets.insert( key );
+        }
+      }
+    }
   }
 
   // Profilesets become gear sets: sorted by name so runs are reproducible.
@@ -196,6 +252,9 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
   auto child = std::make_unique<sim_t>( sim, 0, control.get() );
   child->seed            = seed ? seed : default_seed;
   child->report_progress = false;
+  // free the worker threads' sims after the run (as profilesets do): without it every child sim kept one copy of the
+  // whole raid per thread, and a long run (the talent values: 150+ child sims) ran out of memory
+  child->cleanup_threads = true;
   if ( !child->execute() || child->is_canceled() )
     throw std::runtime_error( fmt::format( "tolerance: simulation failed at {} {:.1f}%", test, pct * 100 ) );
 
@@ -469,6 +528,7 @@ test_result_t tolerance_t::cached_fast_search( const sim_control_t& base, const 
   std::string key;
   static const std::vector<std::string> outputs_only = { "json",        "json2",          "output",      "html",
                                                          "healer_html", "healer_html_template", "tolerance_cache",
+                                                         "tolerance_keep", "tolerance_keep_except", "tolerance_reuse",
                                                          "tolerance_share_source", "xml", "log", "report_details" };
   for ( const auto& o : base.options )
     if ( range::find( outputs_only, o.name ) == outputs_only.end() )
@@ -618,11 +678,33 @@ void tolerance_t::analyze()
       screen_base = probe_health( probe( base, "combined", levels.back(), 0, screen_iterations, 0, nullptr, true ) );
     }
 
+    // tolerance_reuse: the profile's result on this pattern equals the earlier report's, so its sets would replay the
+    // same fights: those already there are not played again.
+    bool reuse_ok = false;
+    if ( reuse && keep_main.count( pattern ) )
+    {
+      double h = raid_health_of( results[ first ] );
+      reuse_ok = h >= 0 && std::abs( h - keep_main[ pattern ] ) < 1e-12;
+      if ( reuse_ok )
+        fmt::print( "Same result as the earlier report: sets already simulated are reused\n" );
+    }
+
     // Gear sets: the same search on the same random numbers, starting at the profile's score with small steps.
     for ( const auto& [ name, set_lines ] : sets )
     {
       if ( sim->is_canceled() )
         return;
+      if ( reuse_ok )
+      {
+        std::string key = name + "\x1f" + pattern;
+        for ( const auto& l : set_lines )
+          key += "\x1f" + l;
+        if ( keep_sets.count( key ) )
+        {
+          reused.insert( name + "\x1f" + pattern );
+          continue;  // the report carries its earlier result
+        }
+      }
       setup_result_t s;
       s.name    = name;
       s.role    = "set";
@@ -674,7 +756,7 @@ void tolerance_t::analyze()
     // doesn't drop.
     if ( search_enabled && !search_sets && score > 0 )
     {
-      for ( size_t i : point_upgrades( first ) )
+      for ( size_t i : upgrade_limits ? point_upgrades( first ) : std::vector<size_t>() )
       {
         if ( sim->is_canceled() )
           return;
@@ -707,7 +789,7 @@ void tolerance_t::analyze()
 }
 
 // Raid health kept (the gear check's score) at the highest fixed level, -1 without one.
-static double raid_health_of( const setup_result_t& s )
+double raid_health_of( const setup_result_t& s )
 {
   if ( s.levels.empty() || !s.levels.back().has_stats || s.levels.back().stats.health_seconds <= 0 )
     return -1;
@@ -755,7 +837,8 @@ std::optional<std::pair<std::string, std::vector<std::string>>> tolerance_t::com
       continue;
     const std::string& line = s.options.front();
     auto eq                 = line.find( '=' );
-    if ( eq == std::string::npos )
+    // items only (a ",id=" line): talent switches (the talent values run) are never combined
+    if ( eq == std::string::npos || line.find( ",id=" ) == std::string::npos )
       continue;
     std::string slot = line.substr( 0, eq );
     auto id          = line.find( ",id=" );

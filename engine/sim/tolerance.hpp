@@ -10,6 +10,7 @@
 #include "sim/tolerance_stats.hpp"
 
 #include <map>
+#include <set>
 #include <optional>
 #include <string>
 #include <utility>
@@ -107,6 +108,21 @@ struct tolerance_t
   std::string cache_file;
   std::map<std::string, test_result_t> cache;
   bool cache_changed = false;
+  // Results kept from an earlier run (tolerance_keep=<that run's JSON report>): its sets that this run doesn't play are
+  // carried into this report unchanged, so a short run (e.g. only rotation choices) keeps the last full run's talent
+  // values. Read at initialize(), because the report may be written to that same file.
+  std::string keep_file;
+  std::string keep_data;
+  std::string keep_except;  // tolerance_keep_except=<prefix>: kept sets named so are dropped unless reused (rerun whole)
+  // tolerance_reuse=1 (with tolerance_keep): a set the earlier report already has (same name, lines and damage pattern)
+  // isn't played again when the profile's own result on that pattern is unchanged; the report carries its old result.
+  bool reuse = false;
+  std::set<std::string> keep_sets;              // name \x1f pattern \x1f lines of the earlier report's sets
+  std::map<std::string, double> keep_main;      // pattern -> the profile's raid health in the earlier report
+  // tolerance_upgrade_limits=0: no limit search for each set with more points (quick runs; finalists get one later).
+  bool upgrade_limits = true;
+  std::set<std::string> reused;  // "name, unit separator, pattern" of the sets this run reused (the report keeps them)
+  std::string ran;  // when this run started (local time), stamped on its setups
   std::string healer_html;           // the healer report to write
   std::string healer_html_template;  // its template (an HTML file with a __SIMC_DATA__ placeholder)
 
