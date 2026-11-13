@@ -18,10 +18,10 @@ set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
 omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
 # Flask: Flask of the Magisters (mastery) instead of SimC's Restoration default, Flask of the Blood Knights (haste)
 flask=magisters_2
-# How often an ally stands in your Efflorescence (it follows your Lifebloom target): 0.36 = the positioning you aim for
-# (you chose 0.6 when the sim rolled it twice, i.e. 0.36; your raid log of 2026-11-08 shows ~0.1, 2.4 heals per
-# pulse); 1 = the raid always stacked on it.
-druid.efflorescence_coverage=0.36
+# How often an ally stands in your Efflorescence (it follows your Lifebloom target): 0.18 = your Coiled Altar kill (3.2 of
+# 17.7 others within 10 yd of you per pulse; the melee can't reposition), your choice for every fight (2026-11-13; was 0.36);
+# 1 = the raid always stacked on it.
+druid.efflorescence_coverage=0.18
 # How often each of Bursting Growth's 2 nearby allies is within its 10 yards (a burst heals 3 at most): your log shows
 # ~0.8 (2.6 players per burst).
 druid.bursting_growth_coverage=0.8

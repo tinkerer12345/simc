@@ -3,19 +3,19 @@
                            "players":  20,
                            "fights":  199,
                            "wipes":  199,
-                           "simulation_length":  50.205939698492567,
-                           "healer_hps":  894849.2163625996,
-                           "healer_damage_taken":  2741903.935967717,
-                           "healer_fight_length":  50.205939698492567,
-                           "raid_damage_taken":  61335675.316047728,
+                           "simulation_length":  50.2261407035177,
+                           "healer_hps":  894898.2843398262,
+                           "healer_damage_taken":  2677490.137875334,
+                           "healer_fight_length":  50.2261407035177,
+                           "raid_damage_taken":  61249622.120982394,
                            "raid_frames_units":  20,
-                           "raid_frames_deaths":  12,
+                           "raid_frames_deaths":  13,
                            "death_recaps":  1
                        },
     "patchwerk_healer_profile":  {
                                      "raid_member_health":  901360.0,
-                                     "healer_hps":  359650.98914530678,
-                                     "raid_damage_taken":  111091135.80799134
+                                     "healer_hps":  359080.27377894558,
+                                     "raid_damage_taken":  111162913.39585033
                                  },
     "evoker_healer_profile":  {
                                   "wipes":  0,
