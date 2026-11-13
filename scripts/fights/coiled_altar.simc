@@ -4,6 +4,10 @@
 # with Venom Rupture waves; Suffocating Darkness and Defilement healing absorbs. The phase table
 # is in engine/class_modules/bosses/sc_coiled_altar.cpp (coiled_altar_phases); phases=... after encounter= overrides it.
 # Use after a healer profile: simc.exe <healer>.simc fights\coiled_altar.simc ...
+# Efflorescence coverage on this fight (the healer's option: read here, the healer is still the last actor). Your kill:
+# 3.2 of 17.7 others stood within 10 yd of you per pulse = 0.18 (pulses healed 2.2 of 3 = ~0.08); the melee can't
+# reposition, so it depends on the ranged stacking in it. Your choice (2026-11-13): 0.18. Restoration Druid only.
+druid.efflorescence_coverage=0.18
 max_time=496
 vary_combat_length=0
 
