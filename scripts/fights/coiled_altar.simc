@@ -1,9 +1,10 @@
 # Coiled Altar (Mythic), simulated for healers: Patchwerk's raid and calibration (everyone has the healer's health,
-# every hit a share of it, one healer's share = 100%) with phases shaped like a Mythic kill (8:21): P1 orb waves every
-# ~33 sec, P2 a permanent aura with two slow ghost ramps, a 38 sec soak intermission, P3 both together. The phase table
+# every hit a share of it, one healer's share = 100%) on a Mythic farm kill's timeline and damage (8:36): P1 Venom
+# Rupture waves after each Sever, P2 the Dreadful Presence aura, a 37 sec Spirit Erasure intermission, P3 both bosses
+# with Venom Rupture waves and Defilement healing absorbs. The phase table
 # is in engine/class_modules/bosses/sc_patchwerk.cpp (coiled_altar_phases); phases=... after encounter= overrides it.
 # Use after a healer profile: simc.exe <healer>.simc fights\coiled_altar.simc ...
-max_time=503
+max_time=516
 vary_combat_length=0
 
 # Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.

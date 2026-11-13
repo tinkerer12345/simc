@@ -634,37 +634,34 @@ player_t* create_patchwerk( sim_t* sim )
   return new patchwerk_t( sim );
 }
 
-/* Coiled Altar (Mythic), simulated: Patchwerk with phases shaped like the user's Mythic kill (8:21, damage taken by
- * ability per phase from Warcraft Logs, 2026-11-08). The same calibration as Patchwerk (shares of the raid's health,
- * one healer's share = 100%); each phase's multipliers give its intensity (~0.94 / 0.93 / 1.08 / 1.08 of the fight's
- * average) and mix (shares of the raid's damage without the tanks):
- * - P1 (2:05): orb waves (Venom Rupture, Fangs) 53%, steady (Coalesced Venom) 43%, avoidable 3%: a wave every ~33 sec
- *   lasting ~17 sec, each +12%, the 3rd the biggest.
- * - P2 (2:40): steady (Dreadful Presence aura) 78%, slow waves (Retaliatory Malice ghosts) 13%: 2 ramps of ~50 sec;
- *   spot (Gloombomb, Dread Bolt, ghosts) 8%.
- * - Intermission (0:38): Spirit Erasure soaks, ~95% steady.
- * - P3 (3:00): steady 56%, waves 27% (Venom Rupture, Retaliatory Malice) every ~45 sec, spot 14%.
- * Tanks take ~11% of the damage (Patchwerk's calibration: 20%), so tank x0.55. Left out: the 122M Gravebound hit at
- * 8:05 (a kill-time event, not healing pressure). Fight length: the kill's, set in fights\coiled_altar.simc.
- *
- * 2026-11-13, from a farm kill's events (Warcraft Logs, Venom Rupture / Fangs / Defilement): the generic P1 and P3
- * waves are replaced by the real timeline (at=, sizes=; one stack = 0.241 H per player per 10 sec wave: each Sever's
- * Venom Rupture ticks every 2 sec for 10 sec at 55.7k unmitigated x stacks, 74% taken, at H = 950k and the stand-ins'
- * 10% reduction; its 56k opening hit = +0.2 stack):
- * - P1: Fangs of the Coiled Altar at 0:01 and 1:26 (~485k taken per player, 8 sec: 2.35 stacks); Venom Rupture after
- *   each Sever, in pairs: 0:23 (5 stacks), 0:39 (3), 0:59 (5), 1:16 (3), 1:48 (6), and 10 stacks at the transition.
- * - P3: Blighted Sever's Venom Rupture every ~31-37 sec from 73 sec in (4, 3, 3, 4 stacks); Defilement, a healing
- *   absorb on the whole raid: 0.86 H at 39 sec, then 0.25 H and 1.13 H at 123 and 141 sec (healing eaten per player).
- * Not yet sized (no damage table): Toxic Deluge (8 casts), Noxious Ground, Dreadful Presence, Dread Bolt, Wail of
- * Terror, Gloombomb: still the per-phase steady / spot mix. P3's Retaliatory Malice waves are dropped with the old waves.
+/* Coiled Altar (Mythic), simulated: Patchwerk's engine (shares of the raid's health, one healer's share = 100%) on the
+ * timeline and damage of a farm kill (8:36, Warcraft Logs, 2026-11-13: damage done by ability per phase, Venom
+ * Rupture / Fangs / Defilement / Spirit Erasure / Dreadful Presence events). Rates per player per second, taken / 0.9
+ * (the stand-ins' 10% reduction), H = 950k, 20 players:
+ * - P1 (0:00-2:22) Zul'jan: steady = Coalesced Venom (86.4M); spot = Mutagenic Venom, Volatile Venom, Widow's Touch,
+ *   Venomfang, Guillotine (35.5M) + Noxious Ground and Axegrinder (25.0M: avoidable, but ticking ground damage on a
+ *   few players, so spot; the engine's avoidable hit would be a one-shot at this size); tank = melee, Twinfang Toxin,
+ *   Sever (11% of the damage: x0.55). On the timeline: Fangs of the Coiled Altar at 0:01 and 1:26 (~485k per player,
+ *   2.35 stacks) and each Sever's Venom Rupture: one 10 sec wave, ticks every 2 sec at 55.7k unmitigated x stacks,
+ *   74% taken, its 56k opening hit = +0.2 stack, one stack = 0.241 H per player: 0:23 (5), 0:39 (3), 0:59 (5),
+ *   1:16 (3), 1:48 (6), 2:05 (4), 2:21 (10, at the transition).
+ * - P2 (2:22-4:51) Hex Lord Malacrass: steady = Dreadful Presence (195.6M, flat: ~15.5M every 10 sec); spot =
+ *   Retaliatory Malice (16.2M), Gravebound, Dread Bolt, Gloombomb (17.5M); tank = Soul Sever only (x0.15).
+ * - Intermission (4:51-5:28): Spirit Erasure soaks (73.2M), steady.
+ * - P3 (5:28-8:36) both: steady = Coalesced Venom (237.9M); spot = Mutagenic and Volatile Venom, Grim Guillotine,
+ *   Death's Whisper, Malevolent Resonance (41.3M) + Malacrass's Dread Bolts and Gloombombs at their P2 size (~15M);
+ *   tank = melee, Corrupted Toxin, Blighted Sever (x0.59). On the timeline: Blighted Sever's Venom Rupture at 6:04
+ *   (4 stacks), 6:35 (3), 7:08 (3), 7:45 (4), 8:16 (2); Defilement, a healing absorb on the whole raid (avoidable in
+ *   game; sized as the raid took it): 0.86 H at 5:30, 0.25 H at 6:54, 1.13 H at 7:12 (healing eaten per player).
+ * Fight length: the kill's (8:36), set in fights\coiled_altar.simc. Left out: Gravebound's kill-time hit.
  */
 constexpr util::string_view coiled_altar_phases =
-    "125:steady=1.35,spot=0.04,avoidable=1.16,tank=0.55,waves=10,stack=0.241,big_from=6,"
-    "at=1+23+39+59+76+86+108+122,sizes=2.35+5.2+3.2+5.2+3.2+2.35+6.2+10.2/"
-    "160:steady=2.42,burst=0.25,spot=0.35,avoidable=0.4,tank=0.55,interval=80,first=25,waves=50/"
-    "38:steady=3.43,burst=0,spot=0.25,avoidable=0,tank=0.5/"
-    "180:steady=2.02,spot=0.71,avoidable=0,tank=0.55,waves=10,stack=0.241,big_from=4,at=73+104+137+174,"
-    "sizes=4.2+3.2+3.2+4.2,absorb_at=39+123+141,absorbs=0.86+0.25+1.13";
+    "142:steady=1.108,spot=1.094,avoidable=0,tank=0.55,waves=10,stack=0.241,big_from=6,"
+    "at=1+23+39+59+76+86+108+125+141,sizes=2.35+5.2+3.2+5.2+3.2+2.35+6.2+4.2+10.2/"
+    "149:steady=2.39,spot=0.58,avoidable=0,tank=0.15,burst=0/"
+    "37:steady=3.60,spot=0,avoidable=0,tank=0,burst=0/"
+    "188:steady=2.305,spot=0.77,avoidable=0,tank=0.59,waves=10,stack=0.241,big_from=4,at=36+67+100+137+168,"
+    "sizes=4.2+3.2+3.2+4.2+2.2,absorb_at=2+86+104,absorbs=0.86+0.25+1.13";
 
 player_t* create_coiled_altar( sim_t* sim )
 {
