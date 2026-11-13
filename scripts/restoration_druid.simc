@@ -138,9 +138,9 @@ actions+=/swiftmend,target_if=min:target.health.pct,if=target.health.pct<50&(dot
 # Soul of the Forest Rejuvenation: Power of the Archdruid puts it on 3 allies
 actions+=/rejuvenation,target_if=min:target.health.pct,if=buff.soul_of_the_forest_tree.up
 actions+=/regrowth,target_if=min:target.health.pct,if=buff.clearcasting_tree.up
-# After a Tranquility (and in the Abundance window after a Convoke): spam Regrowth on allies without one, Rejuvenation
+# In the Abundance window after a Convoke: Regrowth on hurt allies without one, Rejuvenation
 # targets first (more Harmony), anyone low first of all
-actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+(target.health.pct>50)*50-dot.rejuvenation.ticking*20+target.health.pct*0.1,if=cooldown.tranquility.remains>165|buff.abundance.up&cooldown.convoke_the_spirits.remains>45&target.health.pct<90
+actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+(target.health.pct>50)*50-dot.rejuvenation.ticking*20+target.health.pct*0.1,if=buff.abundance.up&cooldown.convoke_the_spirits.remains>45&target.health.pct<90
 # Wild Growth whenever 5 or more are below 90%, at any mana, not held for Convoke (2026-11-12)
 actions+=/wild_growth,target_if=min:target.health.pct,if=injured_allies.90>=5
 # Low mana: fewer Rejuvenations, Regrowths with Abundance instead
