@@ -120,6 +120,9 @@ actions+=/swiftmend,target_if=min:target.health.pct,if=variable.ramp&encounter.b
 actions+=/wild_growth,target_if=min:target.health.pct,if=variable.ramp
 actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+target.health.pct,if=variable.ramp&active_dot.regrowth<5
 actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=variable.ramp&active_dot.rejuvenation<12
+# Keeper of the Grove: Spirit of the Thicket makes Ironbark a big heal (its Dryad: ~107x spell power on the target over
+# 6 s, the user's log), so on cooldown on the lowest ally. Without the talent: only to save someone below 40%.
+actions+=/ironbark,target_if=min:target.health.pct,if=talent.spirit_of_the_thicket.enabled
 actions+=/ironbark,target_if=min:target.health.pct,if=target.health.pct<40
 # Exploding Infection (your 1 per wave): it gains a stack every tick and explodes on the raid when dispelled, so
 # dispel at 2 stacks while the raid is healthy and let it reach 3 when the raid is low

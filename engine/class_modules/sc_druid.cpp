@@ -547,6 +547,8 @@ struct druid_t final : public parse_player_effects_t
   double symbiotic_relationship_pool_self = 0.0;      // collected for the druid until the next 1 s pulse
   timespan_t lifetreading_efflo_end = 0_ms;           // end of the Efflorescence that follows Lifebloom
   timespan_t efflo_end = 0_ms;                        // end of the druid's Efflorescence (any cast)
+  real_ppm_t* sylvan_rppm = nullptr;  // Keeper of the Grove (Restoration): Sylvan Beckoning on HoT ticks
+  size_t kotg_dream_bloom_targets = 3;  // Dream Surge: allies its Dream Bloom heals
   player_t* efflo_target = nullptr;                   // the player it was placed under (always standing in it)
   int reforestation_count = 0;                        // Swiftmend casts towards the next Tree of Life
   int everbloom_max_stack = 0;                       // Lifebloom stacks from Everbloom's pulse (0: no Everbloom)
@@ -666,6 +668,13 @@ struct druid_t final : public parse_player_effects_t
     action_t* wellhoned_frenzied_regeneration = nullptr;  // Restoration only (Well-Honed Instincts)
     action_t* flower_walk = nullptr;                   // Restoration only (Barkskin pulses)
     action_t* lifetreading_efflorescence = nullptr;
+    // Keeper of the Grove, Restoration (kotg_heal_t): Treants, Dream Surge, Dryads
+    action_t* kotg_treant_swiftmend = nullptr;
+    action_t* kotg_nourish = nullptr;
+    action_t* kotg_dream_bloom = nullptr;
+    action_t* kotg_dryad_regrowth = nullptr;
+    action_t* kotg_dryad_tranquility = nullptr;
+    action_t* kotg_spirit_of_the_thicket = nullptr;
     action_t* verdancy = nullptr;                      // Restoration only (Lifebloom blooms)
     action_t* rejuvenation_archdruid = nullptr;  // power of the archdruid extra targets
     action_t* regrowth_archdruid = nullptr;
@@ -862,6 +871,8 @@ struct druid_t final : public parse_player_effects_t
     buff_t* ruthless_aggression;
     buff_t* strategic_infusion;
     buff_t* sylvan_beckoning;
+    buff_t* sylvan_empowered;  // Restoration: the next Swiftmend summons a Dryad
+    buff_t* power_of_nature_heal;  // Restoration: per Treant, Rejuvenation / Efflorescence / Lifebloom
     buff_t* treants_of_the_moon;  // treant moonfire background heartbeat
     buff_t* feline_potential;          // wildpower surge
     buff_t* feline_potential_counter;  // wildpower surge
@@ -2702,6 +2713,10 @@ struct druid_heal_t : public druid_spell_base_t<heal_t>
     base_t::tick( d );
 
     trigger_symbiotic_relationship( d->state );
+
+    // Sylvan Beckoning (Keeper of the Grove): HoT ticks may empower the next Swiftmend
+    if ( p()->sylvan_rppm && p()->sylvan_rppm->trigger() )
+      p()->buff.sylvan_empowered->trigger();
 
     // Photosynthesis: periodic heals on a target with Lifebloom (yourself included) may make it bloom. The bloom
     // doesn't end the Lifebloom.
@@ -6349,6 +6364,126 @@ struct elunes_favored_heal_t final : public druid_residual_action_t<druid_heal_t
   }
 };
 
+// Keeper of the Grove (Restoration) =========================================
+// From the user's KotG log (2026-11-13, calibration\wcl\kotg.txt: a dummy session and a heroic Nek'zali kill).
+// Every Swiftmend and Wild Growth, the player's and Convoke's, summons a Treant (166 of 166 casts: Grove Guardians'
+// 3 charges limit nothing; Overgrowth's Wild Growth summons none). The Treants and Dryads are modelled as the druid's
+// own fixed heals, each sized as the boss fight's average heal (overheal included, crits at the rate seen there) in
+// multiples of her spell power, so they scale with spell power only:
+// - Treant: a Swiftmend at once on the summoning target (3.76 x SP), then Nourish (2.42 x SP) on a random injured
+//   ally at +2 s + one 2 s hasted cast each, while it lives 8.4 s (log: +3.3, 4.7, 6.0, 7.4 s, a 5th at 8.3 s in 1 of
+//   4). Nourish picks like Everbloom: random among the injured (rank 0.50, 19% at full vs 53% of the raid), not the
+//   summoning target. Without Bounteous Bloom (+30% Treant spell power) they heal 1/1.3 as much.
+// - Dream Surge: at the summon, Dream Bloom heals 3 (+Power of the Dream) injured allies (3.43 x SP each).
+// - Harmony of the Grove (+5% healing per Treant, 8 s) and Power of Nature (+10% Rejuvenation, Efflorescence and
+//   Lifebloom per Treant, 15 s) stack on the druid (spell data).
+// - Sylvan Beckoning: HoT ticks proc it (1 RPPM, spell data); the next Swiftmend summons a Dryad: a Regrowth on the
+//   lowest ally at once (20.4 x SP) and 5 Tranquility ticks 0.9 s apart on every living ally (1.17 x SP: the log's
+//   ~2.65 heals of 0.44 x SP per player per tick); Dryad's Dance: Swiftmend recharges 25% faster for its 8 s.
+// - Spirit of the Thicket: Ironbark's Dryad heals its target 6 ticks, 1 s apart (17.8 x SP each).
+struct kotg_heal_t final : public druid_fixed_heal_t
+{
+  double sp_mul;
+
+  kotg_heal_t( druid_t* p, std::string_view n, unsigned id, double mul )
+    : druid_fixed_heal_t( n, p, id ? p->find_spell( id ) : spell_data_t::nil() ), sp_mul( mul )
+  {
+  }
+
+  void heal( player_t* t )
+  {
+    if ( t && !t->is_sleeping() )
+      heal_for( t, sp_mul * p()->cache.spell_power( SCHOOL_NATURE ) * p()->composite_spell_power_multiplier() );
+  }
+};
+
+namespace kotg
+{
+// Living allies, the injured first in random order (as Everbloom picks).
+std::vector<player_t*> injured_first( druid_t* p )
+{
+  std::vector<player_t*> l;
+  for ( auto t : p->sim->player_no_pet_list )
+    if ( !t->is_sleeping() )
+      l.push_back( t );
+  p->rng().shuffle( l.begin(), l.end() );
+  std::stable_partition( l.begin(), l.end(), []( const player_t* t ) { return t->health_percentage() < 100; } );
+  return l;
+}
+
+player_t* lowest( druid_t* p )
+{
+  player_t* low = nullptr;
+  for ( auto t : p->sim->player_no_pet_list )
+    if ( !t->is_sleeping() && ( !low || t->health_percentage() < low->health_percentage() ) )
+      low = t;
+  return low;
+}
+
+void heal_with( action_t* a, player_t* t )
+{
+  if ( a )
+    debug_cast<kotg_heal_t*>( a )->heal( t );
+}
+
+void summon_treant( druid_t* p, player_t* target )
+{
+  if ( !p->active.kotg_nourish )
+    return;
+
+  p->buff.harmony_of_the_grove->trigger();
+  p->buff.power_of_nature_heal->trigger();
+
+  // its opening Swiftmend: the summoning target, or another injured ally when it is gone
+  player_t* t = target && !target->is_sleeping() && !target->is_enemy() ? target : nullptr;
+  if ( !t )
+  {
+    auto l = injured_first( p );
+    t = l.empty() ? nullptr : l.front();
+  }
+  heal_with( p->active.kotg_treant_swiftmend, t );
+
+  if ( p->active.kotg_dream_bloom )
+  {
+    auto l = injured_first( p );
+    for ( size_t i = 0; i < l.size() && i < p->kotg_dream_bloom_targets; i++ )
+      heal_with( p->active.kotg_dream_bloom, l[ i ] );
+  }
+
+  double interval = 2.0 * p->cache.spell_cast_speed();
+  for ( double at = 2.0 + interval; at <= 8.4; at += interval )
+    make_event( *p->sim, timespan_t::from_seconds( at ), [ p ] {
+      auto l = injured_first( p );
+      if ( !l.empty() )
+        heal_with( p->active.kotg_nourish, l.front() );
+    } );
+}
+
+void summon_dryad( druid_t* p )
+{
+  heal_with( p->active.kotg_dryad_regrowth, lowest( p ) );
+  for ( int i = 0; i < 5; i++ )
+    make_event( *p->sim, timespan_t::from_seconds( 0.9 * i ), [ p ] {
+      for ( auto t : p->sim->player_no_pet_list )
+        if ( !t->is_sleeping() )
+          heal_with( p->active.kotg_dryad_tranquility, t );
+    } );
+
+  // Dryad's Dance: Swiftmend recharges 25% faster while the Dryad is out (8 s: 2.67 s of recharge gained)
+  if ( p->talent.dryads_dance.ok() )
+    p->get_cooldown( "swiftmend" )->adjust( timespan_t::from_seconds( -8.0 * ( 1.0 / 0.75 - 1.0 ) ) );
+}
+
+void spirit_of_the_thicket( druid_t* p, player_t* t )
+{
+  for ( int i = 1; i <= 6; i++ )
+    make_event( *p->sim, timespan_t::from_seconds( i ), [ p, t ] {
+      if ( !t->is_sleeping() )
+        heal_with( p->active.kotg_spirit_of_the_thicket, t );
+    } );
+}
+}  // namespace kotg
+
 // Ironbark =================================================================
 struct ironbark_t final : public druid_heal_t
 {
@@ -6359,6 +6494,10 @@ struct ironbark_t final : public druid_heal_t
     druid_heal_t::impact( s );
 
     td( s->target )->buff.ironbark->trigger();
+
+    // Spirit of the Thicket (Keeper of the Grove): Ironbark summons a Dryad healing its target
+    if ( p()->active.kotg_spirit_of_the_thicket )
+      kotg::spirit_of_the_thicket( p(), s->target );
   }
 };
 
@@ -7059,6 +7198,10 @@ struct swiftmend_t final : public druid_heal_t
     {
       consumed_pct = data().effectN( 2 ).percent();
 
+      // Cenarius' Might (Keeper of the Grove): Swiftmend heals 20% more
+      if ( p->talent.cenarius_might.ok() )
+        base_multiplier *= 1.0 + p->talent.cenarius_might->effectN( 2 ).percent();
+
       if ( p->talent.renewing_surge.ok() )
       {
         surge_base = p->talent.renewing_surge->effectN( 1 ).percent();
@@ -7161,6 +7304,15 @@ struct swiftmend_t final : public druid_heal_t
     // Implant: Swiftmend grows a Symbiotic Bloom on its target
     if ( p()->talent.implant.ok() && p()->talent.thriving_growth.ok() )
       p()->trigger_symbiotic_bloom( target );
+
+    // Keeper of the Grove: a Treant (Convoke's too); an empowered Swiftmend (Sylvan Beckoning) also a Dryad
+    if ( !background || has_flag( flag_e::CONVOKE ) )
+      kotg::summon_treant( p(), target );
+    if ( !background && p()->buff.sylvan_empowered->check() )
+    {
+      p()->buff.sylvan_empowered->decrement();
+      kotg::summon_dryad( p() );
+    }
 
     // Everbloom: Blooming Frenzy, Lifebloom blooms 3 times in rapid succession, 0.25 s apart
     if ( p()->talent.everbloom_3.ok() && p()->active.lifebloom_bloom )
@@ -7301,6 +7453,10 @@ struct wild_growth_t final : public trigger_thriving_growth_t<use_dot_list_t<dru
   void execute() override
   {
     base_t::execute();
+
+    // Keeper of the Grove: a Treant (Convoke's too, not Overgrowth's)
+    if ( p()->specialization() == DRUID_RESTORATION && ( !background || has_flag( flag_e::CONVOKE ) ) )
+      kotg::summon_treant( p(), target );
 
     // Implant: Wild Growth grows a Symbiotic Bloom on its target
     if ( !background && p()->specialization() == DRUID_RESTORATION && p()->talent.implant.ok() &&
@@ -11816,6 +11972,10 @@ void druid_t::init_base_stats()
 
   player_t::init_base_stats();
 
+  // Expansiveness (Keeper of the Grove): +5% maximum mana
+  if ( specialization() == DRUID_RESTORATION && talent.expansiveness.ok() )
+    resources.base_multiplier[ RESOURCE_MANA ] *= 1.0 + talent.expansiveness->effectN( 2 ).percent();
+
   // only intially activate required resources. others will be dynamically activated depending on apl
   resources.active_resource[ RESOURCE_ASTRAL_POWER ] = specialization() == DRUID_BALANCE;
   resources.active_resource[ RESOURCE_ENERGY ]       = specialization() == DRUID_FERAL;
@@ -12598,6 +12758,16 @@ void druid_t::create_buffs()
   buff.harmony_of_the_grove = make_fallback( talent.harmony_of_the_grove.ok(),
     this, "harmony_of_the_grove", find_spell( specialization() == DRUID_RESTORATION ? 428737 : 428735 ) )
       ->set_cooldown( 0_ms );
+  if ( specialization() == DRUID_RESTORATION )
+    buff.harmony_of_the_grove->set_stack_behavior( buff_stack_behavior::ASYNCHRONOUS );  // one stack per Treant
+
+  buff.power_of_nature_heal = make_fallback( talent.power_of_nature.ok() && talent.grove_guardians.ok() &&
+                                               specialization() == DRUID_RESTORATION,
+                                             this, "power_of_nature", find_spell( 428866 ) )
+    ->set_stack_behavior( buff_stack_behavior::ASYNCHRONOUS );
+
+  buff.sylvan_empowered = make_fallback( talent.sylvan_beckoning.ok() && specialization() == DRUID_RESTORATION,
+                                         this, "sylvan_beckoning_empowered", find_spell( 1264680 ) );
 
   buff.implant = make_fallback( talent.implant.ok(), this, "implant", find_spell( 455496 ) )
     ->set_cooldown( talent.implant->internal_cooldown() );
@@ -13021,6 +13191,29 @@ void druid_t::create_actions()
 
     if ( talent.verdancy.ok() && talent.lifebloom.ok() )
       active.verdancy = get_secondary_action<verdancy_t>( "verdancy" );
+
+    // Keeper of the Grove (kotg_heal_t: sizes from the user's log)
+    if ( talent.grove_guardians.ok() )
+    {
+      double bb = talent.bounteous_bloom.ok() ? 1.0 : 1.0 / 1.3;
+      active.kotg_treant_swiftmend = new kotg_heal_t( this, "grove_guardian_swiftmend", 0, 3.76 * bb );
+      active.kotg_nourish = new kotg_heal_t( this, "grove_guardian_nourish", 422090, 2.42 * bb );
+      if ( talent.dream_surge.ok() )
+      {
+        active.kotg_dream_bloom = new kotg_heal_t( this, "dream_bloom", 434141, 3.43 );
+        kotg_dream_bloom_targets = 3 + ( talent.power_of_the_dream.ok()
+                                           ? as<size_t>( talent.power_of_the_dream->effectN( 2 ).base_value() )
+                                           : 0 );
+      }
+    }
+    if ( talent.sylvan_beckoning.ok() )
+    {
+      active.kotg_dryad_regrowth = new kotg_heal_t( this, "dryad_regrowth", 1264664, 20.4 );
+      active.kotg_dryad_tranquility = new kotg_heal_t( this, "dryad_tranquility", 0, 1.17 );
+      sylvan_rppm = get_rppm( "sylvan_beckoning_heal", talent.sylvan_beckoning );
+    }
+    if ( talent.spirit_of_the_thicket.ok() )
+      active.kotg_spirit_of_the_thicket = new kotg_heal_t( this, "spirit_of_the_thicket", 1264905, 17.8 );
 
     if ( talent.lifetreading.ok() && talent.efflorescence.ok() )
       // its own stats: the tick action already reports into them (replace_stats in efflorescence_t)
@@ -15595,6 +15788,11 @@ void druid_t::parse_action_effects( action_t* action )
       buff.clearcasting_tree->decrement();
   } );
   _a->parse_effects( buff.incarnation_tree );
+  if ( specialization() == DRUID_RESTORATION )
+  {
+    _a->parse_effects( buff.harmony_of_the_grove );
+    _a->parse_effects( buff.power_of_nature_heal );
+  }
   _a->parse_effects( buff.natures_swiftness, CONSUME_BUFF );
 
   // Hero talents
