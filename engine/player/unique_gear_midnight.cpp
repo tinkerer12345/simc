@@ -5076,6 +5076,213 @@ void coiled_fangstone( special_effect_t& effect )
   effect.execute_action = create_proc_action<coiled_fangstone_t>( "coiled_fangstone", effect );
 }
 
+// Healer trinkets upstream doesn't implement (fork, 2026-11-13; built from the spell data and the tooltips; the
+// targets and the mushroom are assumptions, marked below).
+namespace heal_trinket
+{
+// The living ally (not an enemy) with the lowest health, tanks only when asked (any ally if no tank lives).
+player_t* lowest_ally( player_t* p, bool tanks_only )
+{
+  player_t* best = nullptr;
+  for ( auto t : p->sim->player_no_pet_list )
+  {
+    if ( t->is_sleeping() || t->is_enemy() || ( tanks_only && t->primary_role() != ROLE_TANK ) )
+      continue;
+    if ( !best || t->health_percentage() < best->health_percentage() )
+      best = t;
+  }
+  return best || !tanks_only ? best : lowest_ally( p, false );
+}
+
+// A random injured living ally (any living ally when nobody is injured).
+player_t* random_injured_ally( player_t* p )
+{
+  std::vector<player_t*> injured, all;
+  for ( auto t : p->sim->player_no_pet_list )
+  {
+    if ( t->is_sleeping() || t->is_enemy() )
+      continue;
+    all.push_back( t );
+    if ( t->health_percentage() < 100 )
+      injured.push_back( t );
+  }
+  auto& l = injured.empty() ? all : injured;
+  return l.empty() ? nullptr : l[ p->rng().range( l.size() ) ];
+}
+
+// Heals pct of the damage t takes, checked every second for dur, until pool health is restored (Preternatural
+// Antivenom; Unstable Felheart Crystal's absorb is modelled the same way at 100%: it eats what t would have taken).
+void heal_damage_taken( action_t* heal, player_t* t, double pct, double pool, timespan_t dur )
+{
+  t->track_incoming_damage = true;
+  auto left = std::make_shared<double>( pool );
+  for ( int i = 1; i <= as<int>( dur.total_seconds() ); i++ )
+    make_event( *t->sim, timespan_t::from_seconds( i ), [ heal, t, pct, left ] {
+      if ( t->is_sleeping() || *left <= 0 )
+        return;
+      double amount = std::min( *left, pct * t->compute_incoming_damage( 1_s ) );
+      if ( amount <= 0 )
+        return;
+      *left -= amount;
+      heal->base_dd_min = heal->base_dd_max = amount;
+      heal->execute_on_target( t );
+    } );
+}
+
+action_t* fixed_heal( const special_effect_t& e, std::string_view name, double amount, bool crit = true )
+{
+  auto heal = create_proc_action<generic_heal_t>( name, e, e.driver() );
+  heal->base_dd_min = heal->base_dd_max = amount;
+  heal->may_crit = crit;
+  heal->dot_duration = 0_ms;
+  heal->base_tick_time = 0_ms;
+  return heal;
+}
+}  // namespace heal_trinket
+
+// Seed of Radiant Hope (on use, 1 min)
+// 1263644 driver: e1 = heal every 1.5 s for 12 s, e2 = below 50% health -> bloom
+// 1285918 e1 = the bloom's instant heal
+// Target (assumed): the lowest ally when used. The bloom heals once and ends the Lightblossoms.
+void seed_of_radiant_hope( special_effect_t& effect )
+{
+  struct seed_t : public generic_proc_t
+  {
+    action_t* tick;
+    action_t* bloom;
+    double threshold;
+
+    seed_t( const special_effect_t& e )
+      : generic_proc_t( e, "seed_of_radiant_hope", spell_data_t::nil() ),
+        tick( heal_trinket::fixed_heal( e, "seed_of_radiant_hope_tick", e.driver()->effectN( 1 ).average( e ) ) ),
+        bloom( heal_trinket::fixed_heal( e, "seed_of_radiant_hope_bloom",
+                                         e.player->find_spell( 1285918 )->effectN( 1 ).average( e ) ) ),
+        threshold( e.driver()->effectN( 2 ).base_value() )
+    {
+      harmful = false;
+    }
+
+    void execute() override
+    {
+      generic_proc_t::execute();
+      player_t* t = heal_trinket::lowest_ally( player, false );
+      if ( !t )
+        return;
+
+      auto bloomed = std::make_shared<bool>( false );
+      for ( int i = 1; i <= 24; i++ )  // every 0.5 s for 12 s: a tick each 1.5 s, the bloom checked each 0.5 s
+        make_event( *sim, timespan_t::from_millis( 500 * i ), [ this, t, bloomed, i ] {
+          if ( t->is_sleeping() || *bloomed )
+            return;
+          if ( i % 3 == 0 )
+            tick->execute_on_target( t );
+          if ( t->health_percentage() < threshold )
+          {
+            *bloomed = true;
+            bloom->execute_on_target( t );
+          }
+        } );
+    }
+  };
+
+  effect.execute_action = create_proc_action<seed_t>( "seed_of_radiant_hope", effect );
+}
+
+// Mycolic Medicine
+// 1250591 driver: RPPM 4 on heals. e1 = instant heal on the target, e2 = the mushroom's heal
+// The mushroom (assumed): half of them are stepped on, by a random injured ally 1-10 s later.
+void mycolic_medicine( special_effect_t& effect )
+{
+  auto heal = heal_trinket::fixed_heal( effect, "mycolic_medicine", effect.driver()->effectN( 1 ).average( effect ) );
+  auto mushroom = heal_trinket::fixed_heal( effect, "glowcap_mushroom", effect.driver()->effectN( 2 ).average( effect ) );
+
+  effect.player->callbacks.register_callback_execute_function(
+      effect.spell_id, [ heal, mushroom, p = effect.player ]( auto, auto, player_t* t, auto ) {
+        if ( !t || t->is_enemy() )
+          return;
+        heal->execute_on_target( t );
+        if ( p->rng().roll( 0.5 ) )
+          make_event( *p->sim, timespan_t::from_seconds( p->rng().range( 1.0, 10.0 ) ), [ p, mushroom ] {
+            if ( auto a = heal_trinket::random_injured_ally( p ) )
+              mushroom->execute_on_target( a );
+          } );
+      } );
+
+  new dbc_proc_callback_t( effect.player, effect );
+}
+
+// Preternatural Antivenom
+// 1295775 driver: RPPM 2.5 on heals. e1 = health restored at most, e2 = 75% of the damage taken; 1305846 = 30 s
+void preternatural_antivenom( special_effect_t& effect )
+{
+  auto heal = heal_trinket::fixed_heal( effect, "preternatural_antivenom", 0, false );
+  double pool = effect.driver()->effectN( 1 ).average( effect );
+  double pct = effect.driver()->effectN( 2 ).percent();
+  timespan_t dur = effect.player->find_spell( 1305846 )->duration();
+
+  effect.player->callbacks.register_callback_execute_function(
+      effect.spell_id, [ heal, pool, pct, dur ]( auto, auto, player_t* t, auto ) {
+        if ( t && !t->is_enemy() )
+          heal_trinket::heal_damage_taken( heal, t, pct, pool, dur );
+      } );
+
+  new dbc_proc_callback_t( effect.player, effect );
+}
+
+// Kyrakka's Searing Embers
+// 384649 driver: RPPM 4 on heals, 1 s ICD. e1 = the ember's heal on the target 1 s later (its fire damage ignored)
+void kyrakkas_searing_embers( special_effect_t& effect )
+{
+  auto heal = heal_trinket::fixed_heal( effect, "burning_embers", effect.driver()->effectN( 1 ).average( effect ) );
+
+  effect.player->callbacks.register_callback_execute_function(
+      effect.spell_id, [ heal, p = effect.player ]( auto, auto, player_t* t, auto ) {
+        if ( !t || t->is_enemy() )
+          return;
+        make_event( *p->sim, 1_s, [ heal, t ] {
+          if ( !t->is_sleeping() )
+            heal->execute_on_target( t );
+        } );
+      } );
+
+  new dbc_proc_callback_t( effect.player, effect );
+}
+
+// Unstable Felheart Crystal (on use, 1.5 min)
+// 1254339 driver: e1 = health sacrificed; 1255200 = 10 s absorb, its size 1266821 e1
+// Target (assumed): the tank with the lowest health. The absorb is modelled as healing what they take, up to its size.
+void unstable_felheart_crystal( special_effect_t& effect )
+{
+  struct felheart_t : public generic_proc_t
+  {
+    action_t* absorb;
+    double size, cost;
+    timespan_t dur;
+
+    felheart_t( const special_effect_t& e )
+      : generic_proc_t( e, "unstable_felheart_crystal", spell_data_t::nil() ),
+        absorb( heal_trinket::fixed_heal( e, "unstable_felheart_crystal_absorb", 0, false ) ),
+        size( e.player->find_spell( 1266821 )->effectN( 1 ).average( e ) ),
+        cost( e.driver()->effectN( 1 ).average( e ) ),
+        dur( e.player->find_spell( 1255200 )->duration() )
+    {
+      harmful = false;
+    }
+
+    void execute() override
+    {
+      generic_proc_t::execute();
+      if ( player_t* t = heal_trinket::lowest_ally( player, true ) )
+      {
+        player->resource_loss( RESOURCE_HEALTH, std::min( cost, player->resources.current[ RESOURCE_HEALTH ] - 1 ) );
+        heal_trinket::heal_damage_taken( absorb, t, 1.0, size, dur );
+      }
+    }
+  };
+
+  effect.execute_action = create_proc_action<felheart_t>( "unstable_felheart_crystal", effect );
+}
+
 // Sigil of the Impending Eclipse
 // 1309868 driver: RPPM on your heals. e1 = haste, e2 = haste for every e3% health the healed target is missing
 // 1309909 Forestall the End (15s haste buff)
@@ -6603,6 +6810,11 @@ void register_special_effects()
   register_special_effect( 1256790, trinkets::undreamt_gods_oozing_vestige );
   register_special_effect( 1259633, trinkets::light_company_guidon );
   register_special_effect( 1309868, trinkets::sigil_of_the_impending_eclipse );
+  register_special_effect( 1263644, trinkets::seed_of_radiant_hope );
+  register_special_effect( 1250591, trinkets::mycolic_medicine );
+  register_special_effect( 1295775, trinkets::preternatural_antivenom );
+  register_special_effect( 384649, trinkets::kyrakkas_searing_embers );
+  register_special_effect( 1254339, trinkets::unstable_felheart_crystal );
   register_special_effect( 1251817, DISABLED_EFFECT );  // Light Company Guidon equip driver
   register_special_effect( 1251822, trinkets::heart_of_ancient_hunger );
   register_special_effect( { 1260592, 1265809 }, trinkets::plume_of_beloren ); // Radiant and Umbral Plume
