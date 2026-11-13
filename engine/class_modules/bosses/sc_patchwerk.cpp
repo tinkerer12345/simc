@@ -31,7 +31,7 @@ namespace
  *   size it has at the defaults (every 30 sec, every 4th big), so a longer interval means less burst damage in total.
  * - spot: spot_dot on 3 random players every 8 sec (6 ticks, 1 sec), and every 30 sec from 0:35 a dispellable_dot on
  *   one random player, the healer's to dispel: it gains a stack every 1.5 sec tick and lasts 30 sec (lethal if
- *   ignored, like Vashnik's Exploding Infection).
+ *   ignored, like Vashnik's Exploding Infection); dispellable=0 turns it off.
  * - avoidable: avoidable_hit on 1 random player every 20 sec.
  * - tank: melee on the active tank every 2 sec, a tank_buster (physical hit + 16 tank_buster_dot ticks, 2 sec) every
  *   30 sec from 0:10, then the other tank taunts.
@@ -175,6 +175,7 @@ struct patchwerk_t final : public enemy::enemy_t
   timespan_t burst_interval = default_burst_interval;
   int big_burst_every       = default_big_burst_every;
   bool burst_scales_with_interval = true;
+  bool dispellable_on = true;  // dispellable=0: no dispellable_dot (a boss without Vashnik-style dispels)
   std::string phases_str;
   std::vector<phase_t> phases;
   std::vector<scheduled_burst_t> burst_schedule;  // phased fights: every burst of the fight, in time order
@@ -213,6 +214,7 @@ struct patchwerk_t final : public enemy::enemy_t
     add_option( opt_int( "big_burst_every", big_burst_every, 1, 100 ) );
     add_option( opt_bool( "burst_scales_with_interval", burst_scales_with_interval ) );
     add_option( opt_string( "phases", phases_str ) );
+    add_option( opt_bool( "dispellable", dispellable_on ) );
     enemy::enemy_t::create_options();
   }
 
@@ -410,7 +412,8 @@ struct patchwerk_t final : public enemy::enemy_t
                       [ this, size = ph.absorbs[ k ] ] { apply_heal_absorb( size ); } );
     }
     every( spot_first, spot_interval, [ this ] { cast_spot_dots(); } );
-    every( dispellable_first, dispellable_interval, [ this ] { apply_affliction(); } );
+    if ( dispellable_on )
+      every( dispellable_first, dispellable_interval, [ this ] { apply_affliction(); } );
     every( avoidable_first, avoidable_interval, [ this ] { cast_avoidable(); } );
     every( melee_first, melee_interval, [ this ] { swing(); } );
     every( buster_first, buster_interval, [ this ] { cast_tank_buster(); } );

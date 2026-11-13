@@ -28,4 +28,6 @@ raid_tank_physical_reduction=0.57
 # Fury of the Dead (Venomous Abyss zone buff): +8% damage and healing in the week of 2026-11-08, +1% per week up to 15%.
 encounter_healing_done=0.08
 encounter=CoiledAltar
+# No Patchwerk dispellable DoT: on the kill only Venomfang (P1) was dispelled, 6 times by others; its damage is in P1's spot.
+dispellable=0
 enemy_health=1000000000
