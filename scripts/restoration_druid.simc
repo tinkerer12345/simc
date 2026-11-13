@@ -156,10 +156,11 @@ actions+=/regrowth,target_if=min:target.health.pct,if=buff.abundance.up&(target.
 # Starsurge while the raid is healthy: Master Shapeshifter returns more mana than it costs (10 casts on the kill)
 # Tree of Life: Rejuvenation (40% stronger, 30% cheaper) on anyone without one, below everything but the Starsurge filler
 actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*100+target.health.pct,if=buff.incarnation_tree_of_life.up&!(dot.rejuvenation.ticking|dot.germination.ticking)
-# Mana (2026-11-13): above 50% mana, Regrowth a hurt player without one before any filler. Coiled Altar +2.6% (half from its
+# Mana (2026-11-13): above 30% mana (was 50%: Coiled Altar +0.54, limit 142.3 -> 143.6%, Patchwerk same; at any mana runs
+# dry early), Regrowth a hurt player without one before any filler. First adopted at 50%: Coiled Altar +2.6% (half from its
 # healing absorbs: Regrowth's upfront heal gets through), Patchwerk -0.5%; the user's style (filler only above 50%, Wrath
 # when the raid is above 90%) ended fights at 44-51% mana and cost 3-4% on Patchwerk.
-actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+target.health.pct,if=target.health.pct<90&mana.pct>50
+actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+target.health.pct,if=target.health.pct<90&mana.pct>30
 actions+=/starsurge,if=raid_health.pct>=95
 # Rejuvenations in waves: always enough for Abundance (5), more while someone is hurt and mana allows
 actions+=/rejuvenation,target_if=min:(dot.rejuvenation.ticking+dot.germination.ticking)*10+target.health.pct,if=(active_dot.rejuvenation<5|target.health.pct<95&mana.pct>=30)
