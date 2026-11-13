@@ -1666,6 +1666,20 @@ if (compareOnly && checks.length && talentSets.length && talentSets.every(s => T
     "apl_variable.rj_keep=6": "Outside ramps, keep about 6 Rejuvenations out (on players without one first), whatever their health, instead of 5 plus more while someone is hurt.",
     "apl_variable.rj_keep=10": "Outside ramps, keep about 10 Rejuvenations out.",
     "apl_variable.rj_keep=14": "Outside ramps, keep about 14 Rejuvenations out.",
+    "apl_variable.tree=1": "While Tree of Life is up (Rejuvenation 40% stronger and 30% cheaper), put a Rejuvenation on everyone who has none, before anything but dispels.",
+    "apl_variable.tree=2": "While Tree of Life is up, keep two Rejuvenations (Germination) on everyone.",
+    "apl_variable.tree=3": "While Tree of Life is up (Wild Growth hits 7), cast Wild Growth whenever it is ready and 3 or more are hurt.",
+    "apl_variable.tree=4": "While Tree of Life is up: Wild Growth whenever ready, and a Rejuvenation on everyone who has none.",
+    "apl_variable.tree=5": "While Tree of Life is up (Regrowth is instant), Regrowth anyone below 90% who doesn't have one.",
+    "apl_variable.tree=6": "While Tree of Life is up, a Rejuvenation on everyone who has none, but only where the normal Rejuvenation filler would go (after Swiftmend, Wild Growth and Regrowth).",
+    "apl_variable.tree=7": "While Tree of Life is up: Wild Growth whenever ready, and a Rejuvenation on everyone who has none where the normal filler would go.",
+    "apl_variable.wg=0": "Your play until 2026-11-12: Wild Growth when 5 or more players are below 90% health, only while you have 40% mana or more.",
+    "apl_variable.wg=6": "Wild Growth when 5 or more players are below 90% health, down to 20% mana.",
+    "apl_variable.wg=2": "Wild Growth as soon as 3 players are below 90% health (instead of 5), at any mana.",
+    "apl_variable.wg=3": "Wild Growth only once 7 players are below 90% health (instead of 5), at any mana.",
+    "apl_variable.wg=4": "Wait until 5 players are below 80% health (instead of 90%) before casting Wild Growth.",
+    "apl_variable.wg_hold=10": "Your play until 2026-11-12: don't cast Wild Growth in the 10 seconds before Convoke (it is still cast as part of the Convoke opener).",
+    "apl_variable.wg_hold=20": "Don't cast Wild Growth in the 20 seconds before Convoke (it is still cast as part of the Convoke opener).",
     "apl_variable.blanket=2": "Spend spare mana on Rejuvenation for everyone missing one, even ahead of your filler Regrowths.",
   };
   const choiceNames = [...new Set(checks.flatMap(c => c.rows.filter(r => r.name.startsWith("Choice: ")).map(r => r.name)))];
@@ -1686,7 +1700,7 @@ if (compareOnly && checks.length && talentSets.length && talentSets.every(s => T
   // Talents the sim can't value (checked in sc_druid.cpp, 2026-11-12): their numbers would mean nothing, so the page says why.
   const NOT_SIMULATED = {
     "Restoration Druid": {
-      "Verdancy": "SimC doesn't simulate it yet", "Verdant Infusion": "SimC doesn't simulate it yet",
+      "Verdant Infusion": "SimC doesn't simulate it yet",
       "Regenesis": "SimC doesn't simulate it yet", "Regenerative Heartwood": "SimC doesn't simulate it yet",
       "Embrace of the Dream": "SimC doesn't simulate it yet", "Waking Dream": "SimC doesn't simulate it yet",
       "Grove Guardians": "SimC doesn't simulate it yet", "Dream of Cenarius": "SimC doesn't simulate it yet",
@@ -1842,7 +1856,7 @@ if (compareOnly && checks.length && talentSets.length && talentSets.every(s => T
     return { treeName, after, label, take, drop };
   };
   // Talents whose measured value is known to be shaky: a route touching one says so.
-  const CAVEAT = { "Restoration Druid": { "Unstoppable Growth": "Unstoppable Growth's value is uncertain: without it the sim estimates Wild Growth's healing (no log to check it against yet). Treat this route as unproven." } }[healer?.specialization] || {};
+  const CAVEAT = { "Restoration Druid": {} }[healer?.specialization] || {};
   const caveatsOf = ch => [...new Set(ch.take.concat(ch.drop).map(x => CAVEAT[x.n.name]).filter(Boolean))];
   const rankWord = x => x.n.max_rank > 1 ? ` ${x.to}/${x.n.max_rank}` : "";
   const changeText = ch => `<span class="rt-take-t">+ ${ch.take.map(x => esc(x.name) + rankWord(x)).join(", ")}</span>
@@ -1915,6 +1929,12 @@ if (compareOnly && checks.length && talentSets.length && talentSets.every(s => T
       opts: { 8: "Press until 8 are out", 12: "Press until 12 are out", 16: "Press until 16 are out" } },
     { key: "rj_keep", q: "How many Rejuvenations the rest of the time?", now: "At least 5, more while someone is hurt and you have 30% mana",
       opts: { 6: "About 6, whatever the health", 10: "About 10", 14: "About 14" } },
+    { key: "tree", q: "What do you do differently in Tree of Life (Reforestation's every 4th Swiftmend)?", now: "Nothing: the same priority as outside it",
+      opts: { 1: "Rejuvenation on everyone missing one", 2: "Two Rejuvenations on everyone", 3: "Wild Growth on cooldown", 4: "Rejuvenation on everyone + Wild Growth on cooldown", 5: "Instant Regrowth on anyone hurt without one", 6: "Rejuvenation on everyone missing one, low in the list", 7: "Wild Growth on cooldown + Rejuvenation on everyone, low" } },
+    { key: "wg", q: "When do you cast Wild Growth (outside Convoke and Tranquility)?", now: "When 5 or more players are below 90%, at any mana",
+      opts: { 0: "Same, but only with 40% mana (your old play)", 6: "Same, but only down to 20% mana", 2: "When 3 or more are below 90%", 3: "When 7 or more are below 90%", 4: "When 5 or more are below 80%" } },
+    { key: "wg_hold", q: "Do you save Wild Growth for Convoke?", now: "No: cast it whenever it is needed (Convoke's opener casts it anyway)",
+      opts: { 10: "Hold it 10 s before Convoke (your old play)", 20: "Hold it 20 s before Convoke" } },
     { key: "blanket", q: "Keep Rejuvenation on everyone?", now: "No: Rejuvenation where your priority list puts it",
       opts: { 1: "Yes, with spare mana, before Starsurge", 2: "Yes, with spare mana, even before filler Regrowths" } },
   ];
@@ -1997,8 +2017,8 @@ if (compareOnly && checks.length && talentSets.length && talentSets.every(s => T
         : `<b>Talents: your build is the best legal build we found.</b>`} <a href="#routes" class="gl-link">routes</a></div></div>
       ${oldName ? `<div class="gl-row"><span class="gl-ico good">&#10003;</span><div><b>Your rotation vs how you played until 2026-11-12:</b> your raid keeps ${oldGain().map(({ c, v }) =>
         `<span class="gl-pct ${v > 0 ? "good" : "bad"}"><small>${esc(shortPat(c))}</small> ${signedShare(v)}</span>`).join(" ")} health. <a href="#rotation" class="gl-link">details</a></div></div>` : ""}
-      <div class="gl-row"><span class="gl-ico ${goodChoices.length ? "good" : "zero"}">${goodChoices.length ? "↑" : "✓"}</span><div>
-        ${goodChoices.length ? rotationGlance() : `<b>Rotation: keep how you play.</b> None of the ${choiceNames.length} alternatives does better.`} <a href="#rotation" class="gl-link">details</a></div></div>
+      ${choiceNames.length ? `<div class="gl-row"><span class="gl-ico ${goodChoices.length ? "good" : "zero"}">${goodChoices.length ? "↑" : "✓"}</span><div>
+        ${goodChoices.length ? rotationGlance() : `<b>Rotation: keep how you play.</b> None of the ${choiceNames.length} alternatives does better.`} <a href="#rotation" class="gl-link">details</a></div></div>` : ""}
       <div class="gl-row"><span class="gl-ico zero">★</span><div><b>Your most valuable talents:</b> ${top.map(x => `${esc(x.n.name)} <span class="faint">${signedShare(x.v)}</span>`).join(" · ")}
         <a href="#values" class="gl-link">all talents</a></div></div>
       ${nyiNames.length ? `<div class="gl-row"><span class="gl-ico nyi">?</span><div><b>Not simulated:</b> <span class="faint">${esc(nyiNames.join(", "))}</span>. Their value is unknown, so no route uses them as a reason.</div></div>` : ""}

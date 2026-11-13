@@ -1,23 +1,5 @@
 # Rotation choices (restoration_druid_talents.bat [fight] rotation, ~1 min): each line plays your priority list another
 # way through a switch in the profile (apl_variable.<name>=<n>; 0 = how you play now). Same fights and noise rules as the
 # gear check; the talents page keeps the last full talent run and replaces only these. Name lines "Choice: <text>".
-profileset."Choice: Swiftmend yourself when your Regrowth is on you"+=apl_variable.sm_self=1
-profileset."Choice: Always Swiftmend yourself"+=apl_variable.sm_self=2
-profileset."Choice: Regrowth a low ally with none of your HoTs first (high priority)"+=apl_variable.regrowth_first=1
-profileset."Choice: Regrowth a low ally with none of your HoTs first (low priority)"+=apl_variable.regrowth_first=2
-profileset."Choice: Blanket Rejuvenation while mana allows (above the Starsurge filler)"+=apl_variable.blanket=1
-profileset."Choice: Blanket Rejuvenation while mana allows (above the Regrowth fillers)"+=apl_variable.blanket=2
-profileset."Choice: Second Rejuvenation only on yourself and the tank"+=apl_variable.germ=1
-profileset."Choice: Second Rejuvenation on others only right before a burst"+=apl_variable.germ=3
-profileset."Choice: No permanent double on yourself and the tank, others only before a burst"+=apl_variable.germ=4
-profileset."Choice: Keep your own double, not the tank's"+=apl_variable.germ=5
-profileset."Choice: Keep the tank's double, not your own"+=apl_variable.germ=6
-profileset."Choice: Doubles from Archdruid only, by hand only on the tank and anyone below 50%"+=apl_variable.germ=7
-profileset."Choice: 8 Rejuvenations up before Convoke"+=apl_variable.rj_pre=8
-profileset."Choice: 12 Rejuvenations up before Convoke"+=apl_variable.rj_pre=12
-profileset."Choice: 16 Rejuvenations up before Convoke"+=apl_variable.rj_pre=16
-profileset."Choice: Keep about 6 Rejuvenations up"+=apl_variable.rj_keep=6
-profileset."Choice: Keep about 10 Rejuvenations up"+=apl_variable.rj_keep=10
-profileset."Choice: Keep about 14 Rejuvenations up"+=apl_variable.rj_keep=14
-# Your old rotation (how you played until 2026-11-12), kept as a reference: every adopted switch back at its old value.
-profileset."Choice: Your old rotation (until 2026-11-12)"+=apl_variable.germ=0
+# Empty between questions: settled tests and their switches are removed once a rule is adopted or rejected (results in
+# CLAUDE.md and the commit messages).

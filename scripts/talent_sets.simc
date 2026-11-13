@@ -143,6 +143,7 @@ profileset."Build: Improved Swiftmend for Unstoppable Growth (to 1)"+=spec_talen
 profileset."Build: Tranquil Mind for Improved Regrowth"+=spec_talents=103142:0/114808:1
 profileset."Build: Flash of Clarity + Cultivation for Reforestation, Thriving Vegetation"+=spec_talents=103124:0/103125:0/103110:1/137510:2
 profileset."Build: Call of the Elder Druid for Reforestation"+=spec_talents=103125:0/103123:1
+profileset."Build: Verdancy for Reforestation"+=spec_talents=103125:0/103127:1
 profileset."Build: Flash of Clarity for Reforestation"+=spec_talents=103125:0/103110:1
 profileset."Build: Nature's Bounty + Harmonious Blooming for Thriving Vegetation"+=spec_talents=103124:0/103128:1/103134:1
 profileset."Build: Nature's Bounty + Harmonious Blooming + Ysera's Gift for Thriving Vegetation, Reforestation"+=spec_talents=103124:0/103125:0/103099:1/103128:1/103134:1
