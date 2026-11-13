@@ -4,19 +4,17 @@
 # compare it at another item level. An empty file compares nothing.
 # Picked from the export of 2026-11-08 04:07: only items likely to be an upgrade or a sidegrade (same item level as
 # what they replace); swapped-in pieces get the enchant and gem of the piece they replace, so only the item differs.
-# Already tested and dropped: Soulcoiler Ritual Vessel 341 (downgrade), Hex Lord's Dooming Idol at 341 (sidegrade).
+# Already tested and dropped: Soulcoiler Ritual Vessel 341 (downgrade), Hex Lord's Dooming Idol at 341 (now worn).
 
-# Vile Alchemist's Band 334 in place of each ring (your Silvermoon's Alacrity enchant and Flawless Quick Amethyst)
-profileset."Vile Alchemist's Band 334 for Ouroboric Signet"+=finger1=,id=268249,enchant_id=8025,gem_id=240900,bonus_id=6652/13668/13335/12854
-profileset."Vile Alchemist's Band 334 for Band of the Swarmcaller"+=finger2=,id=268249,enchant_id=8025,gem_id=240900,bonus_id=6652/13668/13335/12854
+# Your old ring back (2026-11-13: you now wear Vile Alchemist's Band): was the swap right? (its own enchant and gem)
+profileset."Ouroboric Signet 334 back for Vile Alchemist's Band"+=finger1=,id=272150,enchant_id=8025,gem_id=240900,bonus_id=13668/12854,content_tuning=7481
 
 # The other Enigmatic Dreamwatcher's Lunar Raiment 334 in your bags (another version), with your chest enchant
 profileset."Lunar Raiment 334 (bag version)"+=chest=,id=271531,enchant_id=7987,bonus_id=13334/6652/14049/13690/13698/12854,redirected_base_stats=281236
 
-# Sigil of the Impending Eclipse upgraded to 341 (yours is 318), in place of the Idol: is the upgrade worth it?
+# Sigil of the Impending Eclipse upgraded to 341 (yours is 334), in place of the Idol: is the upgrade worth it?
 profileset."Sigil of the Impending Eclipse 341 for Hex Lord's Dooming Idol"+=trinket1=,id=280835,bonus_id=6652/13334/12849,ilevel=341
 
-# Your Idol upgraded to 341 (2 more Venomstones): compare with the Sigil at 341 above
-profileset."Hex Lord's Dooming Idol 341 (upgraded)"+=trinket1=,id=270169,bonus_id=6652/13334/12854,ilevel=341
+# Amulet of the Twin Fangs (vault) at 341 for Aqirbane Reliquary
 profileset."Amulet of the Twin Fangs 341 (vault; 1 socket: diamond)"+=neck=,id=268251,gem_id=240983,bonus_id=6652/13668/13334/12849,ilevel=341
 profileset."Amulet of the Twin Fangs 341 (vault; 2 sockets, both gems)"+=neck=,id=268251,gem_id=240983/240900,bonus_id=6652/13668/13334/12849,ilevel=341

@@ -13,7 +13,7 @@ death_recap=20
 professions=leatherworking=100/inscription=100
 spec=restoration
 # Silverblooms' own talents and gear (SimC addon export, 2026-11-09)
-talents=CkGADBD3hSPCL9Y9gz68WcKvMYMmZZmZMzMmthZwsZsNmBAAAAAAAAAALGa2MjpZG4BMLmZmZYYGAAAAAGAAAAIAAgZbmlmtZ2sxYmZwMbgmBAYmBgB
+talents=CkGADBD3hSPCL9Y9gz68WcKvMYMmZZmZMzMmthZwsZsNmBAAAAAAAAAAbGa2MjpZG4BMLmZmZYYGAAAAAGAAAAIAAgZbmlmtZ2sxYmZwMbgmBAYmBgB
 set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
 omnium_talents=136814:1/136821:1/136817:1/136819:1/136822:1
 # Flask: Flask of the Magisters (mastery) instead of SimC's Restoration default, Flask of the Blood Knights (haste)
@@ -51,13 +51,13 @@ wrist=,id=244576,gem_id=240900,bonus_id=12214/13667/13695/12497/13751/14001/8960
 # Enigmatic Dreamwatcher's Gauntlets (334)
 hands=,id=271529,enchant_id=8727,bonus_id=13335/13691/6652/13697/12854,content_tuning=1040
 # Sash of the Forlorn Vessel (334)
-waist=,id=268256,bonus_id=6652/13696/13662/13334/12854
+waist=,id=268256,gem_id=240900,bonus_id=6652/13696/13662/13334/12854/13695
 # Enigmatic Dreamwatcher's Leggings (334)
 legs=,id=271527,enchant_id=7937,bonus_id=13334/6652/13693/13698/12854,redirected_base_stats=268225
 # Silvermoon Agent's Sneakers (331)
 feet=,id=244569,enchant_id=7993,bonus_id=12214/13667/12497/13751/14001/8960/12384/8793/13836,content_tuning=3615,crafted_stats=40/32,crafting_quality=5
-# Ouroboric Signet (334)
-finger1=,id=272150,enchant_id=8025,gem_id=240900,bonus_id=13668/12854,content_tuning=7481
+# Vile Alchemist's Band (334)
+finger1=,id=268249,enchant_id=7969,gem_id=240892,bonus_id=6652/13668/13335/12854
 # Band of the Swarmcaller (334)
 finger2=,id=281029,enchant_id=8025,gem_id=240900,bonus_id=6652/13668/13334/12854
 # Hex Lord's Dooming Idol (341)
