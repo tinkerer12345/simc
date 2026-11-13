@@ -36,6 +36,7 @@ To change the list of source files run synchronize.py
 		<ClInclude Include="..\engine\class_modules\bosses\sc_bosses.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_encounter_damage.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_vashnik.hpp" />
+		<ClInclude Include="..\engine\class_modules\bosses\sc_coiled_altar.hpp" />
 		<ClInclude Include="..\engine\class_modules\bosses\sc_patchwerk.hpp" />
 		<ClInclude Include="..\engine\class_modules\raid\sc_raid_member.hpp" />
 		<ClInclude Include="..\engine\class_modules\class_module.hpp" />
@@ -240,6 +241,7 @@ To change the list of source files run synchronize.py
 		<ClCompile Include="..\engine\class_modules\bosses\sc_bosses.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_encounter_damage.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_vashnik.cpp" />
+		<ClCompile Include="..\engine\class_modules\bosses\sc_coiled_altar.cpp" />
 		<ClCompile Include="..\engine\class_modules\bosses\sc_patchwerk.cpp" />
 		<ClCompile Include="..\engine\class_modules\raid\sc_raid_member.cpp" />
 		<ClCompile Include="..\engine\class_modules\monk\sc_monk.cpp" />

@@ -4,6 +4,7 @@
 // ==========================================================================
 
 #include "class_modules/bosses/sc_bosses.hpp"
+#include "class_modules/bosses/sc_coiled_altar.hpp"
 #include "class_modules/bosses/sc_patchwerk.hpp"
 #include "class_modules/bosses/sc_vashnik.hpp"
 

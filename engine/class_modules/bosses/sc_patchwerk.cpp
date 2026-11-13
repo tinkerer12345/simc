@@ -634,37 +634,7 @@ player_t* create_patchwerk( sim_t* sim )
   return new patchwerk_t( sim );
 }
 
-/* Coiled Altar (Mythic), simulated: Patchwerk's engine (shares of the raid's health, one healer's share = 100%) on the
- * timeline and damage of a farm kill (8:36, Warcraft Logs, 2026-11-13: damage done by ability per phase, Venom
- * Rupture / Fangs / Defilement / Spirit Erasure / Dreadful Presence events). Rates per player per second, taken / 0.9
- * (the stand-ins' 10% reduction), H = 950k, 20 players:
- * - P1 (0:00-2:22) Zul'jan: steady = Coalesced Venom (86.4M); spot = Mutagenic Venom, Volatile Venom, Widow's Touch,
- *   Venomfang, Guillotine (35.5M) + Noxious Ground and Axegrinder (25.0M: avoidable, but ticking ground damage on a
- *   few players, so spot; the engine's avoidable hit would be a one-shot at this size); tank = melee, Twinfang Toxin,
- *   Sever (11% of the damage: x0.55). On the timeline: Fangs of the Coiled Altar at 0:01 and 1:26 (~485k per player,
- *   2.35 stacks) and each Sever's Venom Rupture: one 10 sec wave, ticks every 2 sec at 55.7k unmitigated x stacks,
- *   74% taken, its 56k opening hit = +0.2 stack, one stack = 0.241 H per player: 0:23 (5), 0:39 (3), 0:59 (5),
- *   1:16 (3), 1:48 (6), 2:05 (4), 2:21 (10, at the transition).
- * - P2 (2:22-4:51) Hex Lord Malacrass: steady = Dreadful Presence (195.6M, flat: ~15.5M every 10 sec); spot =
- *   Retaliatory Malice (16.2M), Gravebound, Dread Bolt, Gloombomb (17.5M); tank = Soul Sever only (x0.15).
- * - Intermission (4:51-5:28): Spirit Erasure soaks (73.2M), steady.
- * - P3 (5:28-8:36) both: steady = Coalesced Venom (237.9M); spot = Mutagenic and Volatile Venom, Grim Guillotine,
- *   Death's Whisper, Malevolent Resonance (41.3M) + Malacrass's Dread Bolts and Gloombombs at their P2 size (~15M);
- *   tank = melee, Corrupted Toxin, Blighted Sever (x0.59). On the timeline: Blighted Sever's Venom Rupture at 6:04
- *   (4 stacks), 6:35 (3), 7:08 (3), 7:45 (4), 8:16 (2); Defilement, a healing absorb on the whole raid (avoidable in
- *   game; sized as the raid took it): 0.86 H at 5:30, 0.25 H at 6:54, 1.13 H at 7:12 (healing eaten per player).
- * Fight length: the kill's (8:36), set in fights\coiled_altar.simc. Left out: Gravebound's kill-time hit.
- */
-constexpr util::string_view coiled_altar_phases =
-    "142:steady=1.108,spot=1.094,avoidable=0,tank=0.55,waves=10,stack=0.241,big_from=6,"
-    "at=1+23+39+59+76+86+108+125+141,sizes=2.35+5.2+3.2+5.2+3.2+2.35+6.2+4.2+10.2/"
-    "149:steady=2.39,spot=0.58,avoidable=0,tank=0.15,burst=0/"
-    "37:steady=3.60,spot=0,avoidable=0,tank=0,burst=0/"
-    "188:steady=2.305,spot=0.77,avoidable=0,tank=0.59,waves=10,stack=0.241,big_from=4,at=36+67+100+137+168,"
-    "sizes=4.2+3.2+3.2+4.2+2.2,absorb_at=2+86+104,absorbs=0.86+0.25+1.13";
-
-player_t* create_coiled_altar( sim_t* sim )
+player_t* create_phased_patchwerk( sim_t* sim, util::string_view name, util::string_view phases )
 {
-  return new patchwerk_t( sim, "Coiled Altar", coiled_altar_phases );
-}
-}  // namespace bosses
+  return new patchwerk_t( sim, name, phases );
+}}  // namespace bosses
