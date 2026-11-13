@@ -546,6 +546,8 @@ struct druid_t final : public parse_player_effects_t
   double symbiotic_relationship_pool_partner = 0.0;   // collected for the bonded ally until the next 1 s pulse
   double symbiotic_relationship_pool_self = 0.0;      // collected for the druid until the next 1 s pulse
   timespan_t lifetreading_efflo_end = 0_ms;           // end of the Efflorescence that follows Lifebloom
+  timespan_t efflo_end = 0_ms;                        // end of the druid's Efflorescence (any cast)
+  player_t* efflo_target = nullptr;                   // the player it was placed under (always standing in it)
   int reforestation_count = 0;                        // Swiftmend casts towards the next Tree of Life
   int everbloom_max_stack = 0;                       // Lifebloom stacks from Everbloom's pulse (0: no Everbloom)
   cooldown_t* aessinas_renewal_icd = nullptr;        // Restoration: Aessina's Renewal, once per 30 s
@@ -664,6 +666,7 @@ struct druid_t final : public parse_player_effects_t
     action_t* wellhoned_frenzied_regeneration = nullptr;  // Restoration only (Well-Honed Instincts)
     action_t* flower_walk = nullptr;                   // Restoration only (Barkskin pulses)
     action_t* lifetreading_efflorescence = nullptr;
+    action_t* verdancy = nullptr;                      // Restoration only (Lifebloom blooms)
     action_t* rejuvenation_archdruid = nullptr;  // power of the archdruid extra targets
     action_t* regrowth_archdruid = nullptr;
     action_t* regrowth_rampant = nullptr;        // rampant growth copy on the lifebloom target
@@ -6328,6 +6331,8 @@ struct efflorescence_t final : public druid_heal_t
       .target( target );
 
     make_event<ground_aoe_event_t>( *sim, p(), params );
+    p()->efflo_end    = sim->current_time() + duration;
+    p()->efflo_target = target;
 
     // the background copy is Lifetreading's, which keeps one Efflorescence going under the Lifebloom target
     if ( background )
@@ -6388,6 +6393,38 @@ struct everbloom_t final : public druid_fixed_heal_t
   }
 };
 
+// Verdancy: "When Lifebloom blooms, up to 3 targets within your Efflorescence are healed." The user's dummy log
+// (2026-11-13, 112 blooms, 314 heals; natural blooms and Blooming Frenzy's blooms alike): every bloom heals the DRUID once
+// wherever she stands (and whoever holds the Lifebloom), plus each ally standing in her Efflorescence (only she and a
+// healing dummy were in it: 3 heals inside, 2 outside). Picks among the standers: assumed random (2 candidates only).
+struct verdancy_t final : public druid_heal_t
+{
+  verdancy_t( druid_t* p ) : druid_heal_t( "verdancy", p, p->find_spell( 392329 ) )
+  {
+    background = dual = proc = true;
+  }
+
+  void trigger()
+  {
+    execute_on_target( p() );
+
+    if ( sim->current_time() >= p()->efflo_end || !p()->efflo_target )
+      return;
+
+    // who stands in it: the player it was placed under, others by druid.efflorescence_coverage (as its own ticks)
+    std::vector<player_t*> in;
+    double c = p()->options.efflorescence_coverage;
+    for ( auto t : sim->player_no_pet_list )
+      if ( !t->is_sleeping() && ( t == p()->efflo_target || c >= 1.0 || rng().roll( c ) ) )
+        in.push_back( t );
+
+    rng().shuffle( in.begin(), in.end() );
+    int n = as<int>( p()->talent.verdancy->effectN( 1 ).base_value() );
+    for ( size_t i = 0; i < in.size() && as<int>( i ) < n; i++ )
+      execute_on_target( in[ i ] );
+  }
+};
+
 struct lifebloom_t final : public druid_heal_t
 {
   struct lifebloom_bloom_t final : public druid_heal_t
@@ -6411,6 +6448,9 @@ struct lifebloom_t final : public druid_heal_t
         auto eb = debug_cast<druid_fixed_heal_t*>( p()->active.everbloom );
         eb->heal_for( s->target, s->result_total * everbloom_pct );
       }
+
+      if ( p()->active.verdancy )
+        debug_cast<verdancy_t*>( p()->active.verdancy )->trigger();
     }
   };
 
@@ -7245,16 +7285,13 @@ struct wild_growth_t final : public trigger_thriving_growth_t<use_dot_list_t<dru
   {
     aoe = as<int>( data().effectN( 2 ).base_value() + p->talent.improved_wild_growth->effectN( 1 ).base_value() );
 
-    // Falloff as a share of the coefficient (the old fixed 0.07 was sized for a 0.14 coefficient and made it flat), and
-    // the data's coefficient is where it ENDS. The user's raid log (2026-11-11): WG tick / the same moment's 3-stack
-    // Lifebloom tick on the druid (whole night, ~1,250 ticks; the same test puts Rejuvenation within 1% of its data)
-    // runs from 1.26x the data at ~0.5 s to 1.04x at ~6.5 s (start ~1.29x, mean ~1.15x). With Unstoppable Growth
-    // rank 2 (SimC reads it as 60% less falloff) that is a base falloff of ~0.72 x the coefficient. Only this build
-    // anchors it: without Unstoppable Growth the start (1.72x) is an extrapolation.
-    decay_coeff = spell_power_mod.tick * 0.72 * ( 1.0 - p->talent.unstoppable_growth->effectN( 1 ).percent() );
-
-    // starts at coefficient + falloff and declines to the coefficient
-    spell_power_mod.tick += decay_coeff;
+    // The START is fixed and the healing falls off linearly to the end; Unstoppable Growth shrinks the drop. Dummy test
+    // (2026-11-13, the user at Unstoppable Growth 2/2, 1/2, 0/2; WG tick / the same moment's 3-stack Lifebloom tick on
+    // the druid, ~180 ticks each, and WG tick / the same cast's first tick agree): the start is the same at every rank
+    // (0.98-0.99), the drop over the duration is 16.5% / 33% / 41.5% of the start: base falloff 41.5%, x 0.4 at 2/2.
+    // Level from the raid log (2026-11-11, 2/2): mean 1.144x the data coefficient, so start = 1.144 / (1 - 0.166 / 2).
+    spell_power_mod.tick *= 1.2475;
+    decay_coeff = spell_power_mod.tick * 0.415 * ( 1.0 - p->talent.unstoppable_growth->effectN( 1 ).percent() );
 
     form_mask = CASTER_FORM;
 
@@ -11508,7 +11545,7 @@ void druid_t::init_spells()
   talent.tranquil_mind                  = ST( "Tranquil Mind" );
   talent.tranquility                    = ST( "Tranquility" );
   talent.unstoppable_growth             = ST( "Unstoppable Growth" );
-  talent.verdancy                       = ST( "Verdancy" );  // TODO: NYI
+  talent.verdancy                       = ST( "Verdancy" );
   talent.verdant_infusion               = ST( "Verdant Infusion" );  // TODO: NYI
   talent.waking_dream                   = ST( "Waking Dream" );  // TODO: increased healing per rejuv NYI
   talent.wild_synthesis                 = ST( "Wild Synthesis" );  // TODO: NYI
@@ -12982,6 +13019,9 @@ void druid_t::create_actions()
     if ( talent.flower_walk.ok() )
       active.flower_walk = get_secondary_action<flower_walk_heal_t>( "flower_walk" );
 
+    if ( talent.verdancy.ok() && talent.lifebloom.ok() )
+      active.verdancy = get_secondary_action<verdancy_t>( "verdancy" );
+
     if ( talent.lifetreading.ok() && talent.efflorescence.ok() )
       // its own stats: the tick action already reports into them (replace_stats in efflorescence_t)
       active.lifetreading_efflorescence = copy( get_secondary_action<efflorescence_t>( "efflorescence_lifetreading" ),
@@ -14165,6 +14205,8 @@ void druid_t::reset()
   dot_lists.efflorescence.clear();
   dot_lists.rejuvenation.clear();
   lifetreading_efflo_end = 0_ms;
+  efflo_end = 0_ms;
+  efflo_target = nullptr;
   reforestation_count = 0;
   spell_queued = {};
 }
