@@ -48,6 +48,12 @@ namespace
  *   growth                                 each burst in the phase this much bigger than the one before (0.12 = +12%),
  *                                          the phase's burst damage per second unchanged
  *   big_every                              every n-th burst of the phase is "big" for encounter.big_burst (0: none)
+ *   at, sizes, stack                       a boss's real timeline instead of interval/first: bursts at these seconds
+ *                                          from the phase's start ("23+39+59"), each sizes[k] x stack H per player
+ *                                          (sizes "5.2+3.2+..."), as waves when waves > 0; burst multiplies them
+ *   big_from                               with at: bursts of at least this size are "big" (encounter.big_burst)
+ *   absorb_at, absorbs                     healing absorbs on every living player at these seconds from the phase's
+ *                                          start, absorbs[k] H each, scaled like burst damage (heal_absorb)
  * The last phase lasts until the fight ends. Without phases, nothing above changes.
  */
 constexpr double steady_rate             = 0.0321;  // H per second, per player
@@ -88,7 +94,19 @@ struct phase_t
   double steady = 1, burst = 1, spot = 1, avoidable = 1, tank = 1;
   double interval = 30, first = 20, waves = 0, growth = 0;
   int big_every = 0;
+  std::vector<double> at, sizes;            // a real timeline (seconds from the phase's start, sizes in stack)
+  double stack = 0, big_from = 0;
+  std::vector<double> absorb_at, absorbs;   // healing absorbs (seconds from the phase's start, H per player)
 };
+
+// "1+2.5+3" -> { 1, 2.5, 3 }
+std::vector<double> parse_list( util::string_view str )
+{
+  std::vector<double> out;
+  for ( auto&& v : util::string_split<util::string_view>( str, "+" ) )
+    out.push_back( util::to_double( v ) );
+  return out;
+}
 
 // A scheduled burst of a phased fight.
 struct scheduled_burst_t
@@ -119,7 +137,13 @@ std::vector<phase_t> parse_phases( util::string_view str )
         auto eq = kv.find( '=' );
         if ( eq == util::string_view::npos )
           throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs key=value.", kv ) );
-        auto key   = kv.substr( 0, eq );
+        auto key = kv.substr( 0, eq );
+        if ( key == "at" || key == "sizes" || key == "absorb_at" || key == "absorbs" )
+        {
+          auto list = parse_list( kv.substr( eq + 1 ) );
+          ( key == "at" ? ph.at : key == "sizes" ? ph.sizes : key == "absorb_at" ? ph.absorb_at : ph.absorbs ) = list;
+          continue;
+        }
         double val = util::to_double( kv.substr( eq + 1 ) );
         if ( key == "steady" ) ph.steady = val;
         else if ( key == "burst" ) ph.burst = val;
@@ -131,10 +155,16 @@ std::vector<phase_t> parse_phases( util::string_view str )
         else if ( key == "waves" ) ph.waves = val;
         else if ( key == "growth" ) ph.growth = val;
         else if ( key == "big_every" ) ph.big_every = as<int>( val );
+        else if ( key == "stack" ) ph.stack = val;
+        else if ( key == "big_from" ) ph.big_from = val;
         else
           throw std::invalid_argument( fmt::format( "Patchwerk phases: unknown key '{}'.", key ) );
       }
     }
+    if ( ph.at.size() != ph.sizes.size() )
+      throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs as many sizes as at.", part ) );
+    if ( ph.absorb_at.size() != ph.absorbs.size() )
+      throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs as many absorbs as absorb_at.", part ) );
     out.push_back( ph );
   }
   return out;
@@ -211,6 +241,14 @@ struct patchwerk_t final : public enemy::enemy_t
     {
       const auto& ph = phases[ p ];
       double until   = p + 1 < phases.size() ? ph.start + ph.duration : end;
+      if ( !ph.at.empty() )
+      {
+        for ( size_t k = 0; k < ph.at.size(); ++k )
+          if ( ph.start + ph.at[ k ] < until && ph.burst > 0 )
+            burst_schedule.push_back( { ph.start + ph.at[ k ], ph.stack * ph.sizes[ k ] * ph.burst, ph.waves,
+                                        ph.big_from > 0 && ph.sizes[ k ] >= ph.big_from } );
+        continue;
+      }
       std::vector<double> times;
       for ( double at = ph.start + ph.first; at < until && ph.burst > 0; at += ph.interval )
         times.push_back( at );
@@ -366,6 +404,10 @@ struct patchwerk_t final : public enemy::enemy_t
       build_burst_schedule();
       for ( size_t i = 0; i < burst_schedule.size(); ++i )
         make_event( *sim, timespan_t::from_seconds( burst_schedule[ i ].at ), [ this, i ] { cast_scheduled_burst( i ); } );
+      for ( const auto& ph : phases )
+        for ( size_t k = 0; k < ph.absorb_at.size(); ++k )
+          make_event( *sim, timespan_t::from_seconds( ph.start + ph.absorb_at[ k ] ),
+                      [ this, size = ph.absorbs[ k ] ] { apply_heal_absorb( size ); } );
     }
     every( spot_first, spot_interval, [ this ] { cast_spot_dots(); } );
     every( dispellable_first, dispellable_interval, [ this ] { apply_affliction(); } );
@@ -405,6 +447,15 @@ struct patchwerk_t final : public enemy::enemy_t
   double per_target( double rate, timespan_t interval, size_t targets ) const
   {
     return rate * health() * interval.total_seconds() * as<double>( raid_size ) / as<double>( targets );
+  }
+
+  // A healing absorb on every living player: size H each, scaled like burst damage (the tolerance search scales it).
+  void apply_heal_absorb( double size )
+  {
+    double amount = size * health() * damage_type_multiplier( *sim, damage_type_e::BURST );
+    for ( auto p : living_players() )
+      p->heal_absorb += amount;
+    sim->print_log( "{} heal absorb of {:.0f} on every living player", *this, amount );
   }
 
   void cast_raid_pulse()
@@ -595,12 +646,25 @@ player_t* create_patchwerk( sim_t* sim )
  * - P3 (3:00): steady 56%, waves 27% (Venom Rupture, Retaliatory Malice) every ~45 sec, spot 14%.
  * Tanks take ~11% of the damage (Patchwerk's calibration: 20%), so tank x0.55. Left out: the 122M Gravebound hit at
  * 8:05 (a kill-time event, not healing pressure). Fight length: the kill's, set in fights\coiled_altar.simc.
+ *
+ * 2026-11-13, from a farm kill's events (Warcraft Logs, Venom Rupture / Fangs / Defilement): the generic P1 and P3
+ * waves are replaced by the real timeline (at=, sizes=; one stack = 0.241 H per player per 10 sec wave: each Sever's
+ * Venom Rupture ticks every 2 sec for 10 sec at 55.7k unmitigated x stacks, 74% taken, at H = 950k and the stand-ins'
+ * 10% reduction; its 56k opening hit = +0.2 stack):
+ * - P1: Fangs of the Coiled Altar at 0:01 and 1:26 (~485k taken per player, 8 sec: 2.35 stacks); Venom Rupture after
+ *   each Sever, in pairs: 0:23 (5 stacks), 0:39 (3), 0:59 (5), 1:16 (3), 1:48 (6), and 10 stacks at the transition.
+ * - P3: Blighted Sever's Venom Rupture every ~31-37 sec from 73 sec in (4, 3, 3, 4 stacks); Defilement, a healing
+ *   absorb on the whole raid: 0.86 H at 39 sec, then 0.25 H and 1.13 H at 123 and 141 sec (healing eaten per player).
+ * Not yet sized (no damage table): Toxic Deluge (8 casts), Noxious Ground, Dreadful Presence, Dread Bolt, Wail of
+ * Terror, Gloombomb: still the per-phase steady / spot mix. P3's Retaliatory Malice waves are dropped with the old waves.
  */
 constexpr util::string_view coiled_altar_phases =
-    "125:steady=1.35,burst=1.07,spot=0.04,avoidable=1.16,tank=0.55,interval=33,first=18,waves=17,growth=0.12,big_every=3/"
+    "125:steady=1.35,spot=0.04,avoidable=1.16,tank=0.55,waves=10,stack=0.241,big_from=6,"
+    "at=1+23+39+59+76+86+108+122,sizes=2.35+5.2+3.2+5.2+3.2+2.35+6.2+10.2/"
     "160:steady=2.42,burst=0.25,spot=0.35,avoidable=0.4,tank=0.55,interval=80,first=25,waves=50/"
     "38:steady=3.43,burst=0,spot=0.25,avoidable=0,tank=0.5/"
-    "180:steady=2.02,burst=0.63,spot=0.71,avoidable=0,tank=0.55,interval=45,first=20,waves=16,growth=0.1,big_every=3";
+    "180:steady=2.02,spot=0.71,avoidable=0,tank=0.55,waves=10,stack=0.241,big_from=4,at=73+104+137+174,"
+    "sizes=4.2+3.2+3.2+4.2,absorb_at=39+123+141,absorbs=0.86+0.25+1.13";
 
 player_t* create_coiled_altar( sim_t* sim )
 {

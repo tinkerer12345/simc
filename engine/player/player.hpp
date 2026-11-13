@@ -445,6 +445,9 @@ struct player_t : public actor_t
 
   // Heal
   double iteration_heal, iteration_heal_taken, iteration_absorb, iteration_absorb_taken; // temporary accumulators
+  // Healing absorb (boss mechanics, e.g. Coiled Altar's Defilement): incoming healing fills it before it heals; 0 unless an
+  // encounter sets it.
+  double heal_absorb = 0.0;
   double hpr;
   std::vector<unsigned> absorb_priority; // for strict sequence absorbs
 

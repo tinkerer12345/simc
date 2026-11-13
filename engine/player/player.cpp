@@ -6650,6 +6650,7 @@ void player_t::reset()
   sim->print_debug( "Resetting {}.", *this );
 
   death_recap.reset();
+  heal_absorb = 0.0;
 
   last_cast = timespan_t::zero();
   gcd_ready = timespan_t::zero();
@@ -8587,6 +8588,14 @@ void player_t::target_mitigation( school_e, result_amount_type dmg_type, action_
 
 void player_t::assess_heal( school_e, result_amount_type, action_state_t* s )
 {
+  // a healing absorb eats the heal first (encounters only: heal_absorb is 0 otherwise)
+  if ( heal_absorb > 0 && s->result_total > 0 )
+  {
+    double eaten = std::min( heal_absorb, s->result_total );
+    heal_absorb -= eaten;
+    s->result_total -= eaten;
+  }
+
   // process heal
   s->result_amount = resource_gain( RESOURCE_HEALTH, s->result_total, nullptr, s->action );
 
