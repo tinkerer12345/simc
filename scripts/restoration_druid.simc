@@ -84,10 +84,11 @@ actions.precombat+=/rejuvenation,target=Protection_Warrior
 # combo points, Ferocious Bite at 5 for damage and Master Shapeshifter mana; the next heal shifts back. Started only
 # while the raid is healthy. Never Convoke in a DPS form.
 actions=variable,name=ramp,value=cooldown.tranquility.remains<15&encounter.big_burst.remains<15
-# Convoke timing (2026-11-13): if a burst lands within 20 s, hold Convoke (and its opener) so it goes off in the last 5 s
-# before it; otherwise on cooldown. Patchwerk +2.0% / +4.2% (0.3 s delay +1.8 / +4.1), Coiled Altar -0.2% (even: its waves
-# come so often that holding gains nothing). Without the opener -2..-5%; 8 Rejuvenations first -0.8 / +1.1.
-actions+=/variable,name=cgo,value=encounter.burst.remains<5|encounter.burst.remains>20
+# Convoke timing (2026-11-13, the user's rule): the first Convoke waits so it goes off just before the first burst (its
+# opener starts 8 s out); after that on cooldown, always with the opener (its ~61 s cycle stays in step with the bursts).
+# Patchwerk +1.75% / +3.18% raid health, limit 124.4 / 144.1 (on cooldown 124.8 / 144.4), Coiled Altar +0.05%. Holding every
+# Convoke to its burst gave +2.0 / +4.2 but dropped the 1 min limit to 141.7 (it drifted late); without the opener -2..-5%.
+actions+=/variable,name=cgo,value=time>25|encounter.burst.remains<8
 # Barkskin just before every big burst lands (good play, user 2026-11-09; also triggers Matted Fur and Flower Walk)
 actions+=/barkskin,if=encounter.big_burst.remains<=1
 # Tranquility as a big burst lands (Vashnik: an Imbibe's Expulsions; the ramp below sets it up), or in an emergency
