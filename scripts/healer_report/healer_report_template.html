@@ -1929,6 +1929,8 @@ if (compareOnly && checks.length && talentSets.length && talentSets.every(s => T
       opts: { 8: "Press until 8 are out", 12: "Press until 12 are out", 16: "Press until 16 are out" } },
     { key: "rj_keep", q: "How many Rejuvenations the rest of the time?", now: "At least 5, more while someone is hurt and you have 30% mana",
       opts: { 6: "About 6, whatever the health", 10: "About 10", 14: "About 14" } },
+    { key: "sb", q: "Do you aim Rejuvenation at Symbiotic Bloom targets (Bursting Growth, Vigorous Creepers)?", now: "No: the Rejuvenation filler picks whoever has fewest of yours, lowest health first",
+      opts: { 1: "Filler prefers them a bit", 2: "Filler takes them first", 3: "Extra Rejuvenation on bloom targets without one" } },
     { key: "tree", q: "What do you do differently in Tree of Life (Reforestation's every 4th Swiftmend)?", now: "Nothing: the same priority as outside it",
       opts: { 1: "Rejuvenation on everyone missing one", 2: "Two Rejuvenations on everyone", 3: "Wild Growth on cooldown", 4: "Rejuvenation on everyone + Wild Growth on cooldown", 5: "Instant Regrowth on anyone hurt without one", 6: "Rejuvenation on everyone missing one, low in the list", 7: "Wild Growth on cooldown + Rejuvenation on everyone, low" } },
     { key: "wg", q: "When do you cast Wild Growth (outside Convoke and Tranquility)?", now: "When 5 or more players are below 90%, at any mana",
