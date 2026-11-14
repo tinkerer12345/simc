@@ -428,6 +428,7 @@ struct player_t : public actor_t
   raid_frames_t raid_frames;  // opt-in, see raid_frames=1
   // opt-in mana from other players, per minute: an Evoker's Source of Magic, a Shaman's Mana Spring
   double source_of_magic_mana_per_minute = 0;
+  bool soulcoil_barrier_full_use = false; // fork test option: Soulcoil Barriers last until used up (no 20 s limit)
   double mana_spring_mana_per_minute     = 0;
   bool collect_pet_sequence_data;
 

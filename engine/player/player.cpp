@@ -11981,6 +11981,16 @@ std::unique_ptr<expr_t> player_t::create_expression( util::string_view expressio
     }
   }
 
+  // heal_absorbed_allies: living allies carrying a healing absorb (player_t::heal_absorb, set by encounters)
+  if ( util::str_compare_ci( expression_str, "heal_absorbed_allies" ) )
+    return make_fn_expr( expression_str, [ this ] {
+      int n = 0;
+      for ( auto t : sim->player_no_pet_list )
+        if ( !t->is_sleeping() && t->heal_absorb > 0 )
+          n++;
+      return n;
+    } );
+
   if ( util::str_compare_ci( expression_str, "raid_health.pct" ) )
     return make_fn_expr( expression_str, [ this ] {
       double sum = 0.0;
@@ -13579,6 +13589,7 @@ void player_t::create_options()
   add_option( opt_timespan( "death_recap", death_recap.window, 0_ms, 120_s ) );
   add_option( opt_bool( "raid_frames", raid_frames.enabled ) );
   add_option( opt_float( "source_of_magic_mana_per_minute", source_of_magic_mana_per_minute, 0.0, 1e7 ) );
+  add_option( opt_bool( "soulcoil_barrier_full_use", soulcoil_barrier_full_use ) );
   add_option( opt_float( "mana_spring_mana_per_minute", mana_spring_mana_per_minute, 0.0, 1e7 ) );
   add_option( opt_bool( "infinite_mana", resources.infinite_resource[ RESOURCE_MANA ] ) );
   add_option( opt_bool( "infinite_rage", resources.infinite_resource[ RESOURCE_RAGE ] ) );

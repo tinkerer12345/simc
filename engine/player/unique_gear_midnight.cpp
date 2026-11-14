@@ -4566,6 +4566,9 @@ void soulcoiler_ritual_vessel( special_effect_t& effect )
       auto buff = make_buff<fractional_absorb_t>( t, player, "soulcoil_barrier", absorb_spell )
                       ->set_absorb_fraction( absorb_spell->effectN( 2 ).percent() )
                       ->set_absorb_source( player->get_stats( "soulcoiler_ritual_vessel", this ) );
+      // fork test option: the barrier stays until used up (in a real raid 89% are used up within their 20 s)
+      if ( player->soulcoil_barrier_full_use )
+        buff->set_duration( 0_ms );
 
       absorb_buffs[ t ] = buff;
 
@@ -4636,7 +4639,12 @@ void soulcoiler_ritual_vessel( special_effect_t& effect )
           target = next( target );
         }
 
-        get_buff( *target )->trigger( -1, absorb_amount );
+        // encounter sims (fork): the caster's versatility sizes the barrier (raid log: each wearer's barriers sit at
+        // 1.15-1.2x the spell data, matching their versatility)
+        double amount = absorb_amount;
+        if ( !sim->encounter_str.empty() )
+          amount *= 1.0 + player->cache.heal_versatility();
+        get_buff( *target )->trigger( -1, amount );
       }
     }
 
