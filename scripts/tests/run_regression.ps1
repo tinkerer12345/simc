@@ -240,9 +240,9 @@ $chk = Invoke-Simc 'gear_check' @('scripts\restoration_druid.simc', 'scripts\fig
   'tolerance_iterations=60', 'tolerance_noise_runs=1')
 $cs = $chk.sim.tolerance
 Check $g 'gear check: no search' ([int]($cs.search -eq $false)) 1
-Check $g 'gear check: setups per pattern' (@($cs.setups | ForEach-Object { $_.role }) -join ',') 'main,set,noise,main,set,noise'
+Check $g 'gear check: setups (one pattern since 2026-11-13)' (@($cs.setups | ForEach-Object { $_.role }) -join ',') 'main,set,noise'
 Check $g 'gear check: no limit tests' (@($cs.setups | Where-Object { @($_.tests).Count -gt 0 }).Count) 0
-Check $g 'gear check: one level with raid health' (@($cs.setups | Where-Object { @($_.levels).Count -eq 1 -and $_.levels[0].stats.raid_health -gt 0 }).Count) 6
+Check $g 'gear check: one level with raid health' (@($cs.setups | Where-Object { @($_.levels).Count -eq 1 -and $_.levels[0].stats.raid_health -gt 0 }).Count) 3
 # Your limit with the fast search (tolerance_search_sets=0, what the .bat files run): current gear only, a rough pass
 # then aimed full tests. Close to the full search for the druid (bursts every 30 sec; 2026-11-09, after the Symbiotic
 # Blooms fix: coverage 0.32 full 123.4% / fast 123.5% in 4 tests; coverage 0.6: 126.0%; + Source of Magic 6k / Mana Spring 3k per min, the profile: 128.4%).
@@ -252,27 +252,29 @@ $fast = Invoke-Simc 'fast_limit' @('scripts\restoration_druid.simc', 'scripts\fi
 $fs = $fast.sim.tolerance
 $fmain = @($fs.setups | Where-Object { $_.role -eq 'main' })[0]
 $flim = ($fmain.tests | Where-Object { $_.test -eq 'combined' }).score
-Check $g 'fast limit near the full search (118-132%)' ([int]($flim -gt 1.18 -and $flim -lt 1.32)) 1
+Check $g 'fast limit near the full search (141-155%)' ([int]($flim -gt 1.41 -and $flim -lt 1.55)) 1
 # At most 12: with druid.efflorescence_coverage=0.6 (2026-11-09) the death rate creeps up slowly near 5% and the aimed
 # tests approach from below in small steps (11 tests for 126.0%, same answer as the full search). 14 since 2026-11-11
 # (Tranquility 5-target cap + Convoke mix from the log: 13 tests for 125.2%, passing 119.4..125.2 in small steps).
 # 2026-11-11: random target picks from the log (Efflorescence, Bursting Growth, Everbloom among injured, Power of the
 # Archdruid) moved the limit to ~115% (window 108-122%). 2026-11-12: rotation rules adopted (one Rejuvenation on
 # yourself and the tank; Wild Growth at any mana, no hold before Convoke) raised it to ~125% (window 118-132%).
+# 2026-11-13: Patchwerk became Coiled Altar P1 looped (lighter than the old 30 sec bursts): 148.1% (window 141-155%).
 Check $g 'fast limit: at most 14 full tests' ([int](@($fmain.tests[0].probes).Count -le 14)) 1
 Check $g 'fast limit: gear sets not searched' (@($fs.setups | Where-Object { $_.role -eq 'set' -and @($_.tests).Count -gt 0 }).Count) 0
-# Damage patterns (fights\patchwerk.simc: bursts every 30 sec, and the same bursts every 1 min): the search runs once
-# per pattern and the pattern's options reach the boss. Half the burst damage is clearly easier (130% vs 154% at full
-# precision), so an ignored pattern would show as equal limits.
+# Damage patterns (passed here; fights\patchwerk.simc has none since 2026-11-13): the search runs once per pattern
+# and the pattern's options reach the boss. Without the waves and bursts the fight is clearly easier, so an ignored
+# pattern would show as equal limits.
 $tolp = Invoke-Simc 'tolerance_patterns' @('scripts\restoration_druid.simc', 'scripts\fights\patchwerk.simc', 'threads=4',
   'iterations=20', 'tolerance=1', 'tolerance_share=0.2032', 'tolerance_iterations=100', 'tolerance_precision=0.02',
-  'tolerance_tests=none', 'tolerance_noise_runs=0', 'tolerance_levels=none')
+  'tolerance_tests=none', 'tolerance_noise_runs=0', 'tolerance_levels=none', 'tolerance_pattern_name=P1 loop',
+  'tolerance_pattern."No bursts"+=phases=300:steady=0.905,spot=0.852,avoidable=0,tank=0.38,burst=0')
 $tps = $tolp.sim.tolerance
-Check $g 'patterns' (@($tps.patterns | ForEach-Object { $_.name }) -join ',') 'Bursts every 30 sec,Bursts every 1 min'
-Check $g 'one main setup per pattern' (@($tps.setups | ForEach-Object { "$($_.role):$($_.pattern)" }) -join ',') 'main:Bursts every 30 sec,main:Bursts every 1 min'
-$p30 = $tps.setups[0].tests[0].score
-$p60 = $tps.setups[1].tests[0].score
-Check $g 'the same bursts every 1 min raise the limit (pattern reaches the boss)' ($p60 -gt $p30 + 0.04) $true
+Check $g 'patterns' (@($tps.patterns | ForEach-Object { $_.name }) -join ',') 'P1 loop,No bursts'
+Check $g 'one main setup per pattern' (@($tps.setups | ForEach-Object { "$($_.role):$($_.pattern)" }) -join ',') 'main:P1 loop,main:No bursts'
+$pA = $tps.setups[0].tests[0].score
+$pB = $tps.setups[1].tests[0].score
+Check $g 'no bursts raise the limit (pattern reaches the boss)' ($pB -gt $pA + 0.04) $true
 
 # ---------------------------------------------------------------- 2 + 3. Golden values (baseline.json)
 Write-Host 'Healer profile and stock SimC...'

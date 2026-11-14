@@ -49,6 +49,20 @@ struct test_result_t
   std::vector<probe_t> probes;
 };
 
+// One fight of current gear at its first level (the limit): the healer's casts and the boss's damage events, for the
+// report's decision timeline.
+struct sample_cast_t
+{
+  double time = 0, target_health = -1, raid_health = -1, mana = -1;
+  unsigned id = 0;
+  std::string name, spell, ally, apl;
+};
+struct sample_event_t
+{
+  double time = 0;
+  std::string name, target;
+};
+
 struct setup_result_t
 {
   std::string name;
@@ -64,6 +78,9 @@ struct setup_result_t
   unsigned screen_fights = 0;  // 0 = not screened
   double screen_diff     = 0;  // this set minus current gear, raid health (0-1)
   bool screened_out      = false;  // clearly behind: no full check, reported as a downgrade from the screen
+  double sample_level = 0;  // the level the sample fight was played at (main setups only)
+  std::vector<sample_cast_t> sample_casts;
+  std::vector<sample_event_t> sample_events;
 };
 
 struct tolerance_t

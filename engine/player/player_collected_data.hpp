@@ -129,6 +129,8 @@ struct player_collected_data_t
     std::vector<std::pair<player_t*, std::vector<record_t<buff_t>>>> target_list;
     std::array<double, RESOURCE_MAX> resource_snapshot;
     std::array<double, RESOURCE_MAX> resource_max_snapshot;
+    // encounter sims (fork): the cast target's and the raid's health % when the cast was chosen (-1 = not recorded)
+    double target_health = -1, raid_health = -1;
 
     action_sequence_data_t( const action_t* a, const player_t* t, timespan_t ts, timespan_t wait, const player_t* p );
 

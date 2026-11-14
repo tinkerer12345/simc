@@ -54,6 +54,9 @@ namespace
  *   big_from                               with at: bursts of at least this size are "big" (encounter.big_burst)
  *   absorb_at, absorbs                     healing absorbs on every living player at these seconds from the phase's
  *                                          start, absorbs[k] H each, scaled like burst damage (heal_absorb)
+ *   group_at, group_sizes, group_n         group bursts (a hit on a few players, e.g. Grim Guillotine): at these
+ *                                          seconds from the phase's start, group_sizes[k] H on each of group_n random
+ *                                          living players (default 5), counted as spot damage
  * The last phase lasts until the fight ends. Without phases, nothing above changes.
  */
 constexpr double steady_rate             = 0.0321;  // H per second, per player
@@ -97,6 +100,8 @@ struct phase_t
   std::vector<double> at, sizes;            // a real timeline (seconds from the phase's start, sizes in stack)
   double stack = 0, big_from = 0;
   std::vector<double> absorb_at, absorbs;   // healing absorbs (seconds from the phase's start, H per player)
+  std::vector<double> group_at, group_sizes;  // group bursts (seconds from the phase's start, H per player hit)
+  double group_n = 5;                         // players per group burst
 };
 
 // "1+2.5+3" -> { 1, 2.5, 3 }
@@ -138,10 +143,12 @@ std::vector<phase_t> parse_phases( util::string_view str )
         if ( eq == util::string_view::npos )
           throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs key=value.", kv ) );
         auto key = kv.substr( 0, eq );
-        if ( key == "at" || key == "sizes" || key == "absorb_at" || key == "absorbs" )
+        if ( key == "at" || key == "sizes" || key == "absorb_at" || key == "absorbs" || key == "group_at" ||
+             key == "group_sizes" )
         {
           auto list = parse_list( kv.substr( eq + 1 ) );
-          ( key == "at" ? ph.at : key == "sizes" ? ph.sizes : key == "absorb_at" ? ph.absorb_at : ph.absorbs ) = list;
+          ( key == "at" ? ph.at : key == "sizes" ? ph.sizes : key == "absorb_at" ? ph.absorb_at
+            : key == "absorbs" ? ph.absorbs : key == "group_at" ? ph.group_at : ph.group_sizes ) = list;
           continue;
         }
         double val = util::to_double( kv.substr( eq + 1 ) );
@@ -157,6 +164,7 @@ std::vector<phase_t> parse_phases( util::string_view str )
         else if ( key == "big_every" ) ph.big_every = as<int>( val );
         else if ( key == "stack" ) ph.stack = val;
         else if ( key == "big_from" ) ph.big_from = val;
+        else if ( key == "group_n" ) ph.group_n = std::max( 1.0, val );
         else
           throw std::invalid_argument( fmt::format( "Patchwerk phases: unknown key '{}'.", key ) );
       }
@@ -165,6 +173,8 @@ std::vector<phase_t> parse_phases( util::string_view str )
       throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs as many sizes as at.", part ) );
     if ( ph.absorb_at.size() != ph.absorbs.size() )
       throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs as many absorbs as absorb_at.", part ) );
+    if ( ph.group_at.size() != ph.group_sizes.size() )
+      throw std::invalid_argument( fmt::format( "Patchwerk phases: '{}' needs as many group_sizes as group_at.", part ) );
     out.push_back( ph );
   }
   return out;
@@ -186,6 +196,7 @@ struct patchwerk_t final : public enemy::enemy_t
   raid_damage_t* spot_dot        = nullptr;
   raid_damage_t* dispellable_dot = nullptr;
   raid_damage_t* avoidable_hit   = nullptr;
+  raid_damage_t* group_hit       = nullptr;
   raid_damage_t* melee           = nullptr;
   raid_damage_t* tank_buster     = nullptr;
   raid_damage_t* tank_buster_dot = nullptr;
@@ -315,6 +326,7 @@ struct patchwerk_t final : public enemy::enemy_t
           ( new raid_damage_t( "dispellable_dot", this, SCHOOL_SHADOW, 1, damage_type_e::SPOT ) )->single_target();
       avoidable_hit =
           ( new raid_damage_t( "avoidable_hit", this, SCHOOL_FIRE, 1, damage_type_e::AVOIDABLE ) )->single_target();
+      group_hit = ( new raid_damage_t( "group_burst", this, SCHOOL_SHADOW, 1, damage_type_e::SPOT ) )->single_target();
       melee = ( new raid_damage_t( "melee", this, SCHOOL_PHYSICAL, 1, damage_type_e::TANK ) )->single_target();
       tank_buster =
           ( new raid_damage_t( "tank_buster", this, SCHOOL_PHYSICAL, 1, damage_type_e::TANK ) )->single_target();
@@ -410,6 +422,10 @@ struct patchwerk_t final : public enemy::enemy_t
         for ( size_t k = 0; k < ph.absorb_at.size(); ++k )
           make_event( *sim, timespan_t::from_seconds( ph.start + ph.absorb_at[ k ] ),
                       [ this, size = ph.absorbs[ k ] ] { apply_heal_absorb( size ); } );
+      for ( const auto& ph : phases )
+        for ( size_t k = 0; k < ph.group_at.size(); ++k )
+          make_event( *sim, timespan_t::from_seconds( ph.start + ph.group_at[ k ] ),
+                      [ this, size = ph.group_sizes[ k ], n = ph.group_n ] { cast_group_burst( size, n ); } );
     }
     every( spot_first, spot_interval, [ this ] { cast_spot_dots(); } );
     if ( dispellable_on )
@@ -459,6 +475,18 @@ struct patchwerk_t final : public enemy::enemy_t
     for ( auto p : living_players() )
       p->heal_absorb += amount;
     sim->print_log( "{} heal absorb of {:.0f} on every living player", *this, amount );
+  }
+
+  // A group burst: size H on each of n random living players.
+  void cast_group_burst( double size, double n )
+  {
+    auto victims = random_players( as<size_t>( n ) );
+    if ( victims.empty() || size <= 0 )
+      return;
+    sequence_add( group_hit, victims.front() );
+    group_hit->set_damage( size * health() );
+    for ( auto v : victims )
+      group_hit->execute_on_target( v );
   }
 
   void cast_raid_pulse()

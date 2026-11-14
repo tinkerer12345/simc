@@ -563,6 +563,18 @@ void to_json( JsonOutput root, const ::report::json::report_configuration_t& rep
       {
         json[ "item_name" ] = entry.action->item->name_str;
       }
+      // encounter sims (fork): the priority line that chose the cast, its target and health (decision timeline)
+      if ( entry.raid_health >= 0 )
+      {
+        json[ "apl" ] = entry.action->signature_str;
+        if ( entry.action->action_list )
+          json[ "apl_list" ] = entry.action->action_list->name_str;
+        if ( entry.target && !entry.target->is_enemy() )
+          json[ "ally" ] = entry.target->name();
+        if ( entry.target_health >= 0 )
+          json[ "target_health" ] = entry.target_health;
+        json[ "raid_health" ] = entry.raid_health;
+      }
     }
     else
     {
@@ -1407,6 +1419,38 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
     auto lv = sn[ "levels" ].make_array();
     for ( const auto& p : s.levels )
       probe_json( p, lv.add() );
+    if ( !s.sample_casts.empty() )
+    {
+      auto sample       = sn[ "sample" ];
+      sample[ "level" ] = s.sample_level;
+      auto casts        = sample[ "casts" ].make_array();
+      for ( const auto& c : s.sample_casts )
+      {
+        auto cn       = casts.add();
+        cn[ "time" ]  = c.time;
+        cn[ "id" ]    = c.id;
+        cn[ "name" ]  = c.name;
+        cn[ "spell" ] = c.spell;
+        cn[ "apl" ]   = c.apl;
+        if ( !c.ally.empty() )
+          cn[ "ally" ] = c.ally;
+        if ( c.target_health >= 0 )
+          cn[ "target_health" ] = c.target_health;
+        if ( c.raid_health >= 0 )
+          cn[ "raid_health" ] = c.raid_health;
+        if ( c.mana >= 0 )
+          cn[ "mana" ] = c.mana;
+      }
+      auto events = sample[ "events" ].make_array();
+      for ( const auto& e : s.sample_events )
+      {
+        auto en       = events.add();
+        en[ "time" ]  = e.time;
+        en[ "name" ]  = e.name;
+        if ( !e.target.empty() )
+          en[ "target" ] = e.target;
+      }
+    }
     if ( !t.ran.empty() )
       sn[ "ran" ] = t.ran;
   }

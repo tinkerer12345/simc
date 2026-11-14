@@ -5,6 +5,7 @@
 
 #include "tolerance.hpp"
 
+#include "action/action.hpp"
 #include "item/item.hpp"
 #include "player/player.hpp"
 #include "sim/sim.hpp"
@@ -87,7 +88,8 @@ void apply_set( sim_control_t& c, const std::vector<std::string>& lines, unsigne
   }
 }
 
-// A damage pattern's lines are boss options: they go right after encounter=, which starts the boss's section.
+// A damage pattern's lines are boss options. The boss (encounter=) is the last actor, so they go at the end of its
+// section, after the fight file's own boss options (a pattern's phases=... must win over the fight's).
 void apply_pattern( sim_control_t& c, const std::vector<std::string>& lines )
 {
   if ( lines.empty() )
@@ -100,7 +102,7 @@ void apply_pattern( sim_control_t& c, const std::vector<std::string>& lines )
                              []( const option_tuple_t& o ) { return util::str_compare_ci( o.name, "encounter" ); } );
   if ( it == opts.rend() )
     throw std::invalid_argument( "tolerance_pattern needs encounter=<name> in the profile." );
-  opts.insert( it.base(), pattern_opts.begin(), pattern_opts.end() );
+  opts.insert( opts.end(), pattern_opts.begin(), pattern_opts.end() );
 }
 
 const char* test_label( const std::string& test )
@@ -305,6 +307,40 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
   {
     p.has_stats = true;
     p.stats     = child->tolerance->stats;
+  }
+
+  // Current gear's first level run (the limit): keep one of its fights for the report's decision timeline.
+  if ( with_stats && setup && setup->role == "main" && setup->sample_casts.empty() )
+  {
+    setup->sample_level = pct;
+    for ( const auto& e : healer->collected_data.action_sequence )
+    {
+      if ( !e.action )
+        continue;
+      sample_cast_t c;
+      c.time          = e.time.total_seconds();
+      c.id            = e.action->id;
+      c.name          = e.action->name();
+      c.spell         = e.action->data_reporting().name_cstr();
+      c.apl           = e.action->signature_str;
+      c.target_health = e.target_health;
+      c.raid_health   = e.raid_health;
+      if ( e.target && !e.target->is_enemy() )
+        c.ally = e.target->name();
+      if ( e.resource_max_snapshot[ RESOURCE_MANA ] > 0 )
+        c.mana = e.resource_snapshot[ RESOURCE_MANA ] / e.resource_max_snapshot[ RESOURCE_MANA ];
+      setup->sample_casts.push_back( std::move( c ) );
+    }
+    for ( const auto* t : child->target_list )
+    {
+      for ( const auto& e : t->collected_data.action_sequence )
+      {
+        if ( !e.action )
+          continue;
+        setup->sample_events.push_back( { e.time.total_seconds(), e.action->name(),
+                                          e.target && !e.target->is_enemy() ? e.target->name() : std::string() } );
+      }
+    }
   }
 
   if ( setup && setup->gear.empty() )

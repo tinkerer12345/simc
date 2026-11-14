@@ -35,6 +35,23 @@ player_collected_data_t::action_sequence_data_t::action_sequence_data_t( const a
                                                                          const player_t* p )
   : action( a ), target( t ), time( ts ), wait_time( wait ), queue_failed( false )
 {
+  // encounter sims (fork): health at the moment of the decision, for the healer report's decision timeline
+  if ( a && !p->sim->encounter_str.empty() )
+  {
+    if ( t && !t->is_enemy() )
+      target_health = t->health_percentage();
+    double sum = 0.0;
+    int n      = 0;
+    for ( auto pl : p->sim->player_no_pet_list )
+    {
+      if ( pl->is_sleeping() || pl->is_enemy() )
+        continue;
+      sum += pl->health_percentage();
+      n++;
+    }
+    raid_health = n ? sum / n : 100.0;
+  }
+
   for ( buff_t* b : p->buff_list )
   {
     if ( b->check() && !b->quiet && !b->constant )
