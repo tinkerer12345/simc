@@ -26,4 +26,7 @@ encounter_healing_done=0.08
 encounter=CoiledAltar
 # No Patchwerk dispellable DoT: on the kill only Venomfang (P1) was dispelled, 6 times by others; its damage is in P1's spot.
 dispellable=0
+# Real damage, fixed for this tier: every hit is sized from the raid's health on your kill (982k per raid member, tanks x1.44),
+# not from your current health, so gear that raises your health (and the raid's) makes the fight easier, as over a season.
+damage_reference_health=982000
 enemy_health=1000000000

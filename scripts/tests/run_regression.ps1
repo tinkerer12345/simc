@@ -252,7 +252,7 @@ $fast = Invoke-Simc 'fast_limit' @('scripts\restoration_druid.simc', 'scripts\fi
 $fs = $fast.sim.tolerance
 $fmain = @($fs.setups | Where-Object { $_.role -eq 'main' })[0]
 $flim = ($fmain.tests | Where-Object { $_.test -eq 'combined' }).score
-Check $g 'fast limit near the full search (141-155%)' ([int]($flim -gt 1.41 -and $flim -lt 1.55)) 1
+Check $g 'fast limit near the full search (126-140%)' ([int]($flim -gt 1.26 -and $flim -lt 1.40)) 1
 # At most 12: with druid.efflorescence_coverage=0.6 (2026-11-09) the death rate creeps up slowly near 5% and the aimed
 # tests approach from below in small steps (11 tests for 126.0%, same answer as the full search). 14 since 2026-11-11
 # (Tranquility 5-target cap + Convoke mix from the log: 13 tests for 125.2%, passing 119.4..125.2 in small steps).
@@ -260,6 +260,7 @@ Check $g 'fast limit near the full search (141-155%)' ([int]($flim -gt 1.41 -and
 # Archdruid) moved the limit to ~115% (window 108-122%). 2026-11-12: rotation rules adopted (one Rejuvenation on
 # yourself and the tank; Wild Growth at any mana, no hold before Convoke) raised it to ~125% (window 118-132%).
 # 2026-11-13: Patchwerk became Coiled Altar P1 looped (lighter than the old 30 sec bursts): 148.1% (window 141-155%).
+# 2026-11-16: the druid's measured role weights (tank x0.54, raid kinds x1.07-1.16): 133.0% (window 126-140%).
 Check $g 'fast limit: at most 14 full tests' ([int](@($fmain.tests[0].probes).Count -le 14)) 1
 Check $g 'fast limit: gear sets not searched' (@($fs.setups | Where-Object { $_.role -eq 'set' -and @($_.tests).Count -gt 0 }).Count) 0
 # Damage patterns (passed here; fights\patchwerk.simc has none since 2026-11-13): the search runs once per pattern

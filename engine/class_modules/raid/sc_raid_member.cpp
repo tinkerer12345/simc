@@ -108,6 +108,11 @@ void raid_member_t::resolve_health( sim_t* sim )
   healer->cache.invalidate_all();
   healer->init_resources( true );
   rs.resolved_health = healer->resources.max[ RESOURCE_HEALTH ];
+  // In combat the raid has Power Word: Fortitude (Stamina +x%), which the healer's max health above doesn't include yet;
+  // the stand-ins have no Stamina for it to work on, so their pool gets it here: the healer's in-combat health.
+  if ( sim->overrides.power_word_fortitude && sim->auras.power_word_fortitude )
+    rs.resolved_health += std::floor( healer->stamina() * sim->auras.power_word_fortitude->data().effectN( 1 ).percent() ) *
+                          healer->current.health_per_stamina;
   healer->current = current;
   healer->cache.invalidate_all();
   sim->print_debug( "Raid stand-in health from {}: {}", *healer, rs.resolved_health );

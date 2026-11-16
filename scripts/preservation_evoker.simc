@@ -15,6 +15,13 @@ spec=preservation
 # Mana from other players, per minute (tracked as its own mana gain): a Shaman's Mana Spring. No Source of Magic: you are the
 # Evoker who casts it on someone else (add source_of_magic_mana_per_minute=6000 if your raid has a second Evoker).
 mana_spring_mana_per_minute=3000
+# This healer's role in the raid (measured 2026-11-16 on the Coiled Altar kill, Duskryth's healing and absorbs split by the kind
+# of damage it answered): 20.2% of all damage; 15.3% of the tank damage, 20.5% of the steady, 21.8% of the raid bursts, 22.3%
+# of the spot. Each kind weighted against the overall share: 100% = a normal Preservation Evoker's job in that raid.
+encounter_damage_tank=0.759
+encounter_damage_steady=1.016
+encounter_damage_burst=1.081
+encounter_damage_spot=1.106
 # Duskryth's own talents and gear (SimC addon export, 2026-10-30, raid loadout)
 talents=CwbBPJc41CfcseY0baneJ1IHrBAAAAAYmZwMjZYGzmhZmZbYAAgZMj5BMGzIMDAAAwMzMZGzMPwsMzMAYGzALgFwMMhsZYzwAYmZMA
 set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1

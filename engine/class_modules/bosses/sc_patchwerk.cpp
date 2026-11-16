@@ -58,6 +58,10 @@ namespace
  *                                          seconds from the phase's start, group_sizes[k] H on each of group_n random
  *                                          living players (default 5), counted as spot damage
  * The last phase lasts until the fight ends. Without phases, nothing above changes.
+ *
+ * damage_reference_health=<health> (a real boss, e.g. Coiled Altar): every hit is sized from this fixed health (the raid
+ * member's health on the log the fight was built from; tanks x raid_tank_health_factor) instead of the stand-ins', so
+ * the raid's own health (the healer's gear) changes how hard the fight is, as over a season in game.
  */
 constexpr double steady_rate             = 0.0321;  // H per second, per player
 constexpr timespan_t steady_interval     = 2_s;
@@ -186,6 +190,7 @@ struct patchwerk_t final : public enemy::enemy_t
   int big_burst_every       = default_big_burst_every;
   bool burst_scales_with_interval = true;
   bool dispellable_on = true;  // dispellable=0: no dispellable_dot (a boss without Vashnik-style dispels)
+  double damage_reference_health = 0;  // > 0: hits sized from this health, not the raid's (a fixed tier's damage)
   std::string phases_str;
   std::vector<phase_t> phases;
   std::vector<scheduled_burst_t> burst_schedule;  // phased fights: every burst of the fight, in time order
@@ -226,6 +231,7 @@ struct patchwerk_t final : public enemy::enemy_t
     add_option( opt_bool( "burst_scales_with_interval", burst_scales_with_interval ) );
     add_option( opt_string( "phases", phases_str ) );
     add_option( opt_bool( "dispellable", dispellable_on ) );
+    add_option( opt_float( "damage_reference_health", damage_reference_health, 0, 1e9 ) );
     enemy::enemy_t::create_options();
   }
 
@@ -284,8 +290,14 @@ struct patchwerk_t final : public enemy::enemy_t
   bool receives_raid_debuffs() const override { return false; }
   bool receives_buffs() const override { return false; }
 
-  double health() const { return raid::member_health( sim, false ); }
-  double tank_health() const { return raid::member_health( sim, true ); }
+  // The health hits are sized from: the stand-ins' (the healer's own with raid_health_from_healer=1), or a fixed
+  // damage_reference_health (a real boss's tier: the raid's health on the log it was built from; tanks x the tank factor).
+  double health() const { return damage_reference_health > 0 ? damage_reference_health : raid::member_health( sim, false ); }
+  double tank_health() const
+  {
+    return damage_reference_health > 0 ? damage_reference_health * sim->raid_stand_in.tank_health_factor
+                                       : raid::member_health( sim, true );
+  }
 
   // A normal burst's total damage per player; big ones are big_burst_size times as large, and the average over a cycle
   // of big_burst_every bursts is burst_rate (at the default interval and big_burst_every, unless

@@ -244,10 +244,17 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
   std::vector<std::string> args = { fmt::format( "iterations={}", iters ), "deterministic=1", "target_error=0",
                                     "tolerance=0", "encounter_damage_all=1",
                                     fmt::format( "tolerance_stats={}", with_stats ? 1 : 0 ) };
-  for ( const char* type : { "steady", "burst", "spot", "tank", "avoidable" } )
+  // A healer's role (the share of each kind of damage it heals relative to its share of all damage, measured from a
+  // raid log) comes in as the run's own encounter_damage_<type> options: they weight each kind here (default 1).
+  const std::pair<const char*, double> roles[] = { { "steady", sim->encounter_damage_steady },
+                                                  { "burst", sim->encounter_damage_burst },
+                                                  { "spot", sim->encounter_damage_spot },
+                                                  { "tank", sim->encounter_damage_tank },
+                                                  { "avoidable", sim->encounter_damage_avoidable } };
+  for ( const auto& [ type, role ] : roles )
   {
     double level = ( test == "combined" || test == type ) ? pct : held;
-    args.push_back( fmt::format( "encounter_damage_{}={}", type, level * share ) );
+    args.push_back( fmt::format( "encounter_damage_{}={}", type, level * share * role ) );
   }
   control->options.parse_args( args );
 
