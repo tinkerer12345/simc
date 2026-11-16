@@ -3,25 +3,25 @@
                            "players":  20,
                            "fights":  199,
                            "wipes":  199,
-                           "simulation_length":  50.2261407035177,
-                           "healer_hps":  894898.2843398262,
-                           "healer_damage_taken":  2677490.137875334,
-                           "healer_fight_length":  50.2261407035177,
-                           "raid_damage_taken":  61249622.120982394,
+                           "simulation_length":  50.28462311557799,
+                           "healer_hps":  867015.271731022,
+                           "healer_damage_taken":  3076305.251037409,
+                           "healer_fight_length":  50.28462311557799,
+                           "raid_damage_taken":  60563972.778597355,
                            "raid_frames_units":  20,
-                           "raid_frames_deaths":  13,
-                           "death_recaps":  1
+                           "raid_frames_deaths":  18,
+                           "death_recaps":  3
                        },
     "patchwerk_healer_profile":  {
-                                     "raid_member_health":  901360.0,
-                                     "healer_hps":  321098.08821368406,
-                                     "raid_damage_taken":  97014352.113050878
+                                     "raid_member_health":  946420.0,
+                                     "healer_hps":  367230.551356213,
+                                     "raid_damage_taken":  111439230.39775157
                                  },
     "evoker_healer_profile":  {
-                                  "wipes":  0,
-                                  "healer_hps":  329097.13471998149,
-                                  "healer_damage_taken":  5023217.965700577,
-                                  "raid_damage_taken":  111054270.89410315
+                                  "wipes":  1,
+                                  "healer_hps":  339500.97414487056,
+                                  "healer_damage_taken":  5365717.851231064,
+                                  "raid_damage_taken":  114602381.6480367
                               },
     "MID1_Priest_Shadow":  {
                                "dps":  130914.1519005129,

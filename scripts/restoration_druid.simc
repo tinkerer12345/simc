@@ -33,6 +33,14 @@ druid.symbiotic_relationship=Frost_Mage
 # Mana from other players, per minute (tracked as their own mana gains): an Evoker's Source of Magic, a Shaman's Mana Spring.
 source_of_magic_mana_per_minute=6000
 mana_spring_mana_per_minute=3000
+# Your role in the raid (measured 2026-11-16 on your Coiled Altar kill, every healer's healing and absorbs split by the kind of
+# damage it answered): you healed 22.5% of all damage, but 12.1% of the tank damage (tanks self-heal ~50%), 24.0% of the
+# steady, 26.1% of the raid bursts, 24.6% of the spot damage. Each kind is weighted by that against your overall share, so
+# 100% = a normal Resto Druid's job in your raid (the limit search keeps these weights).
+encounter_damage_tank=0.538
+encounter_damage_steady=1.067
+encounter_damage_burst=1.160
+encounter_damage_spot=1.093
 
 # Enigmatic Dreamwatcher's Somnolent Stare (334)
 head=,id=271528,enchant_id=7961,gem_id=240900,bonus_id=13334/6652/13696/13847/13692/12854/13658/13695,redirected_base_stats=271875
@@ -146,9 +154,8 @@ actions+=/swiftmend,target_if=min:target.health.pct,if=target.health.pct<50&(dot
 # Soul of the Forest Rejuvenation: Power of the Archdruid puts it on 3 allies
 actions+=/rejuvenation,target_if=min:target.health.pct,if=buff.soul_of_the_forest_tree.up
 actions+=/regrowth,target_if=min:target.health.pct,if=buff.clearcasting_tree.up
-# In the Abundance window after a Convoke: Regrowth on hurt allies without one, Rejuvenation
-# targets first (more Harmony), anyone low first of all
-actions+=/regrowth,target_if=min:dot.regrowth.ticking*100+(target.health.pct>50)*50-dot.rejuvenation.ticking*20+target.health.pct*0.1,if=buff.abundance.up&cooldown.convoke_the_spirits.remains>45&target.health.pct<90
+# After Convoke: no special Regrowth spam (2026-11-16, with your role weights: Patchwerk +0.50, Coiled Altar +0.13 = same);
+# the normal priority below handles it.
 # Wild Growth whenever 5 or more are below 90%, at any mana, not held for Convoke (2026-11-12)
 actions+=/wild_growth,target_if=min:target.health.pct,if=injured_allies.90>=5
 # Low mana: fewer Rejuvenations, Regrowths with Abundance instead
