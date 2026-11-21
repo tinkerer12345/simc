@@ -23,7 +23,10 @@ raid_tank_physical_reduction=0.57
 
 # Fury of the Dead (Venomous Abyss zone buff): +8% damage and healing in the week of 2026-11-08, +1% per week up to 15%.
 encounter_healing_done=0.08
-encounter=CoiledAltar
+encounter=CoiledAltar
+encounter_title="Coiled Altar (Mythic)"
+encounter_description="Your kill's timeline, 8:16: P1 Venom Rupture waves and Fangs, P2 Malacrass's constant aura with healing absorbs, a 41 sec soak intermission, P3 both bosses together. Real damage for this tier: hits sized for 982k-health raid members, so your gear progress shows."
+encounter_tags="8:16|Real tier damage|4 phases|Waves in P1 and P3|Heavy rot in P2|Healing absorbs|Light tank"
 # No Patchwerk dispellable DoT: on the kill only Venomfang (P1) was dispelled, 6 times by others; its damage is in P1's spot.
 dispellable=0
 # Real damage, fixed for this tier: every hit is sized from the raid's health on your kill (982k per raid member, tanks x1.44),

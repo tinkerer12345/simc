@@ -828,6 +828,92 @@ details.explain[open] > summary::before { transform: rotate(90deg); }
 .up-tile-gain { font-size: 22px; font-weight: 800; }
 .up-tile-gain.better { color: var(--heal); } .up-tile-gain.tradeoff { color: var(--c4); }
 .up-tile-lim { font-size: 12px; color: var(--ink-3); }
+.enc-desc { line-height: 1.5; margin: 4px 0 8px; }
+.enc-strip { margin: 6px 0 8px; }
+.enc-strip svg { width: 100%; height: 52px; display: block; }
+.enc-strip .axis { stroke: var(--line); stroke-width: 1; }
+.enc-strip text { fill: var(--ink-3); font-size: 9px; text-anchor: middle; }
+.enc-strip rect.wave { fill: var(--dmg); opacity: .65; } .enc-strip rect.big { fill: var(--dmg); } .enc-strip rect.grp { fill: var(--c4); }
+.enc-key { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin: 0 4px 0 8px; vertical-align: 0; }
+.enc-key.wave { background: var(--dmg); opacity: .65; } .enc-key.big { background: var(--dmg); } .enc-key.grp { background: var(--c4); }
+.enc-role { font-size: 12.5px; color: var(--ink-2); margin: 6px 0 8px; line-height: 1.6; }
+.enc-chip { display: inline-block; margin: 2px 4px 0 0; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--line); font-size: 12px; color: var(--ink); }
+.enc-tags { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; margin: 6px 0 12px; }
+.enc-tag { padding: 3px 10px; border-radius: 999px; font-size: 12.5px; font-weight: 600; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink); }
+.enc-lbl { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); font-weight: 700; margin-right: 6px; }
+.enc-mix { margin: 4px 0 10px; text-align: left; }
+.enc-mix-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 5px; }
+.enc-lean { font-weight: 700; font-size: 13px; color: var(--ink-2); }
+.enc-lean.burst { color: var(--dmg); } .enc-lean.steady { color: var(--c3); }
+.enc-bar { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--grid); gap: 2px; }
+.enc-bar span { display: block; height: 100%; }
+.enc-bar .burst, .enc-legend i.burst { background: var(--dmg); } .enc-bar .steady, .enc-legend i.steady { background: var(--c3); }
+.enc-bar .spot, .enc-legend i.spot { background: var(--c4); } .enc-bar .tank, .enc-legend i.tank { background: var(--school-physical); }
+.enc-bar .avoid, .enc-legend i.avoid { background: var(--ink-3); }
+.enc-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 6px; font-size: 12px; color: var(--ink-2); }
+.enc-legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px; margin-right: 5px; vertical-align: -1px; }
+.enc-role { text-align: left; margin: 4px 0 8px; }
+.enc-chip.more { border-color: color-mix(in srgb, var(--dmg) 55%, var(--line)); } .enc-chip.less { border-color: color-mix(in srgb, var(--heal) 55%, var(--line)); }
+.enc-more { margin-top: 8px; text-align: left; } .enc-more summary { cursor: pointer; color: var(--ink-2); font-size: 13px; }
+.enc-more .enc-desc { color: var(--ink-2); font-size: 13px; line-height: 1.5; margin: 6px 0; }
+/* decisions timeline (Warcraft Logs style) */
+.tl { display: flex; flex-direction: column; gap: 10px; }
+.tl-bar { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; }
+.tl-zoom, .tl-nav { display: flex; gap: 4px; align-items: center; }
+.tl-zoom button, .tl-nav button, .tl-d-nav button { font: inherit; font-size: 13px; padding: 5px 11px; border-radius: 8px; border: 1px solid var(--line); background: var(--panel); color: var(--ink-2); cursor: pointer; }
+.tl-zoom button[aria-pressed="true"] { color: var(--ink); border-color: var(--accent); }
+.tl-range { font-variant-numeric: tabular-nums; color: var(--ink-2); font-size: 13px; min-width: 110px; text-align: center; }
+.tl-cd { font-size: 13px; color: var(--ink-2); display: flex; gap: 6px; align-items: center; }
+.tl-over { height: 46px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); cursor: grab; touch-action: none; overflow: hidden; }
+.tl-over svg { width: 100%; height: 100%; display: block; }
+.tl-over .ob { fill: var(--dmg); opacity: .35; } .tl-over .ob.big { opacity: .7; }
+.tl-over .oh { fill: none; stroke: var(--heal); stroke-width: 1.5; } .tl-over .oc { fill: var(--accent); }
+.tl-over .ow { fill: color-mix(in srgb, var(--ink) 10%, transparent); stroke: var(--ink); stroke-width: 1.5; }
+.tl-body { display: grid; grid-template-columns: 190px 1fr; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); overflow: hidden; outline: none; }
+.tl-body:focus-visible { border-color: var(--accent); }
+.tl-labels { border-right: 1px solid var(--line); background: var(--panel-2); }
+.tl-lane-lbl { display: flex; align-items: center; gap: 7px; padding: 0 10px; font-size: 12.5px; border-top: 1px solid var(--grid); white-space: nowrap; overflow: hidden; }
+.tl-lane-lbl img, .tl-lane-lbl .tl-tile { width: 18px; height: 18px; border-radius: 3px; flex: none; }
+.tl-lane-lbl span { overflow: hidden; text-overflow: ellipsis; } .tl-lane-lbl small { margin-left: auto; color: var(--ink-3); }
+.tl-lane-lbl.cd span { font-weight: 700; }
+.tl-canvas { position: relative; overflow: hidden; }
+.tl-track { position: relative; }
+.tl-grid { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--grid); }
+.tl-grid span { position: absolute; bottom: 2px; left: 3px; font-size: 10px; color: var(--ink-3); }
+.tl-burst { position: absolute; top: 0; bottom: 0; background: color-mix(in srgb, var(--dmg) 7%, transparent); border-left: 2px solid color-mix(in srgb, var(--dmg) 80%, transparent); }
+.tl-burst.big { background: color-mix(in srgb, var(--dmg) 16%, transparent); border-left: 3px solid var(--dmg); }
+.tl-burst.grp { background: none; border-left: 2px dashed var(--c4); }
+.tl-top { position: absolute; top: 0; left: 0; } .tl-top .mpb { fill: color-mix(in srgb, var(--mana) 6%, transparent); } .tl-top .mpa { fill: color-mix(in srgb, var(--mana) 22%, transparent); }
+.tl-band-lbl { display: flex; flex-direction: column; justify-content: space-around; padding: 4px 10px; border-bottom: 1px solid var(--line); font-size: 12px; color: var(--ink-2); }
+.tl-band-lbl i { display: inline-block; width: 10px; height: 3px; margin: 0 6px 3px 0; } .tl-band-lbl .hp i { background: var(--heal); } .tl-band-lbl .mp i { background: var(--mana); }
+.tl-band-lbl small { color: var(--ink-3); margin-left: 4px; } .tl-top .hpa { fill: color-mix(in srgb, var(--heal) 14%, transparent); } .tl-top .ref { stroke: var(--grid); stroke-dasharray: 3 3; } .tl-top .hp { fill: none; stroke: var(--heal); stroke-width: 1.6; } .tl-top .mp { fill: none; stroke: var(--mana); stroke-width: 1.2; opacity: .85; }
+.tl-key { position: absolute; top: 2px; right: 6px; font-size: 10.5px; color: var(--ink-3); }
+.tl-key i { display: inline-block; width: 10px; height: 2px; margin: 0 4px 2px 8px; } .tl-key i.hp { background: var(--heal); } .tl-key i.mp { background: var(--mana); }
+.tl-ico { position: absolute; width: 24px; height: 24px; padding: 0; border: 1px solid #000; border-radius: 4px; background: var(--panel-2); cursor: pointer; overflow: hidden; }
+.tl-ico img { width: 100%; height: 100%; display: block; }
+.tl-ico:hover { transform: scale(1.18); z-index: 2; }
+.tl-ico.sel, .tl-dot.sel { outline: 2px solid #fff; outline-offset: 1px; z-index: 3; box-shadow: 0 0 10px rgba(255,255,255,.6); }
+.tl-dot { position: absolute; width: 8px; height: 8px; padding: 0; border: 0; border-radius: 50%; background: var(--accent); cursor: pointer; }
+.tl-tile { display: grid; place-items: center; font-size: 10px; font-weight: 700; color: var(--ink); background: var(--panel-2); width: 100%; height: 100%; }
+.tl-sel-line { position: absolute; top: 0; bottom: 0; width: 0; border-left: 1px solid rgba(255,255,255,.7); pointer-events: none; }
+.tl-detail { padding: 14px 16px; }
+.tl-d-head { display: flex; gap: 10px; align-items: center; }
+.tl-d-head img { width: 36px; height: 36px; border-radius: 6px; border: 1px solid #000; }
+.tl-d-nav { margin-left: auto; display: flex; gap: 6px; } .tl-d-nav button:disabled { opacity: .4; cursor: default; }
+.tl-d-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px 18px; margin: 12px 0 8px; }
+.tl-d-grid > div { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+.tl-sub-lbl { display: flex; align-items: center; padding: 0 10px; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; color: var(--ink-3); border-top: 1px solid var(--line); }
+.tl-lane-lbl.buff, .tl-lane-lbl.res { font-size: 11.5px; color: var(--ink-2); } .tl-lane-lbl.buff img, .tl-lane-lbl.buff .tl-tile { width: 14px; height: 14px; }
+.tl-buff { position: absolute; border-radius: 3px; background: color-mix(in srgb, var(--accent, #8b9cf7) 45%, transparent); border: 1px solid color-mix(in srgb, var(--accent, #8b9cf7) 80%, transparent); box-sizing: border-box; pointer-events: auto; }
+.tl-buff span { position: absolute; left: 3px; top: -2px; font-size: 10px; font-weight: 700; color: var(--ink); }
+.tl-res { position: absolute; left: 0; pointer-events: none; } .tl-res polyline { fill: none; stroke: var(--warn, #e6b450); stroke-width: 1.5; }
+.tl-d-res { margin: 4px 0 8px; font-size: 13px; } .pips i { display: inline-block; width: 10px; height: 10px; margin-right: 3px; border-radius: 50%; border: 1px solid var(--ink-3); vertical-align: -1px; } .pips i.on { background: var(--warn, #e6b450); border-color: var(--warn, #e6b450); }
+.tl-d-buffs { margin: 4px 0 8px; font-size: 12.5px; } .tl-d-buffs > div, .tl-d-buffs details > div { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+.tl-d-buffs summary { cursor: pointer; color: var(--ink-3); margin-top: 6px; font-size: 12px; }
+.bchip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px 2px 3px; border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line); color: var(--ink-2); }
+.bchip.rel { border-color: color-mix(in srgb, var(--accent, #8b9cf7) 70%, transparent); color: var(--ink); } .bchip img { width: 16px; height: 16px; border-radius: 50%; } .bchip small { color: var(--ink-3); }
+.tl-why { margin: 6px 0; } .tl-detail code { font-size: 12px; color: var(--ink-2); overflow-wrap: anywhere; }
+@media (max-width: 700px) { .tl-body { grid-template-columns: 110px 1fr; } .tl-lane-lbl small { display: none; } }
 </style>
 </head>
 <body>
@@ -1108,7 +1194,7 @@ const isCoiledAltar = /^(coiledaltar|coiled altar)$/i.test(sim.options?.encounte
 const raidHealth = sim.statistics?.raid_member_health || 0;
 const tankHealth = sim.statistics?.raid_tank_health || 0;
 document.title = healerName + " vs " + bossTitle;
-$("#brand").innerHTML = esc(healerName) + " <span>vs " + esc(bossTitle) + "</span>";
+$("#brand").innerHTML = esc(healerName) + " <span>vs " + esc(sim.options?.encounter_title || bossTitle) + "</span>";
 
 // Icons and colours for the character stats (gear sheet), by stat name.
 const svgIcon = d => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
@@ -1166,7 +1252,7 @@ const bossAbilities = dmgStats.slice(0, 5).map(d => `
   <span class="amt">${totalDmg && d.eff / totalDmg < 0.005 ? "&lt;1%" : fmtPct(totalDmg ? d.eff / totalDmg : 0)}</span></li>`).join("");
 // The kind of damage of each of Patchwerk's abilities (engine/class_modules/bosses/sc_patchwerk.cpp), by ability name.
 const PATCHWERK_KINDS = {
-  raid_pulse: "Steady", raid_burst: "Burst", big_raid_burst: "Burst", spot_dot: "Spot", dispellable_dot: "Spot",
+  raid_pulse: "Steady", raid_burst: "Burst", big_raid_burst: "Burst", spot_dot: "Spot", dispellable_dot: "Spot", group_burst: "Spot",
   avoidable_hit: "Avoidable", melee: "Tank", tank_buster: "Tank", tank_buster_dot: "Tank",
 };
 const abilityKey = d => String(d.label || "").toLowerCase().replace(/[^a-z0-9]+/g, "_").replace(/^_|_$/g, "");
@@ -1274,6 +1360,43 @@ if (encFights && !compareOnly) {
     ${oomIdx >= 0 ? `<div class="small">Mana ran dry at ${fmtTime(oomIdx)}</div>` : ""}`;
 }
 
+// What the fight was: its title and description (fight file: encounter_title / encounter_description), the healer's role
+// weights when they aren't all 1, and a strip of when the boss's raid-wide damage lands (the fight kept at your limit).
+const encTitle = sim.options?.encounter_title || "", encDesc = sim.options?.encounter_description || "";
+const roleW = sim.options?.encounter_damage || {};
+const ROLE_KINDS = [["tank", "tank"], ["steady", "steady"], ["burst", "raid bursts"], ["spot", "spot"]];
+const roleLine = ROLE_KINDS.some(([k]) => roleW[k] != null && Math.abs(roleW[k] - 1) > 1e-9)
+  ? `<div class="enc-role" title="Your share of each kind of damage, measured on a real kill, against your overall share"><span class="enc-lbl">Your role</span>
+     ${ROLE_KINDS.map(([k, n]) => { const v = roleW[k] ?? 1; return `<span class="enc-chip ${v > 1.02 ? "more" : v < 0.98 ? "less" : ""}">${n} ×${v.toFixed(2)}</span>`; }).join("")}</div>` : "";
+// The fight in keywords (fight file: encounter_tags, "|"-separated) and its damage mix as one bar.
+const encTags = String(sim.options?.encounter_tags || "").split("|").map(t => t.trim()).filter(Boolean);
+const MIX = [["Burst", "Bursts", "burst"], ["Steady", "Rot", "steady"], ["Spot", "Spot", "spot"], ["Tank", "Tank", "tank"], ["Avoidable", "Avoidable", "avoid"]];
+function mixBar() {
+  const by = {}; let known = 0;
+  for (const d of dmgStats) { const k = PATCHWERK_KINDS[abilityKey(d)]; if (!k) continue; by[k] = (by[k] || 0) + d.eff; known += d.eff; }
+  if (!totalDmg || known < 0.5 * totalDmg) return "";
+  const parts = MIX.filter(([k]) => by[k] > 0).map(([k, label, cls]) => ({ label, cls, v: by[k] / known }));
+  const b = (by.Burst || 0) / known, r = (by.Steady || 0) / known;
+  const lean = b >= 1.5 * r ? "Burst-heavy" : r >= 1.5 * b ? "Rot-heavy" : "Mixed";
+  return `<div class="enc-mix"><div class="enc-mix-head"><span class="enc-lbl">Damage mix</span><span class="enc-lean ${lean === "Burst-heavy" ? "burst" : lean === "Rot-heavy" ? "steady" : ""}">${lean}</span></div>
+    <div class="enc-bar">${parts.map(p => `<span class="${p.cls}" style="width:${(p.v * 100).toFixed(1)}%" title="${p.label} ${fmtPct(p.v)}"></span>`).join("")}</div>
+    <div class="enc-legend">${parts.map(p => `<span><i class="${p.cls}"></i>${p.label} <b>${fmtPct(p.v)}</b></span>`).join("")}</div></div>`;
+}
+function burstStrip() {
+  const smp = tolSetups.find(x => x.role === "main" && x.sample)?.sample;
+  const ev = (smp?.events || []).filter(e => /^(raid_burst|big_raid_burst|group_burst)$/.test(e.name));
+  if (!ev.length) return "";
+  const len = Math.max(fightLen, ...ev.map(e => e.time)) || 1, W = 300, H = 34;
+  const seen = new Set();
+  const marks = ev.filter(e => { const k = e.name + Math.round(e.time); if (seen.has(k)) return false; seen.add(k); return true; }).map(e => {
+    const x = (e.time / len * W).toFixed(1), big = e.name === "big_raid_burst", grp = e.name === "group_burst";
+    return `<rect x="${x}" y="${big ? 2 : grp ? 18 : 10}" width="${big ? 3 : 2}" height="${big ? 26 : grp ? 10 : 18}" rx="1" class="${big ? "big" : grp ? "grp" : "wave"}"><title>${fmtTime(e.time)} ${big ? "big raid burst" : grp ? "group burst" : "raid burst"}</title></rect>`; }).join("");
+  const ticks = []; for (let t = 0; t <= len + 0.5; t += 60) ticks.push(`<text x="${(Math.min(t, len) / len * W).toFixed(1)}" y="${H + 10}" style="text-anchor:${t === 0 ? "start" : t + 60 > len + 0.5 ? "end" : "middle"}">${fmtTime(t)}</text>`);
+  return `<div class="enc-strip"><div class="faint" style="font-size:12px">When the raid-wide damage lands</div>
+    <svg viewBox="0 -2 ${W} ${H + 14}" preserveAspectRatio="none" role="img" aria-label="Raid bursts over the fight"><line x1="0" x2="${W}" y1="${H - 2}" y2="${H - 2}" class="axis"/>${marks}${ticks.join("")}</svg>
+    <div class="faint" style="font-size:11.5px"><span class="enc-key wave"></span>raid burst <span class="enc-key big"></span>big burst${ev.some(e => e.name === "group_burst") ? ` <span class="enc-key grp"></span>group burst` : ""}</div></div>`;
+}
+
 const matchup = el("section", { id: "summary", "aria-label": "Matchup" });
 matchup.style.marginTop = "0";
 matchup.innerHTML = `
@@ -1308,11 +1431,13 @@ matchup.innerHTML = `
     </div>
     <div class="panel side boss">
       <div class="role">Encounter</div>
-      <h1 class="name">${difficulty ? `<span class="diff">${esc(difficulty)}</span>` : ""}${esc(bossName)}</h1>
-      ${compareOnly ? `<div class="sub">${isCoiledAltar ? "Mythic, simulated in 4 phases:<br>P1 orb waves · P2 aura and ghosts<br>soak intermission · P3 both together"
-        : patterns.map(p => esc(patternLabel(p))).join("<br>")}</div>
-      ${encounterAbilities ? `<ul class="abilities compact">${encounterAbilities}</ul>
-      <div class="faint" style="font-size:12px;margin-top:6px">Every kind of damage is in every fight. Shares of the damage: one fight${multiPattern ? `, ${esc(patternLabel(patterns[0]).toLowerCase())}` : ""}${multiPattern ? "; the other patterns change only the bursts" : ""}.</div>` : ""}` : `
+      <h1 class="name">${encTitle ? esc(encTitle) : `${difficulty ? `<span class="diff">${esc(difficulty)}</span>` : ""}${esc(bossName)}`}</h1>
+      ${encTags.length ? `<div class="enc-tags">${encTags.map(t => `<span class="enc-tag">${esc(t)}</span>`).join("")}</div>` : ""}
+      ${mixBar()}${burstStrip()}${roleLine}
+      ${compareOnly ? `${multiPattern ? `<div class="sub">${patterns.map(p => esc(patternLabel(p))).join("<br>")}</div>` : ""}
+      <details class="enc-more"><summary>Details</summary>
+        ${encDesc ? `<p class="enc-desc">${esc(encDesc)}</p>` : isCoiledAltar ? `<p class="enc-desc">Mythic, simulated in 4 phases: P1 orb waves, P2 aura and ghosts, a soak intermission, P3 both together.</p>` : ""}
+        ${encounterAbilities ? `<ul class="abilities compact">${encounterAbilities}</ul>` : ""}</details>` : `
       <div class="sub">${dmgStats.length} damaging abilities, ${fmtNum(totalDmg)} damage per fight${raidMembers.length ? " to the raid" : ""}</div>
       ${bossAbilities ? `<ul class="abilities">${bossAbilities}</ul>` : ""}`}
     </div>
@@ -2405,70 +2530,247 @@ function decisionWhy(e) {
   return `${who ? who[0].toUpperCase() + who.slice(1) : "Cast"}${cond ? ", because " + cond : ", whenever nothing above it applies"}.`;
 }
 const DEC_COOLDOWNS = /^(convoke_the_spirits|tranquility|innervate|natures_swiftness|barkskin|ironbark|incarnation|use_item_|heart_of_the_wild|wild_growth)/;
+// Spell icons (Wowhead icon names; the sim's data has none): the casts of both healers' profiles. Unknown spells get a
+// lettered tile.
+const SPELL_ICONS = {
+  // buffs the priority lists check
+  207640: "ability_druid_empoweredrejuvination", 16870: "spell_shadow_manaburn", 5420: "ability_druid_treeoflife", 114108: "ability_druid_manatree",
+  369299: "ability_evoker_essenceburst", 1242747: "ability_evoker_infernosblessing", 370901: "ability_evoker_pupilofalexstraza", 1256579: "inv12_apextalent_evoker_merithrasblessing",
+  102342: "spell_druid_ironbark", 1256581: "ability_evoker_spiritbloom", 1261867: "inv12_ability_druid_flourish_empowered",
+  132158: "spell_nature_ravenform", 18562: "inv_relics_idolofrejuvenation", 197626: "spell_arcane_arcane03",
+  22568: "ability_druid_ferociousbite", 22812: "spell_nature_stoneclawtotem", 29166: "spell_nature_lightning",
+  33763: "inv_misc_herb_felblossom", 355913: "ability_evoker_emeraldblossom", 355936: "ability_evoker_dreambreath",
+  382614: "ability_evoker_dreambreath", 357208: "ability_evoker_firebreath", 360995: "ability_evoker_rescue",
+  361195: "ability_evoker_rescue", 361469: "ability_evoker_livingflame", 363534: "ability_evoker_rewind",
+  363916: "inv_artifact_dragonscales", 364343: "ability_evoker_echo", 370537: "ability_evoker_stasis",
+  370564: "ability_evoker_stasis", 370553: "ability_evoker_tipthescales", 373861: "ability_evoker_temporalanomaly",
+  374227: "ability_evoker_hoverblack", 391528: "inv_ability_druid_convokethespirits", 48438: "ability_druid_flourish",
+  5176: "spell_nature_wrathv2", 740: "spell_nature_tranquility", 768: "ability_druid_catform", 774: "spell_nature_rejuvenation",
+  8936: "spell_nature_resistnature", 33891: "ability_druid_improvedtreeform", 145205: "inv_misc_herb_talandrasrose",
+  366155: "ability_evoker_reversion", 367364: "ability_evoker_reversion2", 382731: "ability_evoker_spiritbloom2",
+  1263644: "inv12_jewelrytrinkets_dungeon_seedofradianthope", 8921: "spell_nature_starfall", 88423: "ability_shaman_cleansespirit",
+};
+// Trinkets used by name (the cast carries the effect's spell, not the item).
+const ITEM_ICONS = { hex_lords_dooming_idol: "inv_archaeology_orcclans_crackedidol", gebbos_bottomless_bag: "inv_10_tailoring_bag1_color2",
+  soulcoiler_ritual_vessel: "inv_121_trinket_raid_ulatek_ritualvessel", wavecallers_seastone: "inv_tradeskillitem_sorcererswater" };
+const iconName = (id, name) => SPELL_ICONS[id] || ITEM_ICONS[String(name || "").replace(/^use_item_/, "")] || "";
+const iconUrl = (id, name) => iconName(id, name) ? `https://wow.zamimg.com/images/wow/icons/medium/${iconName(id, name)}.jpg` : "";
 // Boss events worth showing next to the casts (rot and tank damage left out), in words.
-const DEC_EVENTS = { raid_burst: "Raid wave", big_raid_burst: "Big raid wave", spot_dot: "Spot damage (3 players)", group_burst: "Group burst",
+const DEC_EVENTS = { raid_burst: "Raid burst", big_raid_burst: "Big raid burst", spot_dot: "Damage on 3 players", group_burst: "Group burst",
   avoidable_hit: "Avoidable hit", dispellable_dot: "Dispellable debuff" };
+// Lane order: cooldowns first, then the core spells, then fillers and damage.
+const LANE_ORDER = ["convoke_the_spirits", "tranquility", "natures_swiftness", "innervate", "incarnation", "barkskin", "ironbark", "use_item",
+  "stasis", "stasis_release", "temporal_anomaly", "rewind", "zephyr", "tip_the_scales", "dream_breath", "fire_breath",
+  "wild_growth", "swiftmend", "lifebloom", "efflorescence", "merithras_blessing", "echo", "emerald_blossom", "verdant_embrace", "reversion",
+  "regrowth", "rejuvenation", "germination", "living_flame", "natures_cure", "naturalize", "starsurge", "moonfire", "wrath",
+  "cat_form", "heart_of_the_wild", "ferocious_bite"];
+const laneRank = n => { const i = LANE_ORDER.findIndex(p => n === p || n.startsWith(p)); return i < 0 ? 99 : i; };
+
 function renderDecisions() {
   // The fight played at your limit (the gear check keeps one), else the detailed fight.
   const main = tolSetups.find(s => s.role === "main" && s.sample);
   const sample = main?.sample;
-  const casts = sample ? sample.casts.map(c => ({ ...c, spell_name: c.spell, mana: c.mana }))
-    : (cd.action_sequence || []).filter(e => e.name && e.apl).map(e => ({ ...e, mana: e.resources?.mana != null && maxMana ? e.resources.mana / maxMana : null }));
+  const casts = (sample ? sample.casts.map(c => ({ ...c, spell_name: c.spell }))
+    : (cd.action_sequence || []).filter(e => e.name && e.apl).map(e => ({ ...e, mana: e.resources?.mana != null && maxMana ? e.resources.mana / maxMana : null })))
+    .filter(c => c.time >= 0).sort((a, b) => a.time - b.time);
   if (!casts.length) return;
-  // Events: one row per event kind and moment (spot damage hits 3 players at once: one row).
+  casts.forEach((c, i) => c.i = i);
+  const L = Math.max(fightLen, casts[casts.length - 1].time + 1);
+  // Boss events, one per moment (spot damage hits 3 players at once).
   const events = [];
   for (const e of sample?.events || []) {
     if (!DEC_EVENTS[e.name]) continue;
     const last = events[events.length - 1];
     if (last && last.name === e.name && Math.abs(last.time - e.time) < 0.05) { if (e.target) last.targets.push(e.target); continue; }
-    events.push({ time: e.time, name: e.name, targets: e.target ? [e.target] : [], ev: true });
+    events.push({ time: e.time, name: e.name, targets: e.target ? [e.target] : [] });
   }
-  const rows = [...casts, ...events].sort((a, b) => a.time - b.time || (b.ev ? 1 : 0) - (a.ev ? 1 : 0));
-  const spells = [...new Set(casts.map(e => e.name))].sort();
-  const bar = (v, cls) => `<span class="dec-bar ${cls}" style="--v:${Math.max(0, Math.min(100, v))}%"></span>`;
-  const castRow = e => {
-    const hp = e.target_health, cls = DEC_COOLDOWNS.test(e.name) ? " cd" : "";
-    return `<details class="dec${cls}" data-spell="${esc(e.name)}"><summary>
-      <span class="dec-t">${fmtTime(e.time)}</span>
-      <span class="dec-s">${e.id ? `<a class="wh-item" href="https://www.wowhead.com/spell=${e.id}" data-wh-icon-size="small" data-wowhead="spell=${e.id}">${esc(e.spell_name || prettyAction(e.name))}</a>` : esc(prettyAction(e.name))}</span>
-      <span class="dec-w">${e.ally ? `${esc(e.ally.replace(/_/g, " "))} ${bar(hp ?? 100, "hp")} <b>${Math.round(hp ?? 0)}%</b>` : `<span class="faint">no target</span>`}</span>
-      <span class="dec-r">${e.raid_health != null ? `<span title="Raid health"><small class="faint">raid</small> ${bar(e.raid_health, "hp")} ${Math.round(e.raid_health)}%</span>` : ""}${e.mana != null ? `<span title="Mana"><small class="faint">mana</small> ${bar(e.mana * 100, "mana")} ${Math.round(e.mana * 100)}%</span>` : ""}</span>
-      <span class="dec-y">${esc(decisionWhy(e))}</span></summary>
-      <div class="dec-raw"><span class="faint">Priority line:</span> <code>${esc(e.apl)}</code></div></details>`;
-  };
-  const evRow = e => `<div class="dec-ev ${e.name}"><span class="dec-t">${fmtTime(e.time)}</span><span class="dec-evname">${esc(DEC_EVENTS[e.name])}</span>
-      <span class="dec-evwho faint">${e.targets.length && e.name !== "raid_burst" && e.name !== "big_raid_burst" ? esc(e.targets.map(t => t.replace(/_/g, " ")).join(", ")) : "everyone"}</span></div>`;
+  const bursts = events.filter(e => /raid_burst|group_burst/.test(e.name));
+  // Lanes: one per spell, cooldowns first.
+  const laneNames = [...new Set(casts.map(c => c.name))].sort((a, b) => laneRank(a) - laneRank(b) || a.localeCompare(b));
+  const laneOf = Object.fromEntries(laneNames.map((n, i) => [n, i]));
+  const laneInfo = laneNames.map(n => { const c = casts.find(x => x.name === n); return { name: n, id: c.id, label: c.spell_name || prettyAction(n), count: casts.filter(x => x.name === n).length, cd: DEC_COOLDOWNS.test(n) }; });
+  // Two actions of one spell (Stasis: store and release) get their action names.
+  laneInfo.forEach(l => { if (laneInfo.filter(o => o.label === l.label).length > 1) l.label = prettyAction(l.name); });
+
   const sec = el("section", { id: "decisions" });
   sec.innerHTML = `
     <div class="section-head"><h2>Decisions</h2>
-      <p>One simulated fight${sample ? ` at your limit (${fmtPct(sample.level, 1)} of one healer's share of the damage)` : ""}, cast by cast: what the sim cast,
-        on whom (and their health at that moment), the raid's health and your mana, and why: the first line of your priority list whose conditions
-        were true, in plain words. The boss's raid waves, spot damage and group bursts are shown in between (its steady damage and tank hits are
-        left out). Tap a cast for its priority line.</p></div>
-    <div class="dec-filter" role="group" aria-label="Show">
-      <button type="button" data-f="all" aria-pressed="true">All casts</button>
-      <button type="button" data-f="cd" aria-pressed="false">Cooldowns</button>
-      <select aria-label="One spell"><option value="">One spell…</option>${spells.map(s => `<option value="${esc(s)}">${esc(prettyAction(s))}</option>`).join("")}</select>
-      <label class="dec-evtoggle"><input type="checkbox" checked> Boss damage</label>
-      <span class="faint dec-count"></span></div>
-    <div class="panel dec-list">${rows.map(r => r.ev ? evRow(r) : castRow(r)).join("")}</div>`;
+      <p>One simulated fight${sample ? ` at your limit (${fmtPct(sample.level, 1)} of one healer's share)` : ""}, like a Warcraft Logs timeline: one row per spell,
+        the boss's raid-wide damage as red bands, the raid's health and your mana on top. <b>Click a spell</b> to see why the sim cast it, on whom and how the raid was doing.
+        Drag the overview or use the arrows to move; ← / → step through the casts.</p></div>
+    <div class="tl">
+      <div class="tl-bar">
+        <div class="tl-zoom" role="group" aria-label="Zoom">${[15, 30, 60, 0].map(z => `<button type="button" data-z="${z}">${z ? z + " s" : "Whole fight"}</button>`).join("")}</div>
+        <div class="tl-nav"><button type="button" data-pan="-1" title="Earlier">◀</button><span class="tl-range"></span><button type="button" data-pan="1" title="Later">▶</button></div>
+        <label class="tl-cd"><input type="checkbox"> Cooldowns only</label>
+      </div>
+      <div class="tl-over" title="Drag to move through the fight"><svg></svg></div>
+      <div class="tl-body" tabindex="0" aria-label="Casts timeline">
+        <div class="tl-labels"></div>
+        <div class="tl-canvas"><div class="tl-track"></div></div>
+      </div>
+      <div class="tl-detail panel"><span class="faint">Click a spell on the timeline to see the decision.</span></div>
+    </div>`;
   app.appendChild(sec);
-  const list = $(".dec-list", sec), count = $(".dec-count", sec), sel = $("select", sec), evBox = $(".dec-evtoggle input", sec), btns = [...sec.querySelectorAll(".dec-filter button")];
-  let f = "all", spell = "";
-  const apply = () => {
-    let n = 0;
-    list.querySelectorAll(".dec").forEach(d => { const on = spell ? d.dataset.spell === spell : f === "cd" ? d.classList.contains("cd") : true; d.hidden = !on; if (on) n++; });
-    list.querySelectorAll(".dec-ev").forEach(d => { d.hidden = !evBox.checked; });
-    count.textContent = `${n} cast${n === 1 ? "" : "s"}`;
-  };
-  btns.forEach(b => b.addEventListener("click", () => { btns.forEach(x => x.setAttribute("aria-pressed", String(x === b))); sel.value = ""; f = b.dataset.f; spell = ""; apply(); }));
-  sel.addEventListener("change", () => { btns.forEach(x => x.setAttribute("aria-pressed", "false")); f = "all"; spell = sel.value; apply(); });
-  evBox.addEventListener("change", apply);
-  apply();
-  applyWhTips();
+
+  const over = $(".tl-over svg", sec), labels = $(".tl-labels", sec), canvas = $(".tl-canvas", sec), track = $(".tl-track", sec);
+  const detail = $(".tl-detail", sec), range = $(".tl-range", sec), cdBox = $(".tl-cd input", sec), body = $(".tl-body", sec);
+  const ROW = 30, TOP = 64;  // lane height, top band (raid health + mana)
+  let start = 0, span = Math.min(30, L), sel = null;
+  // Top band: raid health (y 4-38, scaled from a bit under the fight's lowest to 100%) and mana (y 44-60, 0-100%).
+  const lowest = Math.min(100, ...casts.map(c => c.raid_health ?? 100));
+  const bandLo = Math.max(0, Math.floor((lowest - 3) / 5) * 5);
+  const hpY = v => (38 - (Math.max(bandLo, v) - bandLo) / (100 - bandLo) * 34).toFixed(1);
+  const mpY = v => (60 - Math.max(0, Math.min(1, v)) * 16).toFixed(1);
+  const visibleLanes = () => laneInfo.filter(l => !cdBox.checked || l.cd);
+  // Buffs and resources the priority list checks (buff.<name>. / a resource's name in any cast's line): the ones that steer the rotation.
+  const aplText = casts.map(c => c.apl || "").join(" ");
+  const aplBuffs = new Set([...aplText.matchAll(/buff\.([a-z0-9_]+)\./g)].map(m => m[1]));
+  const buffInfo = {};
+  for (const c of casts) for (const b of c.buffs || []) if (!buffInfo[b.name]) buffInfo[b.name] = { name: b.name, id: b.id, label: prettyAction(b.name), rel: aplBuffs.has(b.name) };
+  const relBuffs = Object.values(buffInfo).filter(b => b.rel);
+  // Each buff's bars: up from a cast to the next cast that still sees it; else until it ran out (its time left), at most that next cast.
+  for (const b of relBuffs) {
+    b.bars = [];
+    casts.forEach((c, i) => {
+      const st = (c.buffs || []).find(x => x.name === b.name); if (!st) return;
+      const nextT = casts[i + 1]?.time ?? L, stillUp = (casts[i + 1]?.buffs || []).some(x => x.name === b.name);
+      const end = stillUp ? nextT : Math.min(nextT, st.remains != null ? c.time + st.remains : nextT);
+      const last = b.bars[b.bars.length - 1];
+      if (last && Math.abs(last.end - c.time) < 0.01 && last.stacks === (st.stacks || 1)) last.end = end;
+      else b.bars.push({ start: c.time, end, stacks: st.stacks || 1 });
+    });
+  }
+  const resNames = [...new Set(casts.flatMap(c => Object.keys(c.resources || {})))].filter(r => new RegExp(`\\b${r}\\b`).test(aplText));
+  const resMax = Object.fromEntries(resNames.map(r => [r, Math.max(1, ...casts.map(c => c.resources?.[r] ?? 0))]));
+  const ROWB = 20;
+
+  function drawOverview() {
+    const W = over.parentNode.clientWidth || 800, H = 46;
+    over.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    const x = t => t / L * W;
+    const pts = casts.filter(c => c.raid_health != null).map(c => `${x(c.time).toFixed(1)},${(H - 6 - (c.raid_health / 100) * (H - 12)).toFixed(1)}`);
+    over.innerHTML = bursts.map(b => `<rect x="${x(b.time).toFixed(1)}" y="0" width="${Math.max(2, x(b.name === "big_raid_burst" ? 6 : 4)).toFixed(1)}" height="${H}" class="ob ${b.name === "big_raid_burst" ? "big" : ""}"/>`).join("")
+      + `<polyline points="${pts.join(" ")}" class="oh"/>`
+      + casts.filter(c => DEC_COOLDOWNS.test(c.name)).map(c => `<circle cx="${x(c.time).toFixed(1)}" cy="${H - 3}" r="2" class="oc"/>`).join("")
+      + `<rect x="${x(start).toFixed(1)}" y="1" width="${Math.max(6, x(span)).toFixed(1)}" height="${H - 2}" rx="4" class="ow"/>`;
+  }
+
+  function draw() {
+    start = Math.max(0, Math.min(start, L - span));
+    const W = canvas.clientWidth || 700, lanes = visibleLanes();
+    const x = t => (t - start) / span * W, inView = t => t >= start - 1 && t <= start + span + 1;
+    const small = span > 90;
+    range.textContent = `${fmtTime(start)} – ${fmtTime(start + span)}`;
+    sec.querySelectorAll(".tl-zoom button").forEach(b => b.setAttribute("aria-pressed", String(+b.dataset.z === (span >= L ? 0 : span))));
+    const subTop = TOP + lanes.length * ROW;
+    const H = subTop + (resNames.length || relBuffs.length ? ROWB : 0) + resNames.length * ROWB * 1.5 + relBuffs.length * ROWB + 16;  // + the time labels
+    track.style.height = H + "px"; labels.style.paddingTop = "0";
+    labels.innerHTML = `<div class="tl-band-lbl" style="height:${TOP}px"><div class="hp"><i></i>Raid health <small>${bandLo}–100%</small></div><div class="mp"><i></i>Mana <small>0–100%</small></div></div>` + lanes.map(l => `<div class="tl-lane-lbl${l.cd ? " cd" : ""}" style="height:${ROW}px">${iconUrl(l.id, l.name) ? `<img src="${iconUrl(l.id, l.name)}" alt="">` : `<span class="tl-tile">${esc(l.label.slice(0, 2))}</span>`}<span>${esc(l.label)}</span><small>${l.count}</small></div>`).join("")
+      + (resNames.length || relBuffs.length ? `<div class="tl-sub-lbl" style="height:${ROWB}px">Buffs &amp; resources</div>` : "")
+      + resNames.map(r => `<div class="tl-lane-lbl res" style="height:${ROWB * 1.5}px"><span>${esc(prettyAction(r))}</span><small>0–${resMax[r]}</small></div>`).join("")
+      + relBuffs.map(b => `<div class="tl-lane-lbl buff" style="height:${ROWB}px">${iconUrl(b.id, b.name) ? `<img src="${iconUrl(b.id, b.name)}" alt="">` : `<span class="tl-tile"></span>`}<span>${esc(b.label)}</span></div>`).join("");
+    // Time grid, burst bands, raid health and mana on top, then the casts.
+    const step = span <= 30 ? 5 : span <= 90 ? 10 : 30;
+    let html = "";
+    for (let t = Math.ceil(start / step) * step; t <= start + span; t += step) html += `<div class="tl-grid" style="left:${x(t)}px"><span>${fmtTime(t)}</span></div>`;
+    for (const b of bursts) if (inView(b.time)) {
+      const w = Math.max(3, (b.name === "big_raid_burst" ? 6 : b.name === "group_burst" ? 1 : 10) / span * W);
+      html += `<div class="tl-burst ${b.name === "big_raid_burst" ? "big" : b.name === "group_burst" ? "grp" : ""}" style="left:${x(b.time)}px;width:${w}px" title="${fmtTime(b.time)} ${esc(DEC_EVENTS[b.name])}"></div>`;
+    }
+    const vis = casts.filter(c => inView(c.time));
+    const hp = vis.filter(c => c.raid_health != null).map(c => `${x(c.time).toFixed(1)},${hpY(c.raid_health)}`);
+    const mp = vis.filter(c => c.mana != null).map(c => `${x(c.time).toFixed(1)},${mpY(c.mana)}`);
+    const area = (p, base) => p.length ? `${p[0].split(",")[0]},${base} ${p.join(" ")} ${p[p.length - 1].split(",")[0]},${base}` : "";
+    html += `<svg class="tl-top" width="${W}" height="${TOP}"><line x1="0" x2="${W}" y1="${hpY(100)}" y2="${hpY(100)}" class="ref"/>
+      <polygon points="${area(hp, 38)}" class="hpa"/><polyline points="${hp.join(" ")}" class="hp"/>
+      <rect x="0" y="44" width="${W}" height="16" class="mpb"/><polygon points="${area(mp, 60)}" class="mpa"/><polyline points="${mp.join(" ")}" class="mp"/></svg>`;
+    const laneIdx = Object.fromEntries(lanes.map((l, i) => [l.name, i]));
+    for (const c of vis) {
+      const li = laneIdx[c.name]; if (li == null) continue;
+      const y = TOP + li * ROW + (ROW - (small ? 8 : 24)) / 2, ic = iconUrl(c.id, c.name), lab = laneInfo.find(l => l.name === c.name)?.label || c.name;
+      html += small
+        ? `<button type="button" class="tl-dot${sel === c.i ? " sel" : ""}" data-i="${c.i}" style="left:${x(c.time) - 4}px;top:${y}px" title="${fmtTime(c.time)} ${esc(c.spell_name || prettyAction(c.name))}"></button>`
+        : `<button type="button" class="tl-ico${sel === c.i ? " sel" : ""}" data-i="${c.i}" style="left:${x(c.time) - 12}px;top:${y}px" title="${fmtTime(c.time)} ${esc(c.spell_name || prettyAction(c.name))}${c.ally ? " → " + esc(c.ally.replace(/_/g, " ")) : ""}">${ic ? `<img src="${ic}" alt="">` : `<span class="tl-tile">${esc(lab.slice(0, 2))}</span>`}</button>`;
+    }
+    let yb = subTop + (resNames.length || relBuffs.length ? ROWB : 0);
+    for (const r of resNames) {
+      const h = ROWB * 1.5 - 4, pts = [];
+      for (const c of vis) if (c.resources?.[r] != null) { const yy = (yb + 2 + h - c.resources[r] / resMax[r] * h).toFixed(1); if (pts.length) pts.push(`${x(c.time).toFixed(1)},${pts[pts.length - 1].split(",")[1]}`); pts.push(`${x(c.time).toFixed(1)},${yy}`); }
+      html += `<svg class="tl-res" style="top:0" width="${W}" height="${H}"><polyline points="${pts.join(" ")}"/></svg>`;
+      yb += ROWB * 1.5;
+    }
+    for (const b of relBuffs) {
+      for (const bar of b.bars) if (bar.end >= start && bar.start <= start + span) {
+        const l = Math.max(0, x(bar.start)), w = Math.max(2, Math.min(W, x(bar.end)) - l);
+        html += `<div class="tl-buff" style="left:${l}px;width:${w}px;top:${yb + 4}px;height:${ROWB - 8}px" title="${esc(b.label)}${bar.stacks > 1 ? " ×" + bar.stacks : ""} ${fmtTime(bar.start)}–${fmtTime(bar.end)}">${bar.stacks > 1 && w > 18 ? `<span>${bar.stacks}</span>` : ""}</div>`;
+      }
+      yb += ROWB;
+    }
+    if (sel != null && inView(casts[sel].time)) html += `<div class="tl-sel-line" style="left:${x(casts[sel].time)}px"></div>`;
+    track.innerHTML = html;
+    drawOverview();
+  }
+
+  const bar = (v, cls) => `<span class="dec-bar ${cls}" style="--v:${Math.max(0, Math.min(100, v))}%"></span>`;
+  function showDetail(i) {
+    const c = casts[i]; sel = i;
+    if (c.time < start || c.time > start + span) start = c.time - span / 2;
+    const near = events.filter(e => Math.abs(e.time - c.time) <= 6).map(e => `${esc(DEC_EVENTS[e.name])} ${e.time >= c.time ? "in " : ""}${Math.abs(e.time - c.time).toFixed(1)} s${e.time < c.time ? " ago" : ""}`);
+    const same = casts.filter(x => x.name === c.name), k = same.indexOf(c);
+    detail.innerHTML = `
+      <div class="tl-d-head">${iconUrl(c.id, c.name) ? `<img src="${iconUrl(c.id, c.name)}" alt="">` : ""}<div><b>${esc(c.spell_name || prettyAction(c.name))}</b>
+        <div class="faint">${fmtTime(c.time)} · cast ${k + 1} of ${same.length}</div></div>
+        <div class="tl-d-nav"><button type="button" data-go="${same[k - 1]?.i ?? ""}" ${k ? "" : "disabled"}>◀ previous</button><button type="button" data-go="${same[k + 1]?.i ?? ""}" ${k < same.length - 1 ? "" : "disabled"}>next ▶</button></div></div>
+      <div class="tl-d-grid">
+        <div><span class="faint">Target</span><b>${c.ally ? esc(c.ally.replace(/_/g, " ")) : "none"}</b>${c.target_health != null && c.ally ? `<span>${bar(c.target_health, "hp")} ${Math.round(c.target_health)}%</span>` : ""}</div>
+        <div><span class="faint">Raid health</span><b>${c.raid_health != null ? Math.round(c.raid_health) + "%" : "–"}</b>${c.raid_health != null ? bar(c.raid_health, "hp") : ""}</div>
+        <div><span class="faint">Mana</span><b>${c.mana != null ? Math.round(c.mana * 100) + "%" : "–"}</b>${c.mana != null ? bar(c.mana * 100, "mana") : ""}</div>
+        <div><span class="faint">Boss damage</span><b>${near.length ? near.join("<br>") : "nothing within 6 s"}</b></div>
+      </div>
+      ${resNames.length ? `<div class="tl-d-res">${resNames.map(r => c.resources?.[r] == null ? "" : `<span class="faint">${esc(prettyAction(r))}</span> <span class="pips">${Number.isInteger(resMax[r]) && resMax[r] <= 10 ? Array.from({ length: resMax[r] }, (_, k) => `<i class="${k < Math.floor(c.resources[r]) ? "on" : ""}"></i>`).join("") : ""}</span> <b>${+c.resources[r].toFixed(1)}</b>`).join(" &nbsp; ")}</div>` : ""}
+      ${(() => {
+        const up = (c.buffs || []).map(b => ({ ...b, info: buffInfo[b.name] }));
+        const chip = b => `<span class="bchip${b.info?.rel ? " rel" : ""}" title="${esc(b.info?.label || b.name)}">${iconUrl(b.id, b.name) ? `<img src="${iconUrl(b.id, b.name)}" alt="">` : ""}${esc(b.info?.label || prettyAction(b.name))}${b.stacks > 1 ? ` <b>×${b.stacks}</b>` : ""}${b.remains != null ? ` <small>${b.remains.toFixed(1)} s</small>` : ""}</span>`;
+        const rel = up.filter(b => b.info?.rel), other = up.filter(b => !b.info?.rel);
+        return `<div class="tl-d-buffs"><span class="faint">Buffs your priority list checks</span><div>${rel.length ? rel.map(chip).join("") : `<span class="faint">none up</span>`}</div>
+          ${other.length ? `<details><summary>${other.length} other buffs up</summary><div>${other.map(chip).join("")}</div></details>` : ""}</div>`;
+      })()}
+      <p class="tl-why"><b>Why:</b> ${esc(decisionWhy(c))}</p>
+      <details><summary>Priority line</summary><code>${esc(c.apl || "")}</code></details>`;
+    draw();
+  }
+
+  // Interaction: zoom presets, arrows, drag on the overview, a wheel nudges the view (a few seconds), keys step casts.
+  sec.querySelectorAll(".tl-zoom button").forEach(b => b.addEventListener("click", () => {
+    const mid = start + span / 2; span = +b.dataset.z ? Math.min(+b.dataset.z, L) : L; start = mid - span / 2; draw();
+  }));
+  sec.querySelectorAll("[data-pan]").forEach(b => b.addEventListener("click", () => { start += +b.dataset.pan * span * 0.5; draw(); }));
+  cdBox.addEventListener("change", draw);
+  const overBox = over.parentNode;
+  const fromOver = ev => { const r = overBox.getBoundingClientRect(); start = (ev.clientX - r.left) / r.width * L - span / 2; draw(); };
+  let dragging = false;
+  overBox.addEventListener("pointerdown", ev => { dragging = true; overBox.setPointerCapture(ev.pointerId); fromOver(ev); });
+  overBox.addEventListener("pointermove", ev => { if (dragging) fromOver(ev); });
+  overBox.addEventListener("pointerup", () => { dragging = false; });
+  canvas.addEventListener("wheel", ev => { ev.preventDefault(); start += Math.sign(ev.deltaY || ev.deltaX) * Math.max(2, span * 0.1); draw(); }, { passive: false });
+  track.addEventListener("click", ev => { const b = ev.target.closest("[data-i]"); if (b) showDetail(+b.dataset.i); });
+  detail.addEventListener("click", ev => { const b = ev.target.closest("[data-go]"); if (b && b.dataset.go !== "") showDetail(+b.dataset.go); });
+  body.addEventListener("keydown", ev => {
+    if (ev.key !== "ArrowLeft" && ev.key !== "ArrowRight") return;
+    ev.preventDefault();
+    const pool = casts.filter(c => !cdBox.checked || DEC_COOLDOWNS.test(c.name));
+    if (!pool.length) return;
+    const cur = sel == null ? -1 : pool.findIndex(c => c.i === sel);
+    const next = ev.key === "ArrowRight" ? Math.min(pool.length - 1, cur + 1) : Math.max(0, cur < 0 ? 0 : cur - 1);
+    showDetail(pool[next].i);
+  });
+  window.addEventListener("resize", draw);
+  draw();
   const nav = $("#nav");
   if (nav && !nav.querySelector('a[href="#decisions"]')) nav.appendChild(el("a", { href: "#decisions" }, "Decisions"));
 }
+
 // ----- the gear check (tolerance_search=0): upgrade, downgrade or no real difference, per damage pattern. Nothing else
 // follows it.
 if (compareOnly) {

@@ -21,6 +21,9 @@ raid_tank_physical_reduction=0.57
 
 # Fury of the Dead (Venomous Abyss zone buff): +8% damage and healing in the week of 2026-11-08, +1% per week up to 15%.
 encounter_healing_done=0.08
-encounter=Vashnik
+encounter=Vashnik
+encounter_title="Vashnik (Mythic)"
+encounter_description="The Mythic Vashnik kill as scripted, 5:45."
+encounter_tags="5:45|Scales with you|Mythic kill as scripted"
 difficulty=mythic
 enemy_health=1000000000

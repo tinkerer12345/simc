@@ -56,6 +56,9 @@ struct sample_cast_t
   double time = 0, target_health = -1, raid_health = -1, mana = -1;
   unsigned id = 0;
   std::string name, spell, ally, apl;
+  struct buff_state_t { unsigned id; std::string name; int stacks; double remains; };
+  std::vector<buff_state_t> buffs;  // the healer's buffs up when the cast was chosen (stacks, seconds left; < 0 = no end)
+  std::vector<std::pair<std::string, double>> resources;  // other resources (Essence, combo points...): name -> amount
 };
 struct sample_event_t
 {

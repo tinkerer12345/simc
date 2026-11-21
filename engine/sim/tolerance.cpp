@@ -6,6 +6,7 @@
 #include "tolerance.hpp"
 
 #include "action/action.hpp"
+#include "buff/buff.hpp"
 #include "item/item.hpp"
 #include "player/player.hpp"
 #include "sim/sim.hpp"
@@ -336,6 +337,12 @@ probe_t tolerance_t::probe( const sim_control_t& base, const std::string& test, 
         c.ally = e.target->name();
       if ( e.resource_max_snapshot[ RESOURCE_MANA ] > 0 )
         c.mana = e.resource_snapshot[ RESOURCE_MANA ] / e.resource_max_snapshot[ RESOURCE_MANA ];
+      for ( const auto& b : e.buff_list )
+        c.buffs.push_back( { b.object->data_reporting().id(), b.object->name_str, b.value,
+                             b.time_value == timespan_t::max() || b.time_value < timespan_t::zero() ? -1.0 : b.time_value.total_seconds() } );
+      for ( size_t r = 0; r < RESOURCE_MAX; r++ )
+        if ( r != RESOURCE_MANA && r != RESOURCE_HEALTH && e.resource_max_snapshot[ r ] > 0 && e.resource_snapshot[ r ] >= 0 )
+          c.resources.emplace_back( util::resource_type_string( static_cast<resource_e>( r ) ), e.resource_snapshot[ r ] );
       setup->sample_casts.push_back( std::move( c ) );
     }
     for ( const auto* t : child->target_list )

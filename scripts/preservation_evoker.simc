@@ -22,26 +22,26 @@ encounter_damage_tank=0.759
 encounter_damage_steady=1.016
 encounter_damage_burst=1.081
 encounter_damage_spot=1.106
-# Duskryth's own talents and gear (SimC addon export, 2026-10-30, raid loadout)
-talents=CwbBPJc41CfcseY0baneJ1IHrBAAAAAYmZwMjZYGzmhZmZbYAAgZMj5BMGzIMDAAAwMzMZGzMPwsMzMAYGzALgFwMMhsZYzwAYmZMA
+# Duskryth's own talents (the saved "raid" loadout) and gear (SimC addon export, 2026-11-21)
+talents=CwbBPJc41CfcseY0baneJ1IHrBAAAAAYmZwMjZYGzmhZmZbYAAgZMj5BMGzAmBAAAYmZGmxMzDMLzMDAmxMwCYBMDDwmhNDDgZmxA
 set_bonus=midnight_season_2_2pc=1/midnight_season_2_4pc=1
 omnium_talents=136814:1/136815:1/136817:1/136819:1/136822:1
 
-head=,id=271501,enchant_id=7961,bonus_id=13334/6652/13696/13692/13698/12846,redirected_base_stats=268230
-neck=,id=268265,gem_id=240983/240908,bonus_id=40/13668/13334/13987/12854
-shoulder=,id=268231,enchant_id=8031,bonus_id=6652/13662/13334/12846
-back=,id=268253,bonus_id=6652/13662/13334/12852
+head=,id=271501,enchant_id=7961,bonus_id=13334/6652/12854/13696/13692/13698/1587,redirected_base_stats=268230
+neck=,id=268265,gem_id=240983/240908,bonus_id=40/13668/13334/13987/12856
+shoulder=,id=271499,enchant_id=8031,bonus_id=6652/13335/13848/13694/13697/1597,redirected_base_stats=268231
+back=,id=268253,bonus_id=6652/13662/13335/13848
 chest=,id=271504,enchant_id=7987,bonus_id=13334/6652/13846/12854/13690/13698/1587,redirected_base_stats=271876
 wrist=,id=244584,bonus_id=12214/13667/12497/13751/14001/8960/12384/8791/13836/13696,content_tuning=3615,crafted_stats=49/36,crafting_quality=5
 hands=,id=271502,bonus_id=6652/13335/13691/13697/12854,redirected_base_stats=268238
-waist=,id=268216,bonus_id=6652/13696/13662/13334/12854
+waist=,id=271498,bonus_id=13334/6652/12854/13696/1587,redirected_base_stats=268216
 legs=,id=271500,enchant_id=7937,bonus_id=13334/6652/13693/13698/13696/12854,redirected_base_stats=268237
 feet=,id=244577,enchant_id=7993,bonus_id=12214/13667/12497/13751/14001/8960/12384/8791/13836,content_tuning=3615,crafted_stats=40/32,crafting_quality=5
-finger1=,id=268249,enchant_id=7997,gem_id=240908,bonus_id=6652/13668/13334/12846
-finger2=,id=251136,enchant_id=7997,gem_id=240908,bonus_id=13440/6652/13668/12699/12846,content_tuning=1279
-trinket1=,id=270164,bonus_id=6652/13335/12854,content_tuning=7359
-trinket2=,id=270167,bonus_id=6652/13335/12854
-main_hand=,id=251123,enchant_id=8041,bonus_id=13440/6652/12701/12854
+finger1=,id=240949,enchant_id=7967,gem_id=240908,bonus_id=12214/13667/12497/13751/14001/8791/13836,content_tuning=3615,crafted_stats=49/36,crafting_quality=5
+finger2=,id=268252,enchant_id=7967,gem_id=240908,bonus_id=6652/13668/13334/12854
+trinket1=,id=270164,bonus_id=6652/13335/12856,content_tuning=7359
+trinket2=,id=270162,bonus_id=41/13334/12856
+main_hand=,id=251123,enchant_id=8689,bonus_id=13440/6652/12701/12856
 
 # Rotation: the Icy Veins and spiritbloom.pro raid guides (Midnight Season 2, Flameshaper), the pacing of a top parse on
 # Mythic Vashnik (Hidaii) and feedback from an Evoker developer (Harrek). Resource rules: Essence Burst always into
@@ -61,6 +61,7 @@ actions+=/stasis_release,if=buff.stasis_ready.up&(raid_health.pct<70|buff.stasis
 # The healer under test dispels its own Exploding Infection of each wave once it has stacked up a little
 actions+=/naturalize,target_if=max:target.dispellable,if=target.dispellable>=3|target.dispellable>=2&raid_health.pct>=80
 actions+=/use_item,name=gebbos_bottomless_bag
+actions+=/use_item,name=soulcoiler_ritual_vessel,if=injured_allies.80>=5
 # Emergencies
 actions+=/rewind,if=raid_health.pct<55
 actions+=/zephyr,if=encounter.big_burst.remains<3

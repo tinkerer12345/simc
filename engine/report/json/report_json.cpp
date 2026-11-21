@@ -1440,6 +1440,22 @@ void tolerance_json( const tolerance::tolerance_t& t, js::JsonOutput root )
           cn[ "raid_health" ] = c.raid_health;
         if ( c.mana >= 0 )
           cn[ "mana" ] = c.mana;
+        if ( !c.buffs.empty() )
+        {
+          auto bl = cn[ "buffs" ].make_array();
+          for ( const auto& b : c.buffs )
+          {
+            auto bn       = bl.add();
+            bn[ "id" ]    = b.id;
+            bn[ "name" ]  = b.name;
+            if ( b.stacks > 1 )
+              bn[ "stacks" ] = b.stacks;
+            if ( b.remains >= 0 )
+              bn[ "remains" ] = b.remains;
+          }
+        }
+        for ( const auto& r : c.resources )
+          cn[ "resources" ][ r.first ] = r.second;
       }
       auto events = sample[ "events" ].make_array();
       for ( const auto& e : s.sample_events )
@@ -1759,6 +1775,12 @@ void to_json( const ::report::json::report_configuration_t& report_configuration
   {
     options_root[ "encounter" ] = sim.encounter_str;
     options_root[ "encounter_difficulty" ] = sim.encounter_difficulty_str;
+    if ( !sim.encounter_title.empty() )
+      options_root[ "encounter_title" ] = sim.encounter_title;
+    if ( !sim.encounter_description.empty() )
+      options_root[ "encounter_description" ] = sim.encounter_description;
+    if ( !sim.encounter_tags.empty() )
+      options_root[ "encounter_tags" ] = sim.encounter_tags;
     auto damage                            = options_root[ "encounter_damage" ];
     damage[ "steady" ]                     = sim.encounter_damage_steady;
     damage[ "burst" ]                      = sim.encounter_damage_burst;

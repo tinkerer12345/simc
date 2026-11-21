@@ -18,10 +18,10 @@
                                      "raid_damage_taken":  111439230.39775157
                                  },
     "evoker_healer_profile":  {
-                                  "wipes":  1,
-                                  "healer_hps":  339500.97414487056,
-                                  "healer_damage_taken":  5365717.851231064,
-                                  "raid_damage_taken":  114602381.6480367
+                                  "wipes":  0,
+                                  "healer_hps":  332700.1938069456,
+                                  "healer_damage_taken":  5275390.85649496,
+                                  "raid_damage_taken":  112311038.10796368
                               },
     "MID1_Priest_Shadow":  {
                                "dps":  130914.1519005129,
@@ -30,8 +30,8 @@
                            },
     "MID1_Death_Knight_Blood":  {
                                     "dps":  69071.65125206339,
-                                    "hps":  39717.86414157975,
-                                    "dtps":  19122613.149530699
+                                    "hps":  39717.86414157971,
+                                    "dtps":  19122613.149530695
                                 },
     "MID1_Druid_Balance":  {
                                "dps":  130733.89991002364,
@@ -44,7 +44,7 @@
                              "dtps":  null
                          },
     "MID1_Druid_Guardian":  {
-                                "dps":  76559.63847130537,
+                                "dps":  76559.63847130533,
                                 "hps":  28560.18923085383,
                                 "dtps":  20557459.2378402
                             },
@@ -54,7 +54,7 @@
                              "dtps":  null
                          },
     "MID1_Evoker_Devastation_FS":  {
-                                       "dps":  131364.86679938055,
+                                       "dps":  131364.86679938058,
                                        "hps":  null,
                                        "dtps":  null
                                    }

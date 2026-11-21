@@ -143,6 +143,8 @@ struct sim_t : private sc_thread_t
   std::string main_target_str;
   std::string encounter_str;
   std::string encounter_difficulty_str;
+  // fork: what the fight is, in words, for the healer report (set in the fight file)
+  std::string encounter_title, encounter_description, encounter_tags;  // tags: short keywords, "|"-separated
   // Encounter fights ended by a wipe rule, in total and per rule (a fight that reaches the end is a kill).
   int encounter_wipes            = 0;
   int encounter_wipes_all_dead   = 0;

@@ -27,7 +27,10 @@ raid_member_avoidance=0
 raid_tank_damage_reduction=0.35
 raid_tank_physical_reduction=0.57
 
-encounter=Patchwerk
+encounter=Patchwerk
+encounter_title="Patchwerk: Coiled Altar P1 waves"
+encounter_description="Phase 1 of Mythic Coiled Altar on repeat for 5:00: a raid-wide Venom Rupture wave about every 20 sec (10 sec each, a big one every 2:12), Fangs twice per loop, steady rot on everyone, a damage-over-time on 3 random players every 8 sec, light tank damage. Every hit is a share of your health, so it grows with your gear."
+encounter_tags="5:00|Scales with you|Wave every ~20 s|Big wave every 2:12|Constant rot|DoTs on 3 players|Light tank"
 dispellable=0
 phases=132:steady=0.905,spot=0.852,avoidable=0,tank=0.38,waves=10,stack=0.209,big_from=7,at=1+22+39+59+76+85+107+124,sizes=2.45+4.2+4.2+4.2+4.2+2.45+7.2+3.2/132:steady=0.905,spot=0.852,avoidable=0,tank=0.38,waves=10,stack=0.209,big_from=7,at=1+22+39+59+76+85+107+124,sizes=2.45+4.2+4.2+4.2+4.2+2.45+7.2+3.2/132:steady=0.905,spot=0.852,avoidable=0,tank=0.38,waves=10,stack=0.209,big_from=7,at=1+22+39+59+76+85+107+124,sizes=2.45+4.2+4.2+4.2+4.2+2.45+7.2+3.2
 enemy_health=1000000000

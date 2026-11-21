@@ -4004,6 +4004,9 @@ void sim_t::create_options()
   add_option( opt_func( "player_simplified", parse_player ) );
   add_option( opt_func( "enemy", parse_player ) );
   add_option( opt_func( "encounter", parse_encounter ) );
+  add_option( opt_string( "encounter_title", encounter_title ) );
+  add_option( opt_string( "encounter_description", encounter_description ) );
+  add_option( opt_string( "encounter_tags", encounter_tags ) );
   add_option( opt_bool( "encounter_wipe_on_tanks", encounter_wipe_on_tanks ) );
   add_option( opt_float( "encounter_wipe_raid_pct", encounter_wipe_raid_pct, 0, 1 ) );
   add_option( opt_float( "encounter_damage_steady", encounter_damage_steady, 0, 100 ) );

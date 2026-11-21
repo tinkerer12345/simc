@@ -1,0 +1,30 @@
+# Patchwerk, big bursts: the same raid, rot, spot damage and tank damage as fights\patchwerk.simc (Coiled Altar P1), and the
+# same total raid-burst damage over 5 min (70.85 Venom Rupture stacks), but delivered as five big planned bursts, each over 6 sec:
+# 0:20, 1:20, 2:20, 3:20, 4:20 (14.17 stacks each, all "big" for the encounter.big_burst timer). The shape healers with planned
+# cooldowns (Stasis, Echo, Temporal Anomaly) are built for; compare a healer here and on patchwerk.simc to see how much the fight's
+# shape favours it.
+# Use after a healer profile: simc.exe <healer>.simc fights\patchwerk_bursts.simc ...
+max_time=300
+vary_combat_length=0
+
+# Stand-in raid, named after specs: 2 tanks, 3 healers (names only, they don't heal), 7 ranged, 7 melee.
+# With the healer under test: 20 players, and it is the only one healing.
+raid_tanks=2
+raid_healers=3
+raid_ranged=7
+raid_melee=7
+raid_health_from_healer=1
+raid_tank_health_factor=1.44
+raid_member_damage_reduction=0.10
+raid_member_avoidance=0
+# Tank mitigation as calibrated on the Vashnik kill: 35% on everything, another 57% on physical damage.
+raid_tank_damage_reduction=0.35
+raid_tank_physical_reduction=0.57
+
+encounter=Patchwerk
+encounter_title="Patchwerk: big bursts"
+encounter_description="The same damage as the waves Patchwerk, but the raid-wide damage comes as five big 6 sec bursts a minute apart (0:20 to 4:20); steady rot, damage-over-time on 3 random players every 8 sec, light tank damage. Every hit is a share of your health."
+encounter_tags="5:00|Scales with you|5 big bursts, 1 per min|Constant rot|DoTs on 3 players|Light tank"
+dispellable=0
+phases=300:steady=0.905,spot=0.852,avoidable=0,tank=0.38,waves=6,stack=0.209,big_from=1,at=20+80+140+200+260,sizes=14.17+14.17+14.17+14.17+14.17
+enemy_health=1000000000
