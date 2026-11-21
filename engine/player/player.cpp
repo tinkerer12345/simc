@@ -13590,6 +13590,7 @@ void player_t::create_options()
   add_option( opt_bool( "raid_frames", raid_frames.enabled ) );
   add_option( opt_float( "source_of_magic_mana_per_minute", source_of_magic_mana_per_minute, 0.0, 1e7 ) );
   add_option( opt_bool( "soulcoil_barrier_full_use", soulcoil_barrier_full_use ) );
+  add_option( opt_float( "precombat_cost", precombat_cost, 0.0, 1.0 ) );
   add_option( opt_float( "mana_spring_mana_per_minute", mana_spring_mana_per_minute, 0.0, 1e7 ) );
   add_option( opt_bool( "infinite_mana", resources.infinite_resource[ RESOURCE_MANA ] ) );
   add_option( opt_bool( "infinite_rage", resources.infinite_resource[ RESOURCE_RAGE ] ) );

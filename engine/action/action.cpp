@@ -1191,8 +1191,15 @@ double action_t::base_cost() const
  */
 double action_t::cost() const
 {
+  // Helpful pre-pull casts are free, unless the player's precombat_cost (fork option, 0-1) says what share they pay: a
+  // healer's pre-pull ramp spends real mana (net of the regen during the ramp).
+  double precombat_share = 1.0;
   if ( !harmful && is_precombat )
-    return 0;
+  {
+    if ( player->precombat_cost <= 0 )
+      return 0;
+    precombat_share = player->precombat_cost;
+  }
 
   auto cr = current_resource();
   if ( cr == resource_e::RESOURCE_NONE )
@@ -1227,6 +1234,7 @@ double action_t::cost() const
 
   if ( c < 0 )
     c = 0;
+  c *= precombat_share;
 
   if ( sim->debug )
   {
